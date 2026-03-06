@@ -15,8 +15,8 @@ interface Component {
   price: number;
   weight: number;
   description: string;
-  imageUrl: string;      // Фото для велосипеда
-  cardImageUrl: string;  // Нове фото для картки в меню
+  imageUrl: string;      
+  cardImageUrl: string;  
   zIndex: number;
 }
 
@@ -26,7 +26,7 @@ interface Step {
   options: Component[];
 }
 
-// --- INITIAL DATA (Повністю відповідає твоєму Excel) ---
+// --- INITIAL DATA ---
 const INITIAL_STEPS: Step[] = [
   { id: 'frame', title: 'Frame', options: [] },
   { id: 'wheelset', title: 'Wheelset', options: [] },
@@ -71,7 +71,10 @@ const OptionCard = ({ component, isSelected, onClick }: { component: Component, 
   return (
     <motion.button
       layout
-      onClick={onClick}
+      onClick={(e) => {
+        e.preventDefault();
+        onClick();
+      }}
       className={cn(
         "relative flex flex-col p-3 rounded-2xl border text-left transition-all group w-full",
         isSelected 
@@ -79,21 +82,20 @@ const OptionCard = ({ component, isSelected, onClick }: { component: Component, 
         : "border-white/5 bg-zinc-900/50 hover:border-white/20 hover:bg-zinc-900"
       )}
     >
-      {/* Контейнер для фото */}
       <div className="aspect-square w-full rounded-xl bg-black/40 mb-3 overflow-hidden relative">
         <img 
           src={component.cardImageUrl} 
           alt={component.name} 
           className="w-full h-full object-contain p-2 group-hover:scale-110 transition duration-500" 
         />
+        {/* Галочка переставлена на ліву сторону (top-2 left-2) */}
         {isSelected && (
-          <div className="absolute top-2 right-2 bg-red-600 p-1.5 rounded-full shadow-lg z-10">
+          <div className="absolute top-2 left-2 bg-red-600 p-1.5 rounded-full shadow-lg z-10">
             <CheckCircle2 size={12} className="text-white" />
           </div>
         )}
       </div>
 
-      {/* Текстовий блок: Назва, Бренд, Ціна, Вага */}
       <div className="flex-1 flex flex-col justify-between overflow-hidden">
         <div>
           <h3 className="text-[11px] font-bold leading-tight tracking-tighter line-clamp-2 text-zinc-300 uppercase">
@@ -129,7 +131,6 @@ export default function BikeConfigurator() {
   const currentStep = steps[currentStepIndex] || steps[0];
   const listRef = useRef<HTMLDivElement>(null);
 
-  // --- АВТОЗАВАНТАЖЕННЯ EXCEL ---
   useEffect(() => {
     const autoLoadExcel = async () => {
       try {
@@ -141,11 +142,9 @@ export default function BikeConfigurator() {
         const workbook = XLSX.read(arrayBuffer);
         
         const newSteps = INITIAL_STEPS.map(step => {
-          // Шукаємо вкладку, ігноруючи регістр букв
           const sheetName = Object.keys(workbook.Sheets).find(
             name => name.toUpperCase().trim() === step.title.toUpperCase().trim()
           );
-          
           const sheet = sheetName ? workbook.Sheets[sheetName] : null;
 
           if (sheet) {
@@ -153,26 +152,22 @@ export default function BikeConfigurator() {
             return {
               ...step,
               options: data.map((row: any, idx: number) => {
-                // Знаходимо назви колонок незалежно від регістру
-                // Усередині data.map((row: any, idx: number) => { ... })
-const rowKeys = Object.keys(row);
-const findKey = (name: string) => rowKeys.find(k => k.toLowerCase().trim() === name.toLowerCase());
+                const rowKeys = Object.keys(row);
+                const findKey = (name: string) => rowKeys.find(k => k.toLowerCase().trim() === name.toLowerCase());
+                const imageKey = findKey('imageurl') || findKey('image');
+                const cardImageKey = findKey('cardimg') || findKey('cardimage');
+                const zKey = findKey('zindex');
 
-const imageKey = findKey('imageurl') || findKey('image');
-const cardImageKey = findKey('cardimg') || findKey('cardimage'); // Шукаємо Cardimg
-const zKey = findKey('zindex');
-
-return {
-  id: `${step.id}-${idx}`,
-  name: row.Name || row.NAME || 'Unknown',
-  brand: row.Brand || row.BRAND || '',
-  price: Number(row.Price || row.PRICE) || 0,
-  weight: Number(row.Weight || row.WEIGHT) || 0,
-  imageUrl: imageKey ? row[imageKey] : "",
-  // Якщо Cardimg порожній, використовуємо звичайний imageUrl як заміну
-  cardImageUrl: cardImageKey ? row[cardImageKey] : (imageKey ? row[imageKey] : ""),
-  zIndex: zKey ? Number(row[zKey]) : 10
-};
+                return {
+                  id: `${step.id}-${idx}`,
+                  name: row.Name || row.NAME || 'Unknown',
+                  brand: row.Brand || row.BRAND || '',
+                  price: Number(row.Price || row.PRICE) || 0,
+                  weight: Number(row.Weight || row.WEIGHT) || 0,
+                  imageUrl: imageKey ? row[imageKey] : "",
+                  cardImageUrl: cardImageKey ? row[cardImageKey] : (imageKey ? row[imageKey] : ""),
+                  zIndex: zKey ? Number(row[zKey]) : 10
+                };
               })
             };
           }
@@ -180,7 +175,7 @@ return {
         });
         setSteps(newSteps);
       } catch (err) {
-        console.error("Помилка автозавантаження:", err);
+        console.error("Помилка завантаження:", err);
       }
     };
     autoLoadExcel();
@@ -203,31 +198,17 @@ return {
 
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-red-600 pb-24">
-      {/* Navbar */}
       <nav className="border-b border-white/5 px-8 py-4 flex justify-between items-center bg-black/80 backdrop-blur-2xl sticky top-0 z-50">
         <div className="flex items-center gap-4 pl-2">
-          {/* Твій новий логотип */}
-          <img 
-            src="/design/Logo.png" 
-            alt="Adictobike Logo" 
-            className="h-6 w-auto object-contain" 
-          />
-          
-          {/* Розділювач та підпис */}
+          <img src="/design/Logo.png" alt="Adictobike Logo" className="h-6 w-auto object-contain" />
           <div className="hidden sm:flex flex-col border-l border-white/10 pl-4 gap-0.4 w-[85px]"> 
-  {/* gap-0 робить відстань мінімальною */}
-  <div className="flex justify-between w-full leading-none">
-    {"ADICTO.BIKE".split("").map((char, i) => (
-      <span key={i} className="text-[9px] font-black italic uppercase text-white">
-        {char}
-      </span>
-    ))}
-  </div>
-  <span className="text-[8px] uppercase tracking-[0.06em] text-zinc-500 font-bold block w-full text-center leading-none">
-    {/* Прибрано mt-1 для щільності */}
-    Configurator
-  </span>
-</div>
+            <div className="flex justify-between w-full leading-none">
+              {"ADICTO.BIKE".split("").map((char, i) => (
+                <span key={i} className="text-[9px] font-black italic uppercase text-white">{char}</span>
+              ))}
+            </div>
+            <span className="text-[8px] uppercase tracking-[0.06em] text-zinc-500 font-bold block w-full text-center leading-none">Configurator</span>
+          </div>
         </div>
         
         <div className="flex items-center gap-6">
@@ -243,56 +224,57 @@ return {
       </nav>
 
       <main className="max-w-[1500px] mx-auto px-6 pt-10">
-  <div className="grid grid-cols-12 gap-10 h-[550px] items-stretch">
-    
-    {/* ЛІВА ЧАСТИНА (ТЕПЕР ТУТ ВЕЛОСИПЕД) */}
-    <div className="col-span-9 flex flex-col gap-6 order-1"> 
-      {/* Вкладки кроків залишаємо зверху над велосипедом */}
-      <div className="flex flex-wrap justify-start items-center px-4 gap-x-4 gap-y-2">
-        {steps.map((step, idx) => (
-          <button
-            key={step.id}
-            onClick={() => jumpToStep(idx)}
-            className={cn(
-              "transition-all duration-300 text-[9px] font-black italic uppercase tracking-widest pb-1 border-b-2 whitespace-nowrap",
-              idx === currentStepIndex 
-                ? "text-red-600 border-red-600 drop-shadow-[0_0_8px_rgba(255,0,0,0.3)]" 
-                : "text-white opacity-20 border-transparent hover:opacity-100"
-            )}
-          >
-            {step.title}
-          </button>
-        ))}
-      </div>
+        <div className="grid grid-cols-12 gap-10 h-[550px] items-stretch">
+          
+          {/* LEFT: VISUALIZER */}
+          <div className="col-span-9 flex flex-col gap-6 order-1"> 
+            <div className="flex flex-wrap justify-start items-center px-4 gap-x-4 gap-y-2">
+              {steps.map((step, idx) => (
+                <button
+                  key={step.id}
+                  onClick={() => jumpToStep(idx)}
+                  className={cn(
+                    "transition-all duration-300 text-[9px] font-black italic uppercase tracking-widest pb-1 border-b-2 whitespace-nowrap",
+                    idx === currentStepIndex 
+                      ? "text-red-600 border-red-600 drop-shadow-[0_0_8px_rgba(255,0,0,0.3)]" 
+                      : "text-white opacity-20 border-transparent hover:opacity-100"
+                  )}
+                >
+                  {step.title}
+                </button>
+              ))}
+            </div>
 
-      <div className="flex-1">
-        <Visualizer selectedComponents={selectedComponents} />
-      </div>
-    </div>
-
-    {/* ПРАВА ЧАСТИНА (ТЕПЕР ТУТ МЕНЮ З КАРТКАМИ) */}
-    <div className="col-span-3 flex flex-col h-full bg-zinc-900/40 rounded-[2.5rem] border border-white/5 p-6 relative overflow-hidden order-2">
-      <div ref={listRef} className="flex-1 space-y-2 velocraft-scrollbar overflow-y-auto pr-1">
-        {error && (
-          <div className="mb-4 text-red-500 bg-red-600/10 p-2 rounded-lg text-[9px] font-bold uppercase">
-            {error}
+            <div className="flex-1">
+              <Visualizer selectedComponents={selectedComponents} />
+            </div>
           </div>
-        )}
-        <AnimatePresence mode="popLayout">
-          {currentStep.options.map((option) => (
-            <OptionCard 
-              key={option.id} 
-              component={option} 
-              isSelected={selections[currentStep.id] === option.id} 
-              onClick={() => handleSelect(option.id)} 
-            />
-          ))}
-        </AnimatePresence>
-      </div>
-    </div>
+
+          {/* RIGHT: OPTIONS */}
+          <div className="col-span-3 flex flex-col h-full bg-zinc-900/40 rounded-[2.5rem] border border-white/5 p-6 relative overflow-hidden order-2">
+            <div ref={listRef} className="flex-1 space-y-2 velocraft-scrollbar overflow-y-auto pr-1">
+              {error && (
+                <div className="mb-4 text-red-500 bg-red-600/10 p-2 rounded-lg text-[9px] font-bold uppercase">{error}</div>
+              )}
+              <AnimatePresence mode="popLayout">
+                {currentStep.options.map((option) => (
+                  <OptionCard 
+                    key={option.id} 
+                    component={option} 
+                    isSelected={selections[currentStep.id] === option.id} 
+                    onClick={() => {
+                      setSelections(prev => ({...prev, [currentStep.id]: option.id}));
+                      setError(null);
+                    }} 
+                  />
+                ))}
+              </AnimatePresence>
+            </div>
+          </div>
         </div>
       </main>
 
+      {/* FOOTER CONTROLS */}
       <div className="fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur-2xl border-t border-white/5 px-12 py-6 flex justify-between items-center z-40">
         <button 
           onClick={() => currentStepIndex > 0 && setCurrentStepIndex(currentStepIndex - 1)} 
@@ -301,6 +283,7 @@ return {
           <ChevronLeft size={20} /> Back
         </button>
         
+        {/* Total info aligned to the right, under visualizer's right edge area */}
         <div className="flex gap-12 items-center">
           <div className="text-right">
             <p className="text-[8px] text-zinc-600 uppercase font-black mb-1">Weight</p>
@@ -339,11 +322,7 @@ function SummaryView({ selections, onReset }: any) {
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
 
-    // Функція для очищення тексту від не-ASCII символів (запобігає "кракозябрам")
-    const cleanText = (text: string) => {
-      if (!text) return "";
-      return String(text).replace(/[^\x00-\x7F]/g, "").toUpperCase();
-    };
+    const cleanText = (text: string) => text ? String(text).replace(/[^\x00-\x7F]/g, "").toUpperCase() : "";
 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(24);
@@ -356,7 +335,6 @@ function SummaryView({ selections, onReset }: any) {
     doc.text(`DATE: ${new Date().toLocaleDateString('en-US').toUpperCase()}`, 14, 32);
     doc.text("OFFICIAL BUILD SPECIFICATION", 14, 37);
 
-    // Очищаємо дані перед подачею в таблицю
     const tableData = selections.map((c: any) => [
       cleanText(c.name),
       cleanText(c.brand),
@@ -375,18 +353,13 @@ function SummaryView({ selections, onReset }: any) {
       theme: 'grid'
     });
 
-    // Дисклеймер (чистий текст, без кирилиці)
     const finalY = (doc as any).lastAutoTable.finalY + 12;
     doc.setFontSize(8);
     doc.setTextColor(140);
     const disclaimer = "NOTICE: THE WEIGHT AND PRICE INDICATED ARE PRELIMINARY AND SUBJECT TO MINOR CHANGES BASED ON COMPONENT AVAILABILITY AND TECHNICAL ASSEMBLY SPECIFICATIONS. ADICTO.BIKE RESERVES THE RIGHT TO MODIFY SPECIFICATIONS WITHOUT PRIOR NOTICE.";
-    const splitDisclaimer = doc.splitTextToSize(disclaimer, pageWidth - 28);
-    doc.text(splitDisclaimer, 14, finalY);
+    doc.text(doc.splitTextToSize(disclaimer, pageWidth - 28), 14, finalY);
 
-    // Footer
     const footerY = pageHeight - 45;
-    doc.setFontSize(9);
-    doc.setTextColor(80);
     doc.text("WWW.ADICTO.BIKE", 14, footerY + 17);
     doc.text("INSTAGRAM: @ADICTO.BIKE", 14, footerY + 23);
     doc.text("EMAIL: HELLO@ADICTO.BIKE", 14, footerY + 29);
@@ -400,7 +373,6 @@ function SummaryView({ selections, onReset }: any) {
     doc.save(`ADICTO_BUILD.pdf`);
   };
 
-  // ЦЕЙ БЛОК ПОВЕРТАЄ ВІЗУАЛ (ЙОГО НЕ ВИСТАЧАЛО)
   return (
     <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-8 text-center font-sans">
       <motion.div 
