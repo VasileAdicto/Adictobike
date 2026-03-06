@@ -25,18 +25,20 @@ interface Step {
   options: Component[];
 }
 
-// --- INITIAL DATA ---
+// --- INITIAL DATA (Повністю відповідає твоєму Excel) ---
 const INITIAL_STEPS: Step[] = [
   { id: 'frame', title: 'Frame', options: [] },
   { id: 'wheelset', title: 'Wheelset', options: [] },
-  { id: 'tires', title: 'Tires', options: [] },
-  { id: 'discs', title: 'Discs', options: [] },
+  { id: 'tyres', title: 'Tyres', options: [] },
+  { id: 'tubes', title: 'Tubes', options: [] },
+  { id: 'cockpit', title: 'Cockpit', options: [] },
+  { id: 'tape', title: 'Tape', options: [] },
+  { id: 'saddle', title: 'Saddle', options: [] },
+  { id: 'shifters', title: 'Shifters', options: [] },
   { id: 'crankset', title: 'Crankset', options: [] },
   { id: 'derailleurs', title: 'Derailleurs', options: [] },
   { id: 'cassette', title: 'Cassette', options: [] },
-  { id: 'shifters', title: 'Shifters', options: [] },
-  { id: 'cockpit', title: 'Cockpit', options: [] },
-  { id: 'saddle', title: 'Saddle', options: [] }
+  { id: 'discs', title: 'Discs', options: [] }
 ];
 
 // --- COMPONENTS ---
@@ -193,7 +195,7 @@ export default function BikeConfigurator() {
           />
           
           {/* Розділювач та підпис */}
-          <div className="hidden sm:flex flex-col border-l border-white/10 pl-4 gap-0.45 w-[85px]"> 
+          <div className="hidden sm:flex flex-col border-l border-white/10 pl-4 gap-0.4 w-[85px]"> 
   {/* gap-0 робить відстань мінімальною */}
   <div className="flex justify-between w-full leading-none">
     {"ADICTO.BIKE".split("").map((char, i) => (
@@ -240,26 +242,29 @@ export default function BikeConfigurator() {
           </div>
 
           <div className="col-span-9 flex flex-col gap-6">
-            <div className="flex justify-between items-center px-4">
-              {steps.map((step, idx) => (
-                <button
-                  key={step.id}
-                  onClick={() => jumpToStep(idx)}
-                  className={cn(
-                    "transition-all duration-300 text-[10px] font-black italic uppercase tracking-widest pb-2 border-b-2",
-                    idx === currentStepIndex 
-                      ? "text-red-600 border-red-600 drop-shadow-[0_0_8px_rgba(255,0,0,0.3)]" 
-                      : "text-white opacity-20 border-transparent hover:opacity-100"
-                  )}
-                >
-                  {step.title}
-                </button>
-              ))}
-            </div>
-            <div className="flex-1">
-              <Visualizer selectedComponents={selectedComponents} />
-            </div>
-          </div>
+  {/* Додано flex-wrap для переносу та зменшено gap */}
+  <div className="flex flex-wrap justify-start items-center px-4 gap-x-4 gap-y-2">
+    {steps.map((step, idx) => (
+      <button
+        key={step.id}
+        onClick={() => jumpToStep(idx)}
+        className={cn(
+          // Зменшено шрифт до 8px (text-[8px]) та прибрано зайві відступи
+          "transition-all duration-300 text-[8px] font-black italic uppercase tracking-widest pb-1 border-b-2 whitespace-nowrap",
+          idx === currentStepIndex 
+            ? "text-red-600 border-red-600 drop-shadow-[0_0_8px_rgba(255,0,0,0.3)]" 
+            : "text-white opacity-20 border-transparent hover:opacity-100"
+        )}
+      >
+        {step.title}
+      </button>
+    ))}
+  </div>
+  {/* Тут далі йде твій Visualizer */}
+  <div className="flex-1">
+    <Visualizer selectedComponents={selectedComponents} />
+  </div>
+</div>
         </div>
       </main>
 
