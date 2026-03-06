@@ -335,7 +335,7 @@ function SummaryView({ selections, onReset }: any) {
 
     // 1. Заголовок
     doc.setFontSize(22);
-    doc.setTextColor(220, 38, 38); // Червоний Adicto
+    doc.setTextColor(220, 38, 38);
     doc.text("ADICTO.BIKE", 14, 20);
     
     doc.setFontSize(10);
@@ -361,7 +361,7 @@ function SummaryView({ selections, onReset }: any) {
       theme: 'striped'
     });
 
-    // 3. Дисклеймер (Текст про вагу та ціну)
+    // 3. Дисклеймер
     const finalY = (doc as any).lastAutoTable.finalY + 10;
     doc.setFontSize(8);
     doc.setTextColor(150);
@@ -369,28 +369,67 @@ function SummaryView({ selections, onReset }: any) {
     const splitDisclaimer = doc.splitTextToSize(disclaimer, pageWidth - 28);
     doc.text(splitDisclaimer, 14, finalY);
 
-    // 4. Контакти та QR-код у футері
+    // 4. Контакти та QR
     const footerY = pageHeight - 40;
     doc.setDrawColor(220, 38, 38);
-    doc.line(14, footerY - 5, pageWidth - 14, footerY - 5); // Лінія-розділювач
+    doc.line(14, footerY - 5, pageWidth - 14, footerY - 5);
 
-    // Текст контактів
     doc.setFontSize(10);
     doc.setTextColor(0);
-    doc.setFont("helvetica", "bold");
     doc.text("CONTACT US:", 14, footerY + 5);
-    doc.setFont("helvetica", "normal");
     doc.text("Web: www.adicto.bike", 14, footerY + 12);
     doc.text("Instagram: @adicto.bike", 14, footerY + 19);
     doc.text("Email: hello@adicto.bike", 14, footerY + 26);
 
-    // Додавання QR-коду (має бути в public/design/qr-code.png)
     try {
       doc.addImage("/design/qr-code.png", "PNG", pageWidth - 45, footerY, 30, 30);
     } catch (e) {
-      console.warn("QR-код не знайдено за шляхом public/design/qr-code.png");
+      console.warn("QR-код не знайдено");
     }
 
     doc.save(`Adicto-Build-${new Date().getTime()}.pdf`);
   };
-} //
+
+  // ЦЕЙ БЛОК ПОВЕРТАЄ ВІЗУАЛ (ЙОГО НЕ ВИСТАЧАЛО)
+  return (
+    <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-8 text-center font-sans">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="max-w-2xl w-full"
+      >
+        <CheckCircle2 size={60} className="text-red-600 mx-auto mb-6" />
+        <h2 className="text-5xl font-black italic uppercase tracking-tighter mb-4 leading-none">
+          Configuration <br/> <span className="text-red-600">Complete</span>
+        </h2>
+        
+        <div className="flex justify-center gap-10 my-8 bg-zinc-900/50 p-6 rounded-3xl border border-white/5">
+          <div>
+            <p className="text-zinc-500 text-[10px] uppercase font-bold tracking-widest">Total Price</p>
+            <p className="text-3xl font-mono text-red-600">€{totalPrice.toLocaleString()}</p>
+          </div>
+          <div className="w-px bg-white/10" />
+          <div>
+            <p className="text-zinc-500 text-[10px] uppercase font-bold tracking-widest">Total Weight</p>
+            <p className="text-3xl font-mono">{totalWeight}g</p>
+          </div>
+        </div>
+
+        <div className="flex gap-4 justify-center">
+          <button 
+            onClick={handleExport} 
+            className="px-8 py-4 bg-red-600 text-white rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-red-700 transition-all flex items-center gap-2"
+          >
+            <Download size={16} /> Export PDF
+          </button>
+          <button 
+            onClick={onReset} 
+            className="px-8 py-4 border border-white/10 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-white/5 transition-all"
+          >
+            Start Over
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
