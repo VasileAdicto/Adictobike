@@ -193,16 +193,16 @@ export default function BikeConfigurator() {
           />
           
           {/* Розділювач та підпис */}
-          <div className="hidden sm:flex flex-col border-l border-white/10 pl-4 gap-0.5 w-[78px]"> 
+          <div className="hidden sm:flex flex-col border-l border-white/10 pl-4 gap-0.45 w-[85px]"> 
   {/* gap-0 робить відстань мінімальною */}
   <div className="flex justify-between w-full leading-none">
     {"ADICTO.BIKE".split("").map((char, i) => (
-      <span key={i} className="text-[10px] font-black italic uppercase text-white">
+      <span key={i} className="text-[9px] font-black italic uppercase text-white">
         {char}
       </span>
     ))}
   </div>
-  <span className="text-[7px] uppercase tracking-[0.1em] text-zinc-500 font-bold block w-full text-center leading-none">
+  <span className="text-[8px] uppercase tracking-[0.06em] text-zinc-500 font-bold block w-full text-center leading-none">
     {/* Прибрано mt-1 для щільності */}
     Configurator
   </span>
@@ -308,7 +308,7 @@ function SummaryView({ selections, onReset }: any) {
     const doc = new jsPDF();
     doc.setFontSize(22);
     doc.setTextColor(220, 38, 38);
-    doc.text("ADICTO PRO BIKES", 14, 20);
+    doc.text("ADICTO.BIKE", 14, 20);
     
     doc.setFontSize(10);
     doc.setTextColor(100);
@@ -330,7 +330,7 @@ function SummaryView({ selections, onReset }: any) {
       theme: 'striped'
     });
 
-    doc.save("Adicto-Pro-Build.pdf");
+    doc.save("Adicto-Build.pdf");
   };
 
   return (
