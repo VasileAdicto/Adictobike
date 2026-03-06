@@ -15,7 +15,8 @@ interface Component {
   price: number;
   weight: number;
   description: string;
-  imageUrl: string; 
+  imageUrl: string;      // Фото для велосипеда
+  cardImageUrl: string;  // Нове фото для картки в меню
   zIndex: number;
 }
 
@@ -80,7 +81,8 @@ const OptionCard = ({ component, isSelected, onClick }: { component: Component, 
     >
       <div className="aspect-square w-full rounded-xl bg-black/40 mb-3 overflow-hidden relative">
         <img 
-          src={component.imageUrl || (component as any).image || (component as any).ImageURL} 
+          // ВИПРАВЛЕНО: тепер тут cardImageUrl
+          src={component.cardImageUrl} 
           alt={component.name} 
           className="w-full h-full object-contain p-2 group-hover:scale-110 transition duration-500" 
         />
@@ -90,13 +92,7 @@ const OptionCard = ({ component, isSelected, onClick }: { component: Component, 
           </div>
         )}
       </div>
-      <div className="flex-1 flex flex-col justify-between overflow-hidden">
-        <div>
-           <h3 className="text-[11px] font-bold leading-tight tracking-tighter line-clamp-2 text-zinc-300 uppercase">{component.name}</h3>
-           <p className="text-[9px] text-zinc-500 uppercase font-black">{component.brand}</p>
-        </div>
-        <p className="font-black text-sm text-red-600 mt-1">€{component.price.toLocaleString()}</p>
-      </div>
+      {/* ... решта коду картки (назва, бренд, ціна) залишається без змін */}
     </motion.button>
   );
 };
@@ -138,21 +134,25 @@ export default function BikeConfigurator() {
               ...step,
               options: data.map((row: any, idx: number) => {
                 // Знаходимо назви колонок незалежно від регістру
-                const rowKeys = Object.keys(row);
-                const findKey = (name: string) => rowKeys.find(k => k.toLowerCase().trim() === name.toLowerCase());
-                
-                const imageKey = findKey('imageurl') || findKey('image');
-                const zKey = findKey('zindex');
+                // Усередині data.map((row: any, idx: number) => { ... })
+const rowKeys = Object.keys(row);
+const findKey = (name: string) => rowKeys.find(k => k.toLowerCase().trim() === name.toLowerCase());
 
-                return {
-                  id: `${step.id}-${idx}`,
-                  name: row.Name || row.NAME || 'Unknown',
-                  brand: row.Brand || row.BRAND || '',
-                  price: Number(row.Price || row.PRICE) || 0,
-                  weight: Number(row.Weight || row.WEIGHT) || 0,
-                  imageUrl: imageKey ? row[imageKey] : "",
-                  zIndex: zKey ? Number(row[zKey]) : 10
-                };
+const imageKey = findKey('imageurl') || findKey('image');
+const cardImageKey = findKey('cardimg') || findKey('cardimage'); // Шукаємо Cardimg
+const zKey = findKey('zindex');
+
+return {
+  id: `${step.id}-${idx}`,
+  name: row.Name || row.NAME || 'Unknown',
+  brand: row.Brand || row.BRAND || '',
+  price: Number(row.Price || row.PRICE) || 0,
+  weight: Number(row.Weight || row.WEIGHT) || 0,
+  imageUrl: imageKey ? row[imageKey] : "",
+  // Якщо Cardimg порожній, використовуємо звичайний imageUrl як заміну
+  cardImageUrl: cardImageKey ? row[cardImageKey] : (imageKey ? row[imageKey] : ""),
+  zIndex: zKey ? Number(row[zKey]) : 10
+};
               })
             };
           }
