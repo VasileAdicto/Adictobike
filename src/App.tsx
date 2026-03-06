@@ -243,47 +243,53 @@ return {
       </nav>
 
       <main className="max-w-[1500px] mx-auto px-6 pt-10">
-        <div className="grid grid-cols-12 gap-10 h-[500px] items-stretch">
-          <div className="col-span-3 flex flex-col h-full bg-zinc-900/40 rounded-[2.5rem] border border-white/5 p-6 relative overflow-hidden">
-            <div ref={listRef} className="flex-1 space-y-2 velocraft-scrollbar overflow-y-auto pr-1">
-              {error && <div className="mb-4 text-red-500 bg-red-600/10 p-2 rounded-lg text-[9px] font-bold uppercase">{error}</div>}
-              <AnimatePresence mode="popLayout">
-                {currentStep.options.map((option) => (
-                  <OptionCard 
-                    key={option.id} 
-                    component={option} 
-                    isSelected={selections[currentStep.id] === option.id} 
-                    onClick={() => {setSelections({...selections, [currentStep.id]: option.id}); setError(null);}} 
-                  />
-                ))}
-              </AnimatePresence>
-            </div>
-          </div>
+  <div className="grid grid-cols-12 gap-10 h-[550px] items-stretch">
+    
+    {/* ЛІВА ЧАСТИНА (ТЕПЕР ТУТ ВЕЛОСИПЕД) */}
+    <div className="col-span-9 flex flex-col gap-6 order-1"> 
+      {/* Вкладки кроків залишаємо зверху над велосипедом */}
+      <div className="flex flex-wrap justify-start items-center px-4 gap-x-4 gap-y-2">
+        {steps.map((step, idx) => (
+          <button
+            key={step.id}
+            onClick={() => jumpToStep(idx)}
+            className={cn(
+              "transition-all duration-300 text-[9px] font-black italic uppercase tracking-widest pb-1 border-b-2 whitespace-nowrap",
+              idx === currentStepIndex 
+                ? "text-red-600 border-red-600 drop-shadow-[0_0_8px_rgba(255,0,0,0.3)]" 
+                : "text-white opacity-20 border-transparent hover:opacity-100"
+            )}
+          >
+            {step.title}
+          </button>
+        ))}
+      </div>
 
-          <div className="col-span-9 flex flex-col gap-6">
-  {/* Додано flex-wrap для переносу та зменшено gap */}
-  <div className="flex flex-wrap justify-start items-center px-4 gap-x-4 gap-y-2">
-    {steps.map((step, idx) => (
-      <button
-        key={step.id}
-        onClick={() => jumpToStep(idx)}
-        className={cn(
-          // Зменшено шрифт до 10px (text-[10px]) та прибрано зайві відступи
-          "transition-all duration-300 text-[10px] font-black italic uppercase tracking-widest pb-1 border-b-2 whitespace-nowrap",
-          idx === currentStepIndex 
-            ? "text-red-600 border-red-600 drop-shadow-[0_0_10px_rgba(255,0,0,0.3)]" 
-            : "text-white opacity-20 border-transparent hover:opacity-100"
+      <div className="flex-1">
+        <Visualizer selectedComponents={selectedComponents} />
+      </div>
+    </div>
+
+    {/* ПРАВА ЧАСТИНА (ТЕПЕР ТУТ МЕНЮ З КАРТКАМИ) */}
+    <div className="col-span-3 flex flex-col h-full bg-zinc-900/40 rounded-[2.5rem] border border-white/5 p-6 relative overflow-hidden order-2">
+      <div ref={listRef} className="flex-1 space-y-2 velocraft-scrollbar overflow-y-auto pr-1">
+        {error && (
+          <div className="mb-4 text-red-500 bg-red-600/10 p-2 rounded-lg text-[9px] font-bold uppercase">
+            {error}
+          </div>
         )}
-      >
-        {step.title}
-      </button>
-    ))}
-  </div>
-  {/* Тут далі йде твій Visualizer */}
-  <div className="flex-1">
-    <Visualizer selectedComponents={selectedComponents} />
-  </div>
-</div>
+        <AnimatePresence mode="popLayout">
+          {currentStep.options.map((option) => (
+            <OptionCard 
+              key={option.id} 
+              component={option} 
+              isSelected={selections[currentStep.id] === option.id} 
+              onClick={() => handleSelect(option.id)} 
+            />
+          ))}
+        </AnimatePresence>
+      </div>
+    </div>
         </div>
       </main>
 
