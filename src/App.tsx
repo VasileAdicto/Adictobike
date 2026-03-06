@@ -193,7 +193,7 @@ export default function BikeConfigurator() {
           />
           
           {/* Розділювач та підпис */}
-          <div className="hidden sm:flex flex-col border-l border-white/10 pl-4 gap-0 w-[80px]"> 
+          <div className="hidden sm:flex flex-col border-l border-white/10 pl-4 gap-0.5 w-[78px]"> 
   {/* gap-0 робить відстань мінімальною */}
   <div className="flex justify-between w-full leading-none">
     {"ADICTO.BIKE".split("").map((char, i) => (
@@ -217,7 +217,7 @@ export default function BikeConfigurator() {
               setCurrentStepIndex(0);
             }} />
           )}
-          <div className="text-zinc-600 font-mono text-xs opacity-50 uppercase tracking-widest">Build by Vasile</div>
+          <div className="text-zinc-600 font-mono text-[9px] opacity-50 uppercase tracking-widest">Build by Vasile</div>
         </div>
       </nav>
 
