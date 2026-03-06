@@ -1,0 +1,38 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+/* --- ДОДАЙ ЦЕ НИЖЧЕ --- */
+
+@layer components {
+  .velocraft-scrollbar {
+    overflow-y: auto;
+    /* Налаштування для Firefox */
+    scrollbar-width: thin;
+    scrollbar-color: #DC2626 rgba(255, 255, 255, 0.03);
+  }
+
+  /* Налаштування для Chrome, Edge та Safari */
+  .velocraft-scrollbar::-webkit-scrollbar {
+    width: 4px; /* Робимо його дуже тонким */
+  }
+
+  .velocraft-scrollbar::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 10px;
+    margin: 10px 0; /* Відступ зверху і знизу, щоб не впирався в краї */
+  }
+
+  .velocraft-scrollbar::-webkit-scrollbar-thumb {
+    background: #DC2626; /* Твій фірмовий червоний */
+    border-radius: 10px;
+  }
+
+  .velocraft-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #EF4444; /* Трохи яскравіший при наведенні */
+  }
+}
