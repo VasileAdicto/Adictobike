@@ -195,7 +195,7 @@ export default function BikeConfigurator() {
           {/* Розділювач та підпис */}
           <div className="hidden sm:flex flex-col border-l border-white/10 pl-4">
             <span className="text-[10px] font-black italic tracking-tighter leading-none uppercase text-white">
-              ADICTO.BIKE</span>
+              ADICTO.BIKE
             </span>
             <span className="text-[7px] uppercase tracking-[0.3em] text-zinc-500 font-bold">
               Configurator
