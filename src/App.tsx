@@ -79,20 +79,40 @@ const OptionCard = ({ component, isSelected, onClick }: { component: Component, 
         : "border-white/5 bg-zinc-900/50 hover:border-white/20 hover:bg-zinc-900"
       )}
     >
+      {/* Контейнер для фото */}
       <div className="aspect-square w-full rounded-xl bg-black/40 mb-3 overflow-hidden relative">
         <img 
-          // ВИПРАВЛЕНО: тепер тут cardImageUrl
           src={component.cardImageUrl} 
           alt={component.name} 
           className="w-full h-full object-contain p-2 group-hover:scale-110 transition duration-500" 
         />
         {isSelected && (
-          <div className="absolute top-2 right-2 bg-red-600 p-1.5 rounded-full shadow-lg">
+          <div className="absolute top-2 right-2 bg-red-600 p-1.5 rounded-full shadow-lg z-10">
             <CheckCircle2 size={12} className="text-white" />
           </div>
         )}
       </div>
-      {/* ... решта коду картки (назва, бренд, ціна) залишається без змін */}
+
+      {/* Текстовий блок: Назва, Бренд, Ціна, Вага */}
+      <div className="flex-1 flex flex-col justify-between overflow-hidden">
+        <div>
+          <h3 className="text-[11px] font-bold leading-tight tracking-tighter line-clamp-2 text-zinc-300 uppercase">
+            {component.name}
+          </h3>
+          <p className="text-[9px] text-zinc-500 uppercase font-black">
+            {component.brand}
+          </p>
+        </div>
+        
+        <div className="flex justify-between items-end mt-2">
+          <p className="font-black text-sm text-red-600">
+            €{component.price.toLocaleString()}
+          </p>
+          <p className="text-[9px] text-zinc-600 font-mono italic">
+            {component.weight}g
+          </p>
+        </div>
+      </div>
     </motion.button>
   );
 };
