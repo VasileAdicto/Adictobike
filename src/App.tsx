@@ -193,16 +193,17 @@ export default function BikeConfigurator() {
           />
           
           {/* Розділювач та підпис */}
-          <div className="hidden sm:flex flex-col border-l border-white/10 pl-4 w-[85px]"> 
-  {/* w-[85px] — це ширина всього блоку. Можеш підібрати її під довжину слова Configurator */}
-  <div className="flex justify-between w-full">
+          <div className="hidden sm:flex flex-col border-l border-white/10 pl-4 gap-0 w-[80px]"> 
+  {/* gap-0 робить відстань мінімальною */}
+  <div className="flex justify-between w-full leading-none">
     {"ADICTO.BIKE".split("").map((char, i) => (
-      <span key={i} className="text-[10px] font-black italic uppercase leading-none text-white">
+      <span key={i} className="text-[10px] font-black italic uppercase text-white">
         {char}
       </span>
     ))}
   </div>
-  <span className="text-[7px] uppercase tracking-[0.1em] text-zinc-500 font-bold mt-1 block w-full text-center">
+  <span className="text-[7px] uppercase tracking-[0.1em] text-zinc-500 font-bold block w-full text-center leading-none">
+    {/* Прибрано mt-1 для щільності */}
     Configurator
   </span>
 </div>
@@ -216,7 +217,7 @@ export default function BikeConfigurator() {
               setCurrentStepIndex(0);
             }} />
           )}
-          <div className="text-zinc-600 font-mono text-xs opacity-50 uppercase tracking-widest">Build v1.0.5</div>
+          <div className="text-zinc-600 font-mono text-xs opacity-50 uppercase tracking-widest">Build by Vasile</div>
         </div>
       </nav>
 
