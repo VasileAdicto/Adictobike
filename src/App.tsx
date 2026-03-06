@@ -16,7 +16,7 @@ interface Component {
   weight: number;
   description: string;
   imageUrl: string; 
-  ZIndex: number;
+  zIndex: number;
 }
 
 interface Step {
@@ -57,7 +57,7 @@ const Visualizer = ({ selectedComponents }: { selectedComponents: Component[] })
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.4 }}
             className="absolute inset-0 w-full h-full object-contain"
-            style={{ ZIndex: Number(comp.ZIndex) }}
+            style={{ zIndex: Number(comp.zIndex) }}
           />
         ))}
       </AnimatePresence>
@@ -150,7 +150,7 @@ export default function BikeConfigurator() {
                   price: Number(row.Price || row.PRICE) || 0,
                   weight: Number(row.Weight || row.WEIGHT) || 0,
                   imageUrl: imageKey ? row[imageKey] : "",
-                  ZIndex: zKey ? Number(row[zKey]) : 10
+                  zIndex: zKey ? Number(row[zKey]) : 10
                 };
               })
             };
