@@ -30,7 +30,6 @@ const INITIAL_STEPS: Step[] = [
   { id: 'frame', title: 'Frame', options: [] },
   { id: 'wheelset', title: 'Wheelset', options: [] },
   { id: 'tyres', title: 'Tyres', options: [] },
-  { id: 'tubes', title: 'Tubes', options: [] },
   { id: 'cockpit', title: 'Cockpit', options: [] },
   { id: 'tape', title: 'Tape', options: [] },
   { id: 'saddle', title: 'Saddle', options: [] },
