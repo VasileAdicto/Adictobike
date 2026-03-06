@@ -268,10 +268,10 @@ return {
         key={step.id}
         onClick={() => jumpToStep(idx)}
         className={cn(
-          // Зменшено шрифт до 8px (text-[8px]) та прибрано зайві відступи
-          "transition-all duration-300 text-[9px] font-black italic uppercase tracking-widest pb-1 border-b-2 whitespace-nowrap",
+          // Зменшено шрифт до 10px (text-[10px]) та прибрано зайві відступи
+          "transition-all duration-300 text-[10px] font-black italic uppercase tracking-widest pb-1 border-b-2 whitespace-nowrap",
           idx === currentStepIndex 
-            ? "text-red-600 border-red-600 drop-shadow-[0_0_9px_rgba(255,0,0,0.3)]" 
+            ? "text-red-600 border-red-600 drop-shadow-[0_0_10px_rgba(255,0,0,0.3)]" 
             : "text-white opacity-20 border-transparent hover:opacity-100"
         )}
       >
