@@ -47,7 +47,7 @@ const Visualizer = ({ selectedComponents }: { selectedComponents: Component[] })
         {selectedComponents.map((comp) => (
           <motion.img
             key={comp.id}
-            src={comp.image}
+            src={comp.imageUrl}
             alt={comp.name}
             initial={{ opacity: 0, scale: 1.05 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -75,7 +75,7 @@ const OptionCard = ({ component, isSelected, onClick }: { component: Component, 
       )}
     >
       <div className="aspect-square w-full rounded-xl bg-black/40 mb-3 overflow-hidden relative">
-        <img src={component.image} alt={component.name} className="w-full h-full object-contain p-2 group-hover:scale-110 transition duration-500" />
+        <img src={component.imageUrl} alt={component.name} className="w-full h-full object-contain p-2 group-hover:scale-110 transition duration-500" />
         {isSelected && (
           <div className="absolute top-2 right-2 bg-red-600 p-1.5 rounded-full shadow-lg">
             <CheckCircle2 size={12} className="text-white" />
