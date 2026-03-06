@@ -30,7 +30,7 @@ export const ExcelImporter: React.FC<ExcelImporterProps> = ({ onDataLoaded }) =>
             brand: row.Brand || 'Generic',
             price: Number(row.Price) || 0,
             weight: Number(row.Weight) || 0,
-            imageUrl: row.ImageURL || `https://picsum.photos/seed/${row.Name}/800/600`,
+            image: row.ImageURL || `https://picsum.photos/seed/${row.Name}/800/600`,
             zIndex: Number(row.ZIndex) || 10,
           }))
         };
