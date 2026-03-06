@@ -6,6 +6,7 @@ import { ExcelImporter } from './components/ExcelImporter';
 
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+
 // --- TYPES ---
 interface Component {
   id: string;
@@ -14,7 +15,7 @@ interface Component {
   price: number;
   weight: number;
   description: string;
-  image: string; 
+  imageUrl: string; 
   zIndex: number;
 }
 
@@ -77,7 +78,11 @@ const OptionCard = ({ component, isSelected, onClick }: { component: Component, 
       )}
     >
       <div className="aspect-square w-full rounded-xl bg-black/40 mb-3 overflow-hidden relative">
-        <img src={component.imageUrl} alt={component.name} className="w-full h-full object-contain p-2 group-hover:scale-110 transition duration-500" />
+        <img 
+          src={component.imageUrl || (component as any).image || (component as any).ImageURL} 
+          alt={component.name} 
+          className="w-full h-full object-contain p-2 group-hover:scale-110 transition duration-500" 
+        />
         {isSelected && (
           <div className="absolute top-2 right-2 bg-red-600 p-1.5 rounded-full shadow-lg">
             <CheckCircle2 size={12} className="text-white" />
@@ -98,11 +103,7 @@ const OptionCard = ({ component, isSelected, onClick }: { component: Component, 
 export default function BikeConfigurator() {
   const isAdmin = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('admin') === 'true';
 
-  const [steps, setSteps] = useState<Step[]>(() => {
-    const saved = localStorage.getItem('bike-config-data');
-    return saved ? JSON.parse(saved) : INITIAL_STEPS;
-  });
-  
+  const [steps, setSteps] = useState<Step[]>(INITIAL_STEPS);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [selections, setSelections] = useState<Record<string, string>>({});
   const [isFinished, setIsFinished] = useState(false);
@@ -111,9 +112,48 @@ export default function BikeConfigurator() {
   const currentStep = steps[currentStepIndex] || steps[0];
   const listRef = useRef<HTMLDivElement>(null);
 
+  // --- АВТОЗАВАНТАЖЕННЯ EXCEL ---
   useEffect(() => {
-    localStorage.setItem('bike-config-data', JSON.stringify(steps));
-  }, [steps]);
+    const autoLoadExcel = async () => {
+      try {
+        const response = await fetch('/data.xlsx');
+        if (!response.ok) throw new Error("Файл не знайдено");
+        
+        const arrayBuffer = await response.arrayBuffer();
+        const XLSX = await import('xlsx');
+        const workbook = XLSX.read(arrayBuffer);
+        
+        const newSteps = INITIAL_STEPS.map(step => {
+          const sheet = workbook.Sheets[step.title];
+          if (sheet) {
+            const data = XLSX.utils.sheet_to_json(sheet);
+            return {
+              ...step,
+              options: data.map((row: any, idx: number) => {
+                const foundImage = Object.keys(row).find(key => 
+                  key.toLowerCase().trim() === 'imageurl' || key.toLowerCase().trim() === 'image'
+                );
+                return {
+                  id: `${step.id}-${idx}`,
+                  name: row.Name || 'Unknown',
+                  brand: row.Brand || '',
+                  price: Number(row.Price) || 0,
+                  weight: Number(row.Weight) || 0,
+                  imageUrl: foundImage ? row[foundImage] : `https://picsum.photos/seed/${idx}/800/600`,
+                  zIndex: Number(row.ZIndex) || 10
+                };
+              })
+            };
+          }
+          return step;
+        });
+        setSteps(newSteps);
+      } catch (error) {
+        console.error("Помилка автозавантаження:", error);
+      }
+    };
+    autoLoadExcel();
+  }, []);
 
   const selectedComponents = useMemo(() => {
     return steps
@@ -128,11 +168,10 @@ export default function BikeConfigurator() {
     }
   };
 
-  if (isFinished) return <SummaryView selections={selectedComponents} onReset={() => { localStorage.removeItem('bike-config-data'); window.location.reload(); }} />;
+  if (isFinished) return <SummaryView selections={selectedComponents} onReset={() => window.location.reload()} />;
 
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-red-600 pb-24">
-      {/* Navbar */}
       <nav className="border-b border-white/5 px-8 py-4 flex justify-between items-center bg-black/80 backdrop-blur-2xl sticky top-0 z-50">
         <div className="flex items-center gap-2">
           <div className="bg-red-600 p-1.5 rounded-lg text-white"><Bike size={18} /></div>
@@ -155,10 +194,7 @@ export default function BikeConfigurator() {
       </nav>
 
       <main className="max-w-[1500px] mx-auto px-6 pt-10">
-        
         <div className="grid grid-cols-12 gap-10 h-[500px] items-stretch">
-          
-          {/* Left Column: Fixed Sidebar */}
           <div className="col-span-3 flex flex-col h-full bg-zinc-900/40 rounded-[2.5rem] border border-white/5 p-6 relative overflow-hidden">
             <div ref={listRef} className="flex-1 space-y-2 velocraft-scrollbar overflow-y-auto pr-1">
               {error && <div className="mb-4 text-red-500 bg-red-600/10 p-2 rounded-lg text-[9px] font-bold uppercase">{error}</div>}
@@ -175,10 +211,7 @@ export default function BikeConfigurator() {
             </div>
           </div>
 
-          {/* Right Column: Navigation + Visualizer aligned */}
           <div className="col-span-9 flex flex-col gap-6">
-            
-            {/* Step Navigation Titles - Aligned with the preview box */}
             <div className="flex justify-between items-center px-4">
               {steps.map((step, idx) => (
                 <button
@@ -195,8 +228,6 @@ export default function BikeConfigurator() {
                 </button>
               ))}
             </div>
-
-            {/* Large Visualizer Area */}
             <div className="flex-1">
               <Visualizer selectedComponents={selectedComponents} />
             </div>
@@ -204,7 +235,6 @@ export default function BikeConfigurator() {
         </div>
       </main>
 
-      {/* Persistent Bottom Bar */}
       <div className="fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur-2xl border-t border-white/5 px-12 py-6 flex justify-between items-center z-40">
         <button 
           onClick={() => currentStepIndex > 0 && setCurrentStepIndex(currentStepIndex - 1)} 
@@ -242,25 +272,20 @@ export default function BikeConfigurator() {
   );
 }
 
-// --- SUMMARY VIEW ---
 function SummaryView({ selections, onReset }: any) {
   const totalPrice = selections.reduce((acc: number, c: any) => acc + c.price, 0);
   const totalWeight = selections.reduce((acc: number, c: any) => acc + c.weight, 0);
 
   const handleExport = () => {
     const doc = new jsPDF();
-    
-    // Стильний заголовок
     doc.setFontSize(22);
-    doc.setTextColor(220, 38, 38); // Червоний Adicto
+    doc.setTextColor(220, 38, 38);
     doc.text("ADICTO PRO BIKES", 14, 20);
     
     doc.setFontSize(10);
     doc.setTextColor(100);
     doc.text(`Configuration Date: ${new Date().toLocaleDateString()}`, 14, 28);
-    doc.text("Official Technical Specification", 14, 33);
 
-    // Дані для таблиці
     const tableData = selections.map((c: any) => [
       c.name,
       c.brand,
@@ -268,22 +293,14 @@ function SummaryView({ selections, onReset }: any) {
       `€${c.price.toLocaleString()}`
     ]);
 
-    // Генерація таблиці
     autoTable(doc, {
       startY: 40,
       head: [['Component', 'Brand', 'Weight', 'Price']],
       body: tableData,
       foot: [['TOTAL SPECIFICATION', '', `${totalWeight}g`, `€${totalPrice.toLocaleString()}`]],
       headStyles: { fillColor: [220, 38, 38], fontStyle: 'bold' },
-      footStyles: { fillColor: [30, 30, 30], textColor: [255, 255, 255] },
       theme: 'striped'
     });
-
-    // Підпис внизу
-    const finalY = (doc as any).lastAutoTable.finalY || 150;
-    doc.setFontSize(8);
-    doc.setTextColor(150);
-    doc.text("Thank you for choosing Adicto Pro. This is a generated specification for your custom build.", 14, finalY + 10);
 
     doc.save("Adicto-Pro-Build.pdf");
   };
@@ -309,16 +326,10 @@ function SummaryView({ selections, onReset }: any) {
         </div>
 
         <div className="flex gap-4 justify-center">
-          <button 
-            onClick={handleExport}
-            className="px-8 py-4 bg-white text-black rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-zinc-200 transition-all flex items-center gap-2"
-          >
+          <button onClick={handleExport} className="px-8 py-4 bg-white text-black rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-zinc-200 transition-all flex items-center gap-2">
             <Download size={16} /> Export PDF
           </button>
-          <button 
-            onClick={onReset} 
-            className="px-8 py-4 border border-white/10 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-white/5 transition-all"
-          >
+          <button onClick={onReset} className="px-8 py-4 border border-white/10 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-white/5 transition-all">
             Start Over
           </button>
         </div>
