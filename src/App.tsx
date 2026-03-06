@@ -16,7 +16,7 @@ interface Component {
   weight: number;
   description: string;
   imageUrl: string; 
-  zIndex: number;
+  ZIndex: number;
 }
 
 interface Step {
@@ -46,7 +46,7 @@ const Visualizer = ({ selectedComponents }: { selectedComponents: Component[] })
     <div className="relative w-full h-full bg-zinc-950 rounded-[2.5rem] overflow-hidden border border-white/5 shadow-[0_0_100px_rgba(0,0,0,0.5)] flex items-center justify-center">
       <div className="absolute inset-0 opacity-5 pointer-events-none" 
            style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
-      <AnimatePresence mode="wait">
+      <AnimatePresence mode="popLayout">
         {selectedComponents.map((comp) => (
           <motion.img
             key={comp.id}
@@ -57,7 +57,7 @@ const Visualizer = ({ selectedComponents }: { selectedComponents: Component[] })
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.4 }}
             className="absolute inset-0 w-full h-full object-contain"
-            style={{ zIndex: comp.zIndex }}
+            style={{ ZIndex: Number(comp.ZIndex) }}
           />
         ))}
       </AnimatePresence>
@@ -124,23 +124,33 @@ export default function BikeConfigurator() {
         const workbook = XLSX.read(arrayBuffer);
         
         const newSteps = INITIAL_STEPS.map(step => {
-          const sheet = workbook.Sheets[step.title];
+          // Шукаємо вкладку, ігноруючи регістр букв
+          const sheetName = Object.keys(workbook.Sheets).find(
+            name => name.toUpperCase().trim() === step.title.toUpperCase().trim()
+          );
+          
+          const sheet = sheetName ? workbook.Sheets[sheetName] : null;
+
           if (sheet) {
             const data = XLSX.utils.sheet_to_json(sheet);
             return {
               ...step,
               options: data.map((row: any, idx: number) => {
-                const foundImage = Object.keys(row).find(key => 
-                  key.toLowerCase().trim() === 'imageurl' || key.toLowerCase().trim() === 'image'
-                );
+                // Знаходимо назви колонок незалежно від регістру
+                const rowKeys = Object.keys(row);
+                const findKey = (name: string) => rowKeys.find(k => k.toLowerCase().trim() === name.toLowerCase());
+                
+                const imageKey = findKey('imageurl') || findKey('image');
+                const zKey = findKey('zindex');
+
                 return {
                   id: `${step.id}-${idx}`,
-                  name: row.Name || 'Unknown',
-                  brand: row.Brand || '',
-                  price: Number(row.Price) || 0,
-                  weight: Number(row.Weight) || 0,
-                  imageUrl: foundImage ? row[foundImage] : `https://picsum.photos/seed/${idx}/800/600`,
-                  zIndex: Number(row.ZIndex) || 10
+                  name: row.Name || row.NAME || 'Unknown',
+                  brand: row.Brand || row.BRAND || '',
+                  price: Number(row.Price || row.PRICE) || 0,
+                  weight: Number(row.Weight || row.WEIGHT) || 0,
+                  imageUrl: imageKey ? row[imageKey] : "",
+                  ZIndex: zKey ? Number(row[zKey]) : 10
                 };
               })
             };
@@ -148,8 +158,8 @@ export default function BikeConfigurator() {
           return step;
         });
         setSteps(newSteps);
-      } catch (error) {
-        console.error("Помилка автозавантаження:", error);
+      } catch (err) {
+        console.error("Помилка автозавантаження:", err);
       }
     };
     autoLoadExcel();
@@ -189,7 +199,7 @@ export default function BikeConfigurator() {
               setCurrentStepIndex(0);
             }} />
           )}
-          <div className="text-zinc-600 font-mono text-xs opacity-50 uppercase tracking-widest">Build v1.0.4</div>
+          <div className="text-zinc-600 font-mono text-xs opacity-50 uppercase tracking-widest">Build v1.0.5</div>
         </div>
       </nav>
 
