@@ -184,7 +184,7 @@ export default function BikeConfigurator() {
     <div className="min-h-screen bg-black text-white font-sans selection:bg-red-600 pb-24">
       {/* Navbar */}
       <nav className="border-b border-white/5 px-8 py-4 flex justify-between items-center bg-black/80 backdrop-blur-2xl sticky top-0 z-50">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 pl-2">
           {/* Твій новий логотип */}
           <img 
             src="/design/Logo.png" 
@@ -217,7 +217,7 @@ export default function BikeConfigurator() {
               setCurrentStepIndex(0);
             }} />
           )}
-          <div className="text-zinc-600 font-mono text-[9px] opacity-50 uppercase tracking-widest">Build by Vasile</div>
+          <div className="text-zinc-600 font-mono text-[9px] pr-2 opacity-50 uppercase tracking-widest">Build by Vasile</div>
         </div>
       </nav>
 
