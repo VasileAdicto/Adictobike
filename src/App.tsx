@@ -53,7 +53,7 @@ const Visualizer = ({ selectedComponents }: { selectedComponents: Component[] })
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.4 }}
-            className="absolute inset-0 w-full h-full object-contain p-12 drop-shadow-[0_20px_60px_rgba(0,0,0,0.8)]"
+            className="absolute inset-0 w-full h-full object-contain"
             style={{ zIndex: comp.zIndex }}
           />
         ))}
