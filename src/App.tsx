@@ -393,3 +393,4 @@ function SummaryView({ selections, onReset }: any) {
 
     doc.save(`Adicto-Build-${new Date().getTime()}.pdf`);
   };
+} //
