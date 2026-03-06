@@ -193,14 +193,19 @@ export default function BikeConfigurator() {
           />
           
           {/* Розділювач та підпис */}
-          <div className="hidden sm:flex flex-col border-l border-white/10 pl-4">
-            <span className="text-[10px] font-black italic uppercase leading-none text-white tracking-[0.25em]">
-              ADICTO.BIKE
-            </span>
-            <span className="text-[7px] uppercase tracking-[0.3em] text-zinc-500 font-bold mt-1">
-              Configurator
-            </span>
-          </div>
+          <div className="hidden sm:flex flex-col border-l border-white/10 pl-4 w-[85px]"> 
+  {/* w-[85px] — це ширина всього блоку. Можеш підібрати її під довжину слова Configurator */}
+  <div className="flex justify-between w-full">
+    {"ADICTO.BIKE".split("").map((char, i) => (
+      <span key={i} className="text-[10px] font-black italic uppercase leading-none text-white">
+        {char}
+      </span>
+    ))}
+  </div>
+  <span className="text-[7px] uppercase tracking-[0.1em] text-zinc-500 font-bold mt-1 block w-full text-center">
+    Configurator
+  </span>
+</div>
         </div>
         
         <div className="flex items-center gap-6">
