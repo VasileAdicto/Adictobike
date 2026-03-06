@@ -4,6 +4,8 @@ import { ChevronLeft, ChevronRight, Bike, Download, CheckCircle2, AlertCircle } 
 import { cn } from './lib/utils';
 import { ExcelImporter } from './components/ExcelImporter';
 
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 // --- TYPES ---
 interface Component {
   id: string;
@@ -245,25 +247,82 @@ function SummaryView({ selections, onReset }: any) {
   const totalPrice = selections.reduce((acc: number, c: any) => acc + c.price, 0);
   const totalWeight = selections.reduce((acc: number, c: any) => acc + c.weight, 0);
 
+  const handleExport = () => {
+    const doc = new jsPDF();
+    
+    // Стильний заголовок
+    doc.setFontSize(22);
+    doc.setTextColor(220, 38, 38); // Червоний Adicto
+    doc.text("ADICTO PRO BIKES", 14, 20);
+    
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.text(`Configuration Date: ${new Date().toLocaleDateString()}`, 14, 28);
+    doc.text("Official Technical Specification", 14, 33);
+
+    // Дані для таблиці
+    const tableData = selections.map((c: any) => [
+      c.name,
+      c.brand,
+      `${c.weight}g`,
+      `€${c.price.toLocaleString()}`
+    ]);
+
+    // Генерація таблиці
+    autoTable(doc, {
+      startY: 40,
+      head: [['Component', 'Brand', 'Weight', 'Price']],
+      body: tableData,
+      foot: [['TOTAL SPECIFICATION', '', `${totalWeight}g`, `€${totalPrice.toLocaleString()}`]],
+      headStyles: { fillColor: [220, 38, 38], fontStyle: 'bold' },
+      footStyles: { fillColor: [30, 30, 30], textColor: [255, 255, 255] },
+      theme: 'striped'
+    });
+
+    // Підпис внизу
+    const finalY = (doc as any).lastAutoTable.finalY || 150;
+    doc.setFontSize(8);
+    doc.setTextColor(150);
+    doc.text("Thank you for choosing Adicto Pro. This is a generated specification for your custom build.", 14, finalY + 10);
+
+    doc.save("Adicto-Pro-Build.pdf");
+  };
+
   return (
     <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-8 text-center">
-      <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}>
+      <div className="max-w-2xl w-full">
         <CheckCircle2 size={60} className="text-red-600 mx-auto mb-6" />
-        <h2 className="text-5xl font-black italic uppercase tracking-tighter mb-4 leading-none italic">Configuration <br/> <span className="text-red-600">Complete</span></h2>
-        <div className="flex justify-center gap-10 my-8">
-          <div><p className="text-zinc-500 text-[10px] uppercase font-bold tracking-widest">Total Price</p><p className="text-3xl font-mono text-red-600">€{totalPrice.toLocaleString()}</p></div>
+        <h2 className="text-5xl font-black italic uppercase tracking-tighter mb-4 leading-none">
+          Configuration <br/> <span className="text-red-600">Complete</span>
+        </h2>
+        
+        <div className="flex justify-center gap-10 my-8 bg-zinc-900/50 p-6 rounded-3xl border border-white/5">
+          <div>
+            <p className="text-zinc-500 text-[10px] uppercase font-bold tracking-widest">Total Price</p>
+            <p className="text-3xl font-mono text-red-600">€{totalPrice.toLocaleString()}</p>
+          </div>
           <div className="w-px bg-white/10" />
-          <div><p className="text-zinc-500 text-[10px] uppercase font-bold tracking-widest">Total Weight</p><p className="text-3xl font-mono">{totalWeight}g</p></div>
+          <div>
+            <p className="text-zinc-500 text-[10px] uppercase font-bold tracking-widest">Total Weight</p>
+            <p className="text-3xl font-mono">{totalWeight}g</p>
+          </div>
         </div>
+
         <div className="flex gap-4 justify-center">
-          <button className="px-8 py-4 bg-white text-black rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-zinc-200 transition-all flex items-center gap-2">
+          <button 
+            onClick={handleExport}
+            className="px-8 py-4 bg-white text-black rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-zinc-200 transition-all flex items-center gap-2"
+          >
             <Download size={16} /> Export PDF
           </button>
-          <button onClick={onReset} className="px-8 py-4 border border-white/10 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-white/5 transition-all">
+          <button 
+            onClick={onReset} 
+            className="px-8 py-4 border border-white/10 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-white/5 transition-all"
+          >
             Start Over
           </button>
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 }
