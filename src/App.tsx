@@ -108,7 +108,7 @@ const OptionCard = ({ component, isSelected, onClick }: { component: Component, 
           <p className="font-black text-sm text-red-600">
             €{component.price.toLocaleString()}
           </p>
-          <p className="text-[9px] text-zinc-600 font-mono italic">
+          <p className="text-sm text-zinc-600 font-mono italic">
             {component.weight}g
           </p>
         </div>
