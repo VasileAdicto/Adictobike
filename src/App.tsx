@@ -189,13 +189,13 @@ export default function BikeConfigurator() {
           <img 
             src="/design/Logo.png" 
             alt="Adictobike Logo" 
-            className="h-10 w-auto object-contain" 
+            className="h-6 w-auto object-contain" 
           />
           
           {/* Розділювач та підпис */}
           <div className="hidden sm:flex flex-col border-l border-white/10 pl-4">
             <span className="text-[10px] font-black italic tracking-tighter leading-none uppercase text-white">
-              ADICTO <span className="text-red-600">PRO</span>
+              ADICTO.BIKE</span>
             </span>
             <span className="text-[7px] uppercase tracking-[0.3em] text-zinc-500 font-bold">
               Configurator
