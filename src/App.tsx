@@ -182,12 +182,24 @@ export default function BikeConfigurator() {
 
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-red-600 pb-24">
+      {/* Navbar */}
       <nav className="border-b border-white/5 px-8 py-4 flex justify-between items-center bg-black/80 backdrop-blur-2xl sticky top-0 z-50">
-        <div className="flex items-center gap-2">
-          <div className="bg-red-600 p-1.5 rounded-lg text-white"><Bike size={18} /></div>
-          <div className="flex flex-col">
-            <span className="text-sm font-black italic tracking-tighter leading-none uppercase">ADICTO <span className="text-red-600 ml-2">PRO</span></span>
-            <span className="text-[7px] uppercase tracking-[0.4em] text-zinc-500 font-bold">Configurator</span>
+        <div className="flex items-center gap-4">
+          {/* Твій новий логотип */}
+          <img 
+            src="/design/Logo.png" 
+            alt="Adictobike Logo" 
+            className="h-10 w-auto object-contain" 
+          />
+          
+          {/* Розділювач та підпис */}
+          <div className="hidden sm:flex flex-col border-l border-white/10 pl-4">
+            <span className="text-[10px] font-black italic tracking-tighter leading-none uppercase text-white">
+              ADICTO <span className="text-red-600">PRO</span>
+            </span>
+            <span className="text-[7px] uppercase tracking-[0.3em] text-zinc-500 font-bold">
+              Configurator
+            </span>
           </div>
         </div>
         
