@@ -333,61 +333,85 @@ function SummaryView({ selections, onReset }: any) {
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
 
-    // 1. Заголовок
-    doc.setFontSize(22);
+    // 1. Header & Branding
+    doc.setDrawColor(220, 38, 38);
+    doc.setLineWidth(1.5);
+    doc.line(14, 15, 40, 15); // Декоративна лінія над назвою
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(24);
     doc.setTextColor(220, 38, 38);
-    doc.text("ADICTO.BIKE", 14, 20);
+    doc.text("ADICTO.BIKE", 14, 25);
     
     doc.setFontSize(10);
     doc.setTextColor(100);
-    doc.text(`Configuration Date: ${new Date().toLocaleDateString()}`, 14, 28);
-    doc.text("Custom Build Specification", 14, 33);
+    doc.setFont("helvetica", "normal");
+    doc.text(`DATE: ${new Date().toLocaleDateString().toUpperCase()}`, 14, 32);
+    doc.text("OFFICIAL BUILD SPECIFICATION", 14, 37);
 
-    // 2. Таблиця з компонентами
+    // 2. Components Table
     const tableData = selections.map((c: any) => [
-      c.name,
-      c.brand,
-      `${c.weight}g`,
-      `€${c.price.toLocaleString()}`
+      c.name.toUpperCase(),
+      c.brand.toUpperCase(),
+      `${c.weight}G`,
+      `EUR ${c.price.toLocaleString()}`
     ]);
 
     autoTable(doc, {
-      startY: 40,
-      head: [['Component', 'Brand', 'Weight', 'Price']],
+      startY: 45,
+      head: [['COMPONENT', 'BRAND', 'WEIGHT', 'PRICE']],
       body: tableData,
-      foot: [['TOTAL SPECIFICATION', '', `${totalWeight}g`, `€${totalPrice.toLocaleString()}`]],
-      headStyles: { fillColor: [220, 38, 38], fontStyle: 'bold' },
-      footStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
-      theme: 'striped'
+      foot: [['TOTAL SPECIFICATION', '', `${totalWeight}G`, `EUR ${totalPrice.toLocaleString()}`]],
+      headStyles: { 
+        fillColor: [20, 20, 20], 
+        textColor: [255, 255, 255], 
+        fontStyle: 'bold',
+        fontSize: 9
+      },
+      footStyles: { 
+        fillColor: [220, 38, 38], 
+        textColor: [255, 255, 255], 
+        fontStyle: 'bold',
+        fontSize: 10
+      },
+      bodyStyles: { fontSize: 9 },
+      theme: 'grid',
+      margin: { left: 14, right: 14 }
     });
 
-    // 3. Дисклеймер
-    const finalY = (doc as any).lastAutoTable.finalY + 10;
+    // 3. Legal Disclaimer (English)
+    const finalY = (doc as any).lastAutoTable.finalY + 12;
     doc.setFontSize(8);
-    doc.setTextColor(150);
-    const disclaimer = "Зверніть увагу: вказані вага та ціна є попередніми та можуть несуттєво змінюватися залежно від наявності компонентів та технічних особливостей збірки. ADICTO.BIKE залишає за собою право вносити зміни у специфікацію без попереднього повідомлення.";
+    doc.setTextColor(140);
+    const disclaimer = "NOTICE: THE WEIGHT AND PRICE INDICATED ARE PRELIMINARY AND SUBJECT TO MINOR CHANGES BASED ON COMPONENT AVAILABILITY AND TECHNICAL ASSEMBLY SPECIFICATIONS. ADICTO.BIKE RESERVES THE RIGHT TO MODIFY SPECIFICATIONS WITHOUT PRIOR NOTICE.";
     const splitDisclaimer = doc.splitTextToSize(disclaimer, pageWidth - 28);
     doc.text(splitDisclaimer, 14, finalY);
 
-    // 4. Контакти та QR
-    const footerY = pageHeight - 40;
-    doc.setDrawColor(220, 38, 38);
-    doc.line(14, footerY - 5, pageWidth - 14, footerY - 5);
+    // 4. Footer with Contacts & QR
+    const footerY = pageHeight - 45;
+    doc.setDrawColor(230, 230, 230);
+    doc.setLineWidth(0.5);
+    doc.line(14, footerY, pageWidth - 14, footerY);
 
-    doc.setFontSize(10);
-    doc.setTextColor(0);
-    doc.text("CONTACT US:", 14, footerY + 5);
-    doc.text("Web: www.adicto.bike", 14, footerY + 12);
-    doc.text("Instagram: @adicto.bike", 14, footerY + 19);
-    doc.text("Email: hello@adicto.bike", 14, footerY + 26);
+    doc.setFontSize(9);
+    doc.setTextColor(20);
+    doc.setFont("helvetica", "bold");
+    doc.text("GET IN TOUCH:", 14, footerY + 10);
+    
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(80);
+    doc.text("WEB: WWW.ADICTO.BIKE", 14, footerY + 17);
+    doc.text("INSTAGRAM: @ADICTO.BIKE", 14, footerY + 23);
+    doc.text("EMAIL: HELLO@ADICTO.BIKE", 14, footerY + 29);
 
+    // QR Code Position
     try {
-      doc.addImage("/design/qr-code.png", "PNG", pageWidth - 45, footerY, 30, 30);
+      doc.addImage("/design/qr-code.png", "PNG", pageWidth - 45, footerY + 5, 30, 30);
     } catch (e) {
-      console.warn("QR-код не знайдено");
+      console.warn("QR code image not found in public/design/qr-code.png");
     }
 
-    doc.save(`Adicto-Build-${new Date().getTime()}.pdf`);
+    doc.save(`ADICTO_BUILD_${new Date().getTime()}.pdf`);
   };
 
   // ЦЕЙ БЛОК ПОВЕРТАЄ ВІЗУАЛ (ЙОГО НЕ ВИСТАЧАЛО)
