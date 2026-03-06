@@ -47,7 +47,7 @@ const Visualizer = ({ selectedComponents }: { selectedComponents: Component[] })
         {selectedComponents.map((comp) => (
           <motion.img
             key={comp.id}
-            src={comp.imageUrl}
+            src={comp.imageUrl || (comp as any).image || (comp as any).ImageURL}
             alt={comp.name}
             initial={{ opacity: 0, scale: 1.05 }}
             animate={{ opacity: 1, scale: 1 }}
