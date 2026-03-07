@@ -390,9 +390,9 @@ function SummaryView({ selections, onReset }: any) {
         <CheckCircle2 size={32} className="text-red-600 mx-auto mb-4" /> 
         <h2 className="text-[27px] font-black italic uppercase tracking-tighter mb-4 leading-none">Configuration <br/> <span className="text-red-600">Complete</span></h2>
         <div className="flex justify-center gap-10 my-8 bg-zinc-900/50 p-6 rounded-3xl border border-white/5">
-          <div><p className="text-zinc-500 text-[8px] uppercase font-bold tracking-widest">Price</p><p className="text-[27px] font-mono text-red-600">€{totalPrice.toLocaleString()}</p></div>
+          <div><p className="text-zinc-500 text-[9px] uppercase font-bold tracking-widest">Price</p><p className="text-[18px] font-mono text-red-600">€{totalPrice.toLocaleString()}</p></div>
           <div className="w-px bg-white/10" />
-          <div><p className="text-zinc-500 text-[8px] uppercase font-bold tracking-widest">Weight</p><p className="text-[27px] font-mono">{totalWeight}g</p></div>
+          <div><p className="text-zinc-500 text-[9px] uppercase font-bold tracking-widest">Weight</p><p className="text-[18px] font-mono">{totalWeight}g</p></div>
         </div>
         <div className="flex gap-4 justify-center">
           <button onClick={handleExport} className="px-8 py-4 bg-red-600 text-white rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-red-700 transition-all flex items-center gap-2"><Download size={16} /> Export PDF</button>
