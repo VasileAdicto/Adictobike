@@ -293,11 +293,12 @@ function SummaryView({ selections, onReset }: any) {
       if (logoBase64) {
           doc.saveGraphicsState();
           doc.setGState(new (doc as any).GState({ opacity: 0.8 }));
-          doc.addImage(logoBase64, 'PNG', (pageWidth / 2) - 15, 8, 30, 30); 
+          doc.addImage(logoBase64, 'PNG', (pageWidth / 2) - 15, 8, 10, 10); 
           doc.restoreGraphicsState();
       }
     } catch (e) {}
 
+    // 2. Велосипед
     try {
       const sortedByZ = [...selections].sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
       for (const comp of sortedByZ) {
@@ -310,25 +311,21 @@ function SummaryView({ selections, onReset }: any) {
       }
     } catch (e) {}
 
-    // 3. Таблиця з розділом SECTION
-    const tableData = selections.map((c: any) => [
-      cleanText(c.stepTitle || ""), 
-      cleanText(c.name), 
-      cleanText(c.brand), 
-      `${c.weight} g`, 
-      `${c.price.toLocaleString()} €`
-    ]);
-
+    // 3. Таблиця
     autoTable(doc, {
-      startY: 140, // Опустив таблицю нижче
+      startY: 140, 
       head: [['SECTION', 'COMPONENT', 'BRAND', 'WEIGHT', 'PRICE']],
-      body: tableData,
+      body: selections.map((c: any) => [
+        cleanText(c.stepTitle || ""), 
+        cleanText(c.name), 
+        cleanText(c.brand), 
+        `${c.weight} g`, 
+        `${c.price.toLocaleString()} €`
+      ]),
       styles: { font: "helvetica", fontSize: 5.8, cellPadding: 2 },
       headStyles: { fillColor: [20, 20, 20], textColor: [255, 255, 255] },
-      columnStyles: {
-        0: { fontStyle: 'bold', cellWidth: 25 }, 
-      },
-      foot: [['TOTAL SPECIFICATION', '', '', `${totalWeight} g`, `${totalPrice.toLocaleString()} €`]],
+      columnStyles: { 0: { fontStyle: 'bold', cellWidth: 25 } },
+      foot: [['TOTAL', '', '', `${totalWeight} g`, `${totalPrice.toLocaleString()} €`]],
       footStyles: { 
         fillColor: [220, 38, 38], 
         textColor: [255, 255, 255], 
@@ -337,7 +334,6 @@ function SummaryView({ selections, onReset }: any) {
         cellPadding: 3 
       },
       didParseCell: (data) => {
-        // Заборона переносу тексту для TOTAL SPECIFICATION
         if (data.section === 'foot' && data.column.index === 0) {
             data.cell.styles.cellWidth = 'wrap'; 
         }
@@ -345,11 +341,21 @@ function SummaryView({ selections, onReset }: any) {
       theme: 'grid'
     });
 
+    // 4. ТЕКСТ ПОПЕРЕДЖЕННЯ (ДИСКЛЕЙМЕР)
+    // Розраховуємо Y після таблиці
+    const finalY = (doc as any).lastAutoTable.finalY + 10;
+    doc.setFontSize(5.6); 
+    doc.setTextColor(140);
+    const disclaimer = "NOTICE: THE WEIGHT AND PRICE INDICATED ARE PRELIMINARY AND SUBJECT TO MINOR CHANGES BASED ON COMPONENT AVAILABILITY AND TECHNICAL ASSEMBLY SPECIFICATIONS. ADICTO.BIKE RESERVES THE RIGHT TO MODIFY SPECIFICATIONS WITHOUT PRIOR NOTICE.";
+    doc.text(doc.splitTextToSize(disclaimer, pageWidth - 28), 14, finalY);
+
+    // 5. Футер (Контакти)
     const footerY = pageHeight - 20;
-    doc.setFontSize(6.3); doc.setTextColor(100);
+    doc.setFontSize(6.3); 
+    doc.setTextColor(100);
     doc.text("WWW.ADICTO.BIKE  |  @ADICTO.BIKE", pageWidth / 2, footerY, { align: 'center' });
 
-    try { doc.addImage("/design/qr-code.png", "PNG", pageWidth - 35, pageHeight - 35, 20, 20); } catch (e) {}
+    try { doc.addImage("/design/qr-code.png", "PNG", pageWidth - 35, pageHeight - 35, 35, 32); } catch (e) {}
 
     doc.save(`ADICTO_BUILD.pdf`);
   };
