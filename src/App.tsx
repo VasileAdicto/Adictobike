@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Bike, Download, CheckCircle2, AlertCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Download, CheckCircle2 } from 'lucide-react';
 import { cn } from './lib/utils';
 import { ExcelImporter } from './components/ExcelImporter';
 
@@ -45,15 +45,16 @@ const INITIAL_STEPS: Step[] = [
 
 const Visualizer = ({ selectedComponents }: { selectedComponents: Component[] }) => {
   return (
-    <div className="relative w-full h-full bg-zinc-950 rounded-[2.5rem] overflow-hidden border border-white/5 shadow-[0_0_100px_rgba(0,0,0,0.5)] flex items-center justify-center">
+    /* Додано ID для html2canvas */
+    <div id="bike-visualizer" className="relative w-full h-full bg-zinc-950 rounded-[2.5rem] overflow-hidden border border-white/5 shadow-[0_0_100px_rgba(0,0,0,0.5)] flex items-center justify-center">
       <div className="absolute inset-0 opacity-5 pointer-events-none" 
            style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
       <AnimatePresence mode="popLayout">
         {selectedComponents.map((comp) => (
           <motion.img
             key={comp.id}
-            src={`${comp.imageUrl}?t=${new Date().getTime()}`} // Додаємо хвіст, щоб обійти кеш
-            crossOrigin="anonymous" // Обов'язково ПЕРШИМ атрибутом
+            src={`${comp.imageUrl}?t=${new Date().getTime()}`} 
+            crossOrigin="anonymous" 
             alt={comp.name}
             initial={{ opacity: 0, scale: 1.05 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -95,7 +96,6 @@ const OptionCard = ({ component, isSelected, onClick }: { component: Component, 
           <p className="text-[9px] text-zinc-500 uppercase font-black">{component.brand}</p>
         </div>
         <div className="flex justify-between items-end mt-2">
-          {/* Правка: Ціна картки товару в стилі та розмірі як загальна ціна */}
           <p className="font-mono text-sm text-red-600 tracking-tighter">
             €{component.price.toLocaleString()}
           </p>
@@ -203,7 +203,6 @@ export default function BikeConfigurator() {
           </div>
 
           <div className="col-span-3 flex flex-col h-full bg-zinc-900/40 rounded-[2.5rem] border border-white/5 p-6 relative overflow-hidden order-2">
-            {/* Правка: Скролл бар справа (direction rtl видалено) */}
             <div ref={listRef} className="flex-1 space-y-2 velocraft-scrollbar overflow-y-auto pr-1">
                 {error && <div className="mb-4 text-red-500 bg-red-600/10 p-2 rounded-lg text-[9px] font-bold uppercase">{error}</div>}
                 <AnimatePresence mode="popLayout">
@@ -247,7 +246,6 @@ export default function BikeConfigurator() {
                 if (currentStep.options.length > 0 && !selections[currentStep.id]) { setError("Select a component"); return; }
                 currentStepIndex < steps.length - 1 ? setCurrentStepIndex(currentStepIndex + 1) : setIsFinished(true);
               }}
-              /* Правка: Next Step компактніше на 20% по висоті та 30% по довжині, шрифт як у Back */
               className="bg-red-600 hover:bg-red-700 text-white h-[32px] px-[22px] rounded-lg font-black uppercase text-[10px] tracking-widest flex items-center gap-3 shadow-lg shadow-red-600/20 active:scale-95 transition-all"
             >
               {currentStepIndex === steps.length - 1 ? 'Finish' : 'Next Step'} <ChevronRight size={14} />
@@ -269,35 +267,28 @@ function SummaryView({ selections, onReset }: any) {
     const pageHeight = doc.internal.pageSize.getHeight();
     const cleanText = (text: string) => text ? String(text).replace(/[^\x00-\x7F]/g, "").toUpperCase() : "";
 
-    // 1. Логотип по центру
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12); doc.setTextColor(220, 38, 38);
     doc.text("ADICTO.BIKE", pageWidth / 2, 15, { align: 'center' });
 
-    // 2. ДОДАВАННЯ ФОТО (важливо!)
     const visualizerElement = document.getElementById('bike-visualizer');
-if (visualizerElement && (window as any).html2canvas) {
-  try {
-    const canvas = await (window as any).html2canvas(visualizerElement, {
-      backgroundColor: '#000000',
-      useCORS: true,        // Дозволяє запити між доменами
-      allowTaint: false,    // Важливо для безпеки
-      scale: 2,             // Якість
-      logging: true,        // Увімкніть, щоб побачити помилки в F12
-      imageTimeout: 15000,  // Чекаємо до 15 секунд завантаження картинок
-    });
-    
-    const imgData = canvas.toDataURL('image/png');
-    // Перевірка в консолі: якщо тут порожньо, значить картинки заблоковані
-    console.log("Image Data generated:", imgData.length > 100); 
-    
-    doc.addImage(imgData, 'PNG', 15, 22, 180, 85);
-  } catch (e) {
-    console.error("Photo error:", e);
-  }
-}
+    if (visualizerElement && (window as any).html2canvas) {
+      try {
+        const canvas = await (window as any).html2canvas(visualizerElement, {
+          backgroundColor: '#000000',
+          useCORS: true,
+          allowTaint: false,
+          scale: 2,
+          logging: true,
+          imageTimeout: 15000,
+        });
+        const imgData = canvas.toDataURL('image/png');
+        doc.addImage(imgData, 'PNG', 15, 22, 180, 85);
+      } catch (e) {
+        console.error("Photo error:", e);
+      }
+    }
 
-    // 3. Дані таблиці
     const tableData = selections.map((c: any) => [
       cleanText(c.name), 
       cleanText(c.brand), 
@@ -306,7 +297,7 @@ if (visualizerElement && (window as any).html2canvas) {
     ]);
 
     autoTable(doc, {
-      startY: 122, // 122 замість 38, щоб таблиця була ПІД фото
+      startY: 122, 
       head: [['COMPONENT', 'BRAND', 'WEIGHT', 'PRICE']],
       body: tableData,
       styles: { font: "helvetica", fontSize: 6.3 },
@@ -316,33 +307,27 @@ if (visualizerElement && (window as any).html2canvas) {
       theme: 'grid'
     });
 
-    // 4. Дисклеймер та Футер
     const finalY = (doc as any).lastAutoTable.finalY + 10;
     doc.setFontSize(5.6); doc.setTextColor(140);
     const disclaimer = "NOTICE: THE WEIGHT AND PRICE INDICATED ARE PRELIMINARY AND SUBJECT TO MINOR CHANGES BASED ON COMPONENT AVAILABILITY AND TECHNICAL ASSEMBLY SPECIFICATIONS. ADICTO.BIKE RESERVES THE RIGHT TO MODIFY SPECIFICATIONS WITHOUT PRIOR NOTICE.";
     doc.text(doc.splitTextToSize(disclaimer, pageWidth - 28), 14, finalY);
 
     const footerY = pageHeight - 35;
-    doc.setFontSize(6.3); doc.setTextColor(100);
+    doc.setFontSize(6.3);
     doc.text("WWW.ADICTO.BIKE", 14, footerY + 10);
     doc.text("INSTAGRAM: @ADICTO.BIKE", 14, footerY + 15);
     doc.text("EMAIL: HELLO@ADICTO.BIKE", 14, footerY + 20);
     doc.text("TEL/WHATSAPP: +34 674 26 26 22", 14, footerY + 25);
 
-    try { 
-      doc.addImage("/design/qr-code.png", "PNG", pageWidth - 35, footerY + 5, 20, 20); 
-    } catch (e) {}
-    
+    try { doc.addImage("/design/qr-code.png", "PNG", pageWidth - 35, footerY + 5, 20, 20); } catch (e) {}
     doc.save(`ADICTO_BUILD.pdf`);
   };
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-8 text-center font-sans">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-2xl w-full">
-        {/* Правка: Значок зменшено */}
         <CheckCircle2 size={32} className="text-red-600 mx-auto mb-4" /> 
         
-        {/* Правка: Текст Configuration Complete зменшено до розміру цифр (text-[27px]) */}
         <h2 className="text-[27px] font-black italic uppercase tracking-tighter mb-4 leading-none">
           Configuration <br/> <span className="text-red-600">Complete</span>
         </h2>
