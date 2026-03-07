@@ -314,22 +314,22 @@ function SummaryView({ selections, onReset }: any) {
   return (
     <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-8 text-center font-sans">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-2xl w-full">
-        <CheckCircle2 size={40} className="text-red-600 mx-auto mb-4" /> {/* Значок зменшено */}
+        <CheckCircle2 size={25} className="text-red-600 mx-auto mb-4" /> {/* Значок зменшено */}
         
-        {/* Текст Configuration Complete зменшено до розміру цифр (text-3xl) */}
-        <h2 className="text-3xl font-black italic uppercase tracking-tighter mb-4 leading-none">
+        {/* Текст Configuration Complete зменшено до розміру цифр (text-2xl) */}
+        <h2 className="text-2xl font-black italic uppercase tracking-tighter mb-4 leading-none">
           Configuration <br/> <span className="text-red-600">Complete</span>
         </h2>
 
         <div className="flex justify-center gap-10 my-8 bg-zinc-900/50 p-6 rounded-3xl border border-white/5">
           <div>
             <p className="text-zinc-500 text-[10px] uppercase font-bold tracking-widest">Total Price</p>
-            <p className="text-3xl font-mono text-red-600">€{totalPrice.toLocaleString()}</p>
+            <p className="text-[27px] font-mono text-red-600">€{totalPrice.toLocaleString()}</p>
           </div>
           <div className="w-px bg-white/10" />
           <div>
             <p className="text-zinc-500 text-[10px] uppercase font-bold tracking-widest">Total Weight</p>
-            <p className="text-3xl font-mono">{totalWeight}g</p>
+            <p className="text-[27px] font-mono">{totalWeight}g</p>
           </div>
         </div>
 
