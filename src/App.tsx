@@ -45,7 +45,6 @@ const INITIAL_STEPS: Step[] = [
 
 const Visualizer = ({ selectedComponents }: { selectedComponents: Component[] }) => {
   return (
-    /* Додано ID для html2canvas */
     <div id="bike-visualizer" className="relative w-full h-full bg-zinc-950 rounded-[2.5rem] overflow-hidden border border-white/5 shadow-[0_0_100px_rgba(0,0,0,0.5)] flex items-center justify-center">
       <div className="absolute inset-0 opacity-5 pointer-events-none" 
            style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
@@ -53,8 +52,9 @@ const Visualizer = ({ selectedComponents }: { selectedComponents: Component[] })
         {selectedComponents.map((comp) => (
           <motion.img
             key={comp.id}
-            src={`${comp.imageUrl}?t=${new Date().getTime()}`} 
+            src={comp.imageUrl} // Використовуємо чисте посилання з Excel
             crossOrigin="anonymous" 
+            loading="eager"
             alt={comp.name}
             initial={{ opacity: 0, scale: 1.05 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -272,20 +272,26 @@ function SummaryView({ selections, onReset }: any) {
     doc.text("ADICTO.BIKE", pageWidth / 2, 15, { align: 'center' });
 
     const visualizerElement = document.getElementById('bike-visualizer');
+    
     if (visualizerElement && (window as any).html2canvas) {
+      // Чекаємо 1 секунду, щоб шари точно завантажилися
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
       try {
         const canvas = await (window as any).html2canvas(visualizerElement, {
           backgroundColor: '#000000',
-          useCORS: true,
-          allowTaint: false,
-          scale: 2,
-          logging: true,
-          imageTimeout: 15000,
+          useCORS: true,      // Дозволяє читати картинки з GitHub
+          allowTaint: false,  // Безпечне малювання
+          scale: 3,           // Збільшуємо якість до максимуму
+          logging: true,      // Увімкни, щоб бачити помилки в F12
+          useCORS: true
         });
+        
         const imgData = canvas.toDataURL('image/png');
+        // Додаємо фото (ширина 180, висота 85)
         doc.addImage(imgData, 'PNG', 15, 22, 180, 85);
       } catch (e) {
-        console.error("Photo error:", e);
+        console.error("Error Critic of photo:", e);
       }
     }
 
