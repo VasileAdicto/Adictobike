@@ -210,56 +210,61 @@ export default function BikeConfigurator() {
           </div>
 
           <div className="col-span-3 flex flex-col h-full bg-zinc-900/40 rounded-[2.5rem] border border-white/5 p-6 relative overflow-hidden order-2">
-            <div ref={listRef} className="flex-1 space-y-2 velocraft-scrollbar overflow-y-auto pr-1">
-              {error && <div className="mb-4 text-red-500 bg-red-600/10 p-2 rounded-lg text-[9px] font-bold uppercase">{error}</div>}
-              <AnimatePresence mode="popLayout">
-                {currentStep.options.map((option) => (
-                  <OptionCard 
-                    key={option.id} 
-                    component={option} 
-                    isSelected={selections[currentStep.id] === option.id} 
-                    onClick={() => { setSelections(prev => ({...prev, [currentStep.id]: option.id})); setError(null); }} 
-                  />
-                ))}
-              </AnimatePresence>
+            <div ref={listRef} style={{ direction: 'rtl' }} className="flex-1 space-y-2 velocraft-scrollbar overflow-y-auto pl-1">
+              <div style={{ direction: 'ltr' }} className="space-y-2">
+                {error && <div className="mb-4 text-red-500 bg-red-600/10 p-2 rounded-lg text-[9px] font-bold uppercase">{error}</div>}
+                <AnimatePresence mode="popLayout">
+                  {currentStep.options.map((option) => (
+                    <OptionCard 
+                      key={option.id} 
+                      component={option} 
+                      isSelected={selections[currentStep.id] === option.id} 
+                      onClick={() => { setSelections(prev => ({...prev, [currentStep.id]: option.id})); setError(null); }} 
+                    />
+                  ))}
+                </AnimatePresence>
+              </div>
             </div>
           </div>
         </div>
       </main>
 
+      {/* FOOTER: Weight & Price aligned to visualizer edge */}
       <div className="fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur-2xl border-t border-white/5 z-40 font-sans">
-        <div className="max-w-[1500px] mx-auto px-6 py-6 flex items-center">
-          <button onClick={() => currentStepIndex > 0 && setCurrentStepIndex(currentStepIndex - 1)} className="flex items-center gap-3 text-zinc-500 hover:text-white disabled:opacity-10 transition-all font-black uppercase text-[10px] tracking-widest">
-            <ChevronLeft size={20} /> Back
-          </button>
-          <div className="flex-1" />
-          <div className="flex gap-10 items-center pr-10 border-r border-white/10 mr-10">
+        <div className="max-w-[1500px] mx-auto px-6 py-6 grid grid-cols-12 gap-10 items-center">
+          
+          {/* Back button (Col 1-2) */}
+          <div className="col-span-2">
+            <button onClick={() => currentStepIndex > 0 && setCurrentStepIndex(currentStepIndex - 1)} className="flex items-center gap-3 text-zinc-500 hover:text-white disabled:opacity-10 transition-all font-black uppercase text-[10px] tracking-widest">
+              <ChevronLeft size={20} /> Back
+            </button>
+          </div>
+
+          {/* Weight & Price (Aligned to the end of Col 9 - right edge of visualizer) */}
+          <div className="col-span-7 flex justify-end items-center gap-10 pr-4">
             <div className="text-right">
               <p className="text-[8px] text-zinc-600 uppercase font-black mb-1">Weight</p>
-              <p className="font-mono text-sm tracking-tighter">
-                {selectedComponents.reduce((acc, c) => acc + c.weight, 0)}g
-              </p>
+              <p className="font-mono text-sm tracking-tighter">{selectedComponents.reduce((acc, c) => acc + c.weight, 0)}g</p>
             </div>
             <div className="h-8 w-px bg-white/10" />
             <div className="text-right">
               <p className="text-[8px] text-zinc-600 uppercase font-black mb-1">Price</p>
-              <p className="font-mono text-sm text-red-600 tracking-tighter">
-                €{selectedComponents.reduce((acc, c) => acc + c.price, 0).toLocaleString()}
-              </p>
+              <p className="font-mono text-sm text-red-600 tracking-tighter">€{selectedComponents.reduce((acc, c) => acc + c.price, 0).toLocaleString()}</p>
             </div>
           </div>
-          <button 
-            onClick={() => {
-              if (currentStep.options.length > 0 && !selections[currentStep.id]) {
-                setError("Select a component");
-                return;
-              }
-              currentStepIndex < steps.length - 1 ? setCurrentStepIndex(currentStepIndex + 1) : setIsFinished(true);
-            }}
-            className="bg-red-600 hover:bg-red-700 text-white px-8 py-2 rounded-lg font-black uppercase text-[11px] tracking-widest flex items-center gap-3 shadow-lg shadow-red-600/20 active:scale-95 transition-all"
-          >
-            {currentStepIndex === steps.length - 1 ? 'Finish' : 'Next Step'} <ChevronRight size={18} />
-          </button>
+
+          {/* Next Step button (Col 10-12) */}
+          <div className="col-span-3 flex justify-end">
+            <button onClick={() => {
+                if (currentStep.options.length > 0 && !selections[currentStep.id]) { setError("Select a component"); return; }
+                currentStepIndex < steps.length - 1 ? setCurrentStepIndex(currentStepIndex + 1) : setIsFinished(true);
+              }}
+              className="bg-red-600 hover:bg-red-700 text-white px-8 py-2 rounded-lg font-black uppercase text-[11px] tracking-widest flex items-center gap-3 shadow-lg shadow-red-600/20 active:scale-95 transition-all"
+            >
+              {currentStepIndex === steps.length - 1 ? 'Finish' : 'Next Step'} <ChevronRight size={18} />
+            </button>
+          </div>
+
         </div>
       </div>
     </div>
