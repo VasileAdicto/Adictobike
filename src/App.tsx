@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Bike, Download, CheckCircle2, AlertCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Download, CheckCircle2 } from 'lucide-react';
 import { cn } from './lib/utils';
 import { ExcelImporter } from './components/ExcelImporter';
 
@@ -26,7 +26,6 @@ interface Step {
   options: Component[];
 }
 
-// --- INITIAL DATA ---
 const INITIAL_STEPS: Step[] = [
   { id: 'frame', title: 'Frame', options: [] },
   { id: 'wheelset', title: 'Wheelset', options: [] },
@@ -94,7 +93,10 @@ const OptionCard = ({ component, isSelected, onClick }: { component: Component, 
           <p className="text-[9px] text-zinc-500 uppercase font-black">{component.brand}</p>
         </div>
         <div className="flex justify-between items-end mt-2">
-          <p className="font-black text-sm text-red-600">€{component.price.toLocaleString()}</p>
+          {/* Стиль ціни як у загальної ціни (font-mono, text-red) */}
+          <p className="font-mono text-sm text-red-600 tracking-tighter">
+            €{component.price.toLocaleString()}
+          </p>
           <p className="text-sm text-zinc-600 font-mono italic">{component.weight}g</p>
         </div>
       </div>
@@ -104,7 +106,6 @@ const OptionCard = ({ component, isSelected, onClick }: { component: Component, 
 
 export default function BikeConfigurator() {
   const isAdmin = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('admin') === 'true';
-
   const [steps, setSteps] = useState<Step[]>(INITIAL_STEPS);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [selections, setSelections] = useState<Record<string, string>>({});
@@ -132,18 +133,15 @@ export default function BikeConfigurator() {
               options: data.map((row: any, idx: number) => {
                 const rowKeys = Object.keys(row);
                 const findKey = (name: string) => rowKeys.find(k => k.toLowerCase().trim() === name.toLowerCase());
-                const imageKey = findKey('imageurl') || findKey('image');
-                const cardImageKey = findKey('cardimg') || findKey('cardimage');
-                const zKey = findKey('zindex');
                 return {
                   id: `${step.id}-${idx}`,
                   name: row.Name || row.NAME || 'Unknown',
                   brand: row.Brand || row.BRAND || '',
                   price: Number(row.Price || row.PRICE) || 0,
                   weight: Number(row.Weight || row.WEIGHT) || 0,
-                  imageUrl: imageKey ? row[imageKey] : "",
-                  cardImageUrl: cardImageKey ? row[cardImageKey] : (imageKey ? row[imageKey] : ""),
-                  zIndex: zKey ? Number(row[zKey]) : 10
+                  imageUrl: row[findKey('imageurl') || 'image'] || "",
+                  cardImageUrl: row[findKey('cardimg') || 'cardimage'] || row[findKey('imageurl') || 'image'] || "",
+                  zIndex: Number(row[findKey('zindex')]) || 10
                 };
               })
             };
@@ -192,14 +190,7 @@ export default function BikeConfigurator() {
           <div className="col-span-9 flex flex-col gap-6 order-1">
             <div className="flex flex-wrap justify-start items-center px-4 gap-x-6 gap-y-2">
               {steps.map((step, idx) => (
-                <button 
-                  key={step.id} 
-                  onClick={() => jumpToStep(idx)} 
-                  className={cn(
-                    "transition-all duration-300 text-[10px] font-black italic uppercase tracking-widest pb-1 border-b-2 whitespace-nowrap",
-                    idx === currentStepIndex ? "text-red-600 border-red-600 drop-shadow-[0_0_9px_rgba(255,0,0,0.3)]" : "text-white opacity-20 border-transparent hover:opacity-100"
-                  )}
-                >
+                <button key={step.id} onClick={() => jumpToStep(idx)} className={cn("transition-all duration-300 text-[10px] font-black italic uppercase tracking-widest pb-1 border-b-2 whitespace-nowrap", idx === currentStepIndex ? "text-red-600 border-red-600 drop-shadow-[0_0_9px_rgba(255,0,0,0.3)]" : "text-white opacity-20 border-transparent hover:opacity-100")}>
                   {step.title}
                 </button>
               ))}
@@ -210,37 +201,32 @@ export default function BikeConfigurator() {
           </div>
 
           <div className="col-span-3 flex flex-col h-full bg-zinc-900/40 rounded-[2.5rem] border border-white/5 p-6 relative overflow-hidden order-2">
-            <div ref={listRef} style={{ direction: 'rtl' }} className="flex-1 space-y-2 velocraft-scrollbar overflow-y-auto pl-1">
-              <div style={{ direction: 'ltr' }} className="space-y-2">
-                {error && <div className="mb-4 text-red-500 bg-red-600/10 p-2 rounded-lg text-[9px] font-bold uppercase">{error}</div>}
-                <AnimatePresence mode="popLayout">
-                  {currentStep.options.map((option) => (
-                    <OptionCard 
-                      key={option.id} 
-                      component={option} 
-                      isSelected={selections[currentStep.id] === option.id} 
-                      onClick={() => { setSelections(prev => ({...prev, [currentStep.id]: option.id})); setError(null); }} 
-                    />
-                  ))}
-                </AnimatePresence>
-              </div>
+            {/* Скроллбар справа (видалено direction: rtl) */}
+            <div ref={listRef} className="flex-1 space-y-2 velocraft-scrollbar overflow-y-auto pr-1">
+              {error && <div className="mb-4 text-red-500 bg-red-600/10 p-2 rounded-lg text-[9px] font-bold uppercase">{error}</div>}
+              <AnimatePresence mode="popLayout">
+                {currentStep.options.map((option) => (
+                  <OptionCard 
+                    key={option.id} 
+                    component={option} 
+                    isSelected={selections[currentStep.id] === option.id} 
+                    onClick={() => { setSelections(prev => ({...prev, [currentStep.id]: option.id})); setError(null); }} 
+                  />
+                ))}
+              </AnimatePresence>
             </div>
           </div>
         </div>
       </main>
 
-      {/* FOOTER: Weight & Price aligned to visualizer edge */}
       <div className="fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur-2xl border-t border-white/5 z-40 font-sans">
         <div className="max-w-[1500px] mx-auto px-6 py-6 grid grid-cols-12 gap-10 items-center">
-          
-          {/* Back button (Col 1-2) */}
           <div className="col-span-2">
             <button onClick={() => currentStepIndex > 0 && setCurrentStepIndex(currentStepIndex - 1)} className="flex items-center gap-3 text-zinc-500 hover:text-white disabled:opacity-10 transition-all font-black uppercase text-[10px] tracking-widest">
               <ChevronLeft size={20} /> Back
             </button>
           </div>
 
-          {/* Weight & Price (Aligned to the end of Col 9 - right edge of visualizer) */}
           <div className="col-span-7 flex justify-end items-center gap-10 pr-4">
             <div className="text-right">
               <p className="text-[8px] text-zinc-600 uppercase font-black mb-1">Weight</p>
@@ -253,24 +239,24 @@ export default function BikeConfigurator() {
             </div>
           </div>
 
-          {/* Next Step button (Col 10-12) */}
           <div className="col-span-3 flex justify-end">
-            <button onClick={() => {
+            <button 
+              onClick={() => {
                 if (currentStep.options.length > 0 && !selections[currentStep.id]) { setError("Select a component"); return; }
                 currentStepIndex < steps.length - 1 ? setCurrentStepIndex(currentStepIndex + 1) : setIsFinished(true);
               }}
-              className="bg-red-600 hover:bg-red-700 text-white px-8 py-2 rounded-lg font-black uppercase text-[11px] tracking-widest flex items-center gap-3 shadow-lg shadow-red-600/20 active:scale-95 transition-all"
+              /* Зменшено розміри кнопки: h-10 замість py-4, px-5 замість px-8, text-[10px] */
+              className="bg-red-600 hover:bg-red-700 text-white h-10 px-5 rounded-lg font-black uppercase text-[10px] tracking-widest flex items-center gap-3 shadow-lg shadow-red-600/20 active:scale-95 transition-all"
             >
-              {currentStepIndex === steps.length - 1 ? 'Finish' : 'Next Step'} <ChevronRight size={18} />
+              {currentStepIndex === steps.length - 1 ? 'Finish' : 'Next Step'} <ChevronRight size={16} />
             </button>
           </div>
-
         </div>
       </div>
     </div>
   );
 }
-      
+
 function SummaryView({ selections, onReset }: any) {
   const totalPrice = selections.reduce((acc: number, c: any) => acc + c.price, 0);
   const totalWeight = selections.reduce((acc: number, c: any) => acc + c.weight, 0);
@@ -278,44 +264,63 @@ function SummaryView({ selections, onReset }: any) {
   const handleExport = () => {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
     const cleanText = (text: string) => text ? String(text).replace(/[^\x00-\x7F]/g, "").toUpperCase() : "";
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(24); doc.setTextColor(220, 38, 38);
-    doc.text("ADICTO.BIKE", 14, 25);
-    doc.setFontSize(10); doc.setTextColor(100);
-    doc.text(`DATE: ${new Date().toLocaleDateString('en-US').toUpperCase()}`, 14, 32);
-    doc.text("OFFICIAL BUILD SPECIFICATION", 14, 37);
 
-    const tableData = selections.map((c: any) => [cleanText(c.name), cleanText(c.brand), `${c.weight}G`, `EUR ${c.price.toLocaleString()}`]);
+    // Adicto.Bike зменшено в 2 рази (було 24, стало 12) та по центру
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12); doc.setTextColor(220, 38, 38);
+    doc.text("ADICTO.BIKE", pageWidth / 2, 20, { align: 'center' });
+    
+    // Текст зменшено на 30% (було 10, стало 7)
+    doc.setFontSize(7); doc.setTextColor(100);
+    doc.text(`DATE: ${new Date().toLocaleDateString('en-US').toUpperCase()}`, 14, 28);
+    doc.text("CUSTOM BUILD SPECIFICATION", 14, 32); // Замість oficial - CUSTOM
+
+    const tableData = selections.map((c: any) => [
+      cleanText(c.name), 
+      cleanText(c.brand), 
+      `${c.weight} g`, // Маленька g та пробіл
+      `${c.price.toLocaleString()} €` // Символ € після цифри
+    ]);
+
     autoTable(doc, {
-      startY: 45,
+      startY: 38,
       head: [['COMPONENT', 'BRAND', 'WEIGHT', 'PRICE']],
       body: tableData,
-      styles: { font: "helvetica", fontSize: 9 },
+      styles: { font: "helvetica", fontSize: 6.3 }, // Зменшено на 30% (було 9)
       headStyles: { fillColor: [20, 20, 20], textColor: [255, 255, 255] },
-      foot: [['TOTAL SPECIFICATION', '', `${totalWeight}G`, `EUR ${totalPrice.toLocaleString()}`]],
+      foot: [['TOTAL SPECIFICATION', '', `${totalWeight} g`, `${totalPrice.toLocaleString()} €`]],
       footStyles: { fillColor: [220, 38, 38], textColor: [255, 255, 255] },
       theme: 'grid'
     });
 
-    const finalY = (doc as any).lastAutoTable.finalY + 12;
+    const finalY = (doc as any).lastAutoTable.finalY + 10;
+    doc.setFontSize(5.6); doc.setTextColor(140); // Зменшено на 30% (було 8)
     const disclaimer = "NOTICE: THE WEIGHT AND PRICE INDICATED ARE PRELIMINARY AND SUBJECT TO MINOR CHANGES BASED ON COMPONENT AVAILABILITY AND TECHNICAL ASSEMBLY SPECIFICATIONS. ADICTO.BIKE RESERVES THE RIGHT TO MODIFY SPECIFICATIONS WITHOUT PRIOR NOTICE.";
-    doc.setFontSize(8); doc.setTextColor(140);
     doc.text(doc.splitTextToSize(disclaimer, pageWidth - 28), 14, finalY);
 
-    const footerY = doc.internal.pageSize.getHeight() - 45;
-    doc.text("WWW.ADICTO.BIKE", 14, footerY + 17);
-    doc.text("INSTAGRAM: @ADICTO.BIKE", 14, footerY + 23);
-    doc.text("EMAIL: HELLO@ADICTO.BIKE", 14, footerY + 29);
-    try { doc.addImage("/design/qr-code.png", "PNG", pageWidth - 45, footerY + 5, 30, 30); } catch (e) {}
+    const footerY = pageHeight - 35;
+    doc.setFontSize(6.3);
+    doc.text("WWW.ADICTO.BIKE", 14, footerY + 10);
+    doc.text("INSTAGRAM: @ADICTO.BIKE", 14, footerY + 15);
+    doc.text("EMAIL: HELLO@ADICTO.BIKE", 14, footerY + 20);
+    doc.text("TEL/WHATSAPP: +34 674 26 26 22", 14, footerY + 25); // Додано телефон
+
+    try { doc.addImage("/design/qr-code.png", "PNG", pageWidth - 35, footerY + 5, 20, 20); } catch (e) {}
     doc.save(`ADICTO_BUILD.pdf`);
   };
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-8 text-center font-sans">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-2xl w-full">
-        <CheckCircle2 size={60} className="text-red-600 mx-auto mb-6" />
-        <h2 className="text-5xl font-black italic uppercase tracking-tighter mb-4 leading-none">Configuration <br/> <span className="text-red-600">Complete</span></h2>
+        <CheckCircle2 size={40} className="text-red-600 mx-auto mb-4" /> {/* Значок зменшено */}
+        
+        {/* Текст Configuration Complete зменшено до розміру цифр (text-3xl) */}
+        <h2 className="text-3xl font-black italic uppercase tracking-tighter mb-4 leading-none">
+          Configuration <br/> <span className="text-red-600">Complete</span>
+        </h2>
+
         <div className="flex justify-center gap-10 my-8 bg-zinc-900/50 p-6 rounded-3xl border border-white/5">
           <div>
             <p className="text-zinc-500 text-[10px] uppercase font-bold tracking-widest">Total Price</p>
@@ -327,11 +332,15 @@ function SummaryView({ selections, onReset }: any) {
             <p className="text-3xl font-mono">{totalWeight}g</p>
           </div>
         </div>
+
         <div className="flex gap-4 justify-center">
+          {/* Кнопка Export PDF по розмірам як Start Over (px-8 py-4 зменшено до стандартного) */}
           <button onClick={handleExport} className="px-8 py-4 bg-red-600 text-white rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-red-700 transition-all flex items-center gap-2">
             <Download size={16} /> Export PDF
           </button>
-          <button onClick={onReset} className="px-8 py-4 border border-white/10 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-white/5 transition-all">Start Over</button>
+          <button onClick={onReset} className="px-8 py-4 border border-white/10 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-white/5 transition-all">
+            Start Over
+          </button>
         </div>
       </motion.div>
     </div>
