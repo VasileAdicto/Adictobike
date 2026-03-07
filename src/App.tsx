@@ -53,6 +53,7 @@ const Visualizer = ({ selectedComponents }: { selectedComponents: Component[] })
           <motion.img
             key={comp.id}
             src={comp.imageUrl || (comp as any).image || (comp as any).ImageURL}
+            crossOrigin="anonymous"
             alt={comp.name}
             initial={{ opacity: 0, scale: 1.05 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -262,56 +263,69 @@ function SummaryView({ selections, onReset }: any) {
   const totalPrice = selections.reduce((acc: number, c: any) => acc + c.price, 0);
   const totalWeight = selections.reduce((acc: number, c: any) => acc + c.weight, 0);
 
-  const handleExport = () => {
-    const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
-    const cleanText = (text: string) => text ? String(text).replace(/[^\x00-\x7F]/g, "").toUpperCase() : "";
+  const handleExport = async () => {
+  const doc = new jsPDF();
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const cleanText = (text: string) => text ? String(text).replace(/[^\x00-\x7F]/g, "").toUpperCase() : "";
 
-    // Правка: Adicto.Bike зменшено в 2 рази та по центру
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(12); doc.setTextColor(220, 38, 38);
-    doc.text("ADICTO.BIKE", pageWidth / 2, 20, { align: 'center' });
-    
-    // Правка: Текст в ПДФ зменшено на 30% (шрифти 7 замість 10)
-    doc.setFontSize(7); doc.setTextColor(100);
-    doc.text(`DATE: ${new Date().toLocaleDateString('en-US').toUpperCase()}`, 14, 28);
-    doc.text("CUSTOM BUILD SPECIFICATION", 14, 32); // Замість oficial - CUSTOM
+  // 1. Логотип по центру
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12); doc.setTextColor(220, 38, 38);
+  doc.text("ADICTO.BIKE", pageWidth / 2, 15, { align: 'center' });
 
-    const tableData = selections.map((c: any) => [
-      cleanText(c.name), 
-      cleanText(c.brand), 
-      `${c.weight} g`, // Правка: між цифрою та g пробіл, g маленька
-      `${c.price.toLocaleString()} €` // Правка: символ € після цифри
-    ]);
+  // 2. ДОДАВАННЯ ФОТО (важливо!)
+  const visualizerElement = document.getElementById('bike-visualizer');
+  if (visualizerElement && (window as any).html2canvas) {
+    try {
+      const canvas = await (window as any).html2canvas(visualizerElement, {
+        backgroundColor: '#000000',
+        useCORS: true,
+        scale: 2
+      });
+      const imgData = canvas.toDataURL('image/png');
+      // Вставляємо фото (ширина 180, висота 85)
+      doc.addImage(imgData, 'PNG', 15, 22, 180, 85);
+    } catch (e) {
+      console.error("Photo error:", e);
+    }
+  }
 
-    autoTable(doc, {
-      startY: 38,
-      head: [['COMPONENT', 'BRAND', 'WEIGHT', 'PRICE']],
-      body: tableData,
-      styles: { font: "helvetica", fontSize: 6.3 }, // Зменшено на 30% (було 9)
-      headStyles: { fillColor: [20, 20, 20], textColor: [255, 255, 255] },
-      foot: [['TOTAL SPECIFICATION', '', `${totalWeight} g`, `${totalPrice.toLocaleString()} €`]],
-      footStyles: { fillColor: [220, 38, 38], textColor: [255, 255, 255] },
-      theme: 'grid'
-    });
+  // 3. Дані таблиці (тут твій код з корекціями)
+  const tableData = selections.map((c: any) => [
+    cleanText(c.name), 
+    cleanText(c.brand), 
+    `${c.weight} g`, 
+    `${c.price.toLocaleString()} €`
+  ]);
 
-    const finalY = (doc as any).lastAutoTable.finalY + 10;
-    doc.setFontSize(5.6); doc.setTextColor(140); // Зменшено на 30%
-    const disclaimer = "NOTICE: THE WEIGHT AND PRICE INDICATED ARE PRELIMINARY AND SUBJECT TO MINOR CHANGES BASED ON COMPONENT AVAILABILITY AND TECHNICAL ASSEMBLY SPECIFICATIONS. ADICTO.BIKE RESERVES THE RIGHT TO MODIFY SPECIFICATIONS WITHOUT PRIOR NOTICE.";
-    doc.text(doc.splitTextToSize(disclaimer, pageWidth - 28), 14, finalY);
+  autoTable(doc, {
+    startY: 122, // ЗМІНИ ЦЕ: 122 замість 38, щоб таблиця була ПІД фото
+    head: [['COMPONENT', 'BRAND', 'WEIGHT', 'PRICE']],
+    body: tableData,
+    styles: { font: "helvetica", fontSize: 6.3 },
+    headStyles: { fillColor: [20, 20, 20], textColor: [255, 255, 255] },
+    foot: [['TOTAL SPECIFICATION', '', `${totalWeight} g`, `${totalPrice.toLocaleString()} €`]],
+    footStyles: { fillColor: [220, 38, 38], textColor: [255, 255, 255] },
+    theme: 'grid'
+  });
 
-    const footerY = pageHeight - 35;
-    doc.setFontSize(6.3); // Зменшено на 30%
-    doc.text("WWW.ADICTO.BIKE", 14, footerY + 10);
-    doc.text("INSTAGRAM: @ADICTO.BIKE", 14, footerY + 15);
-    doc.text("EMAIL: HELLO@ADICTO.BIKE", 14, footerY + 20);
-    doc.text("TEL/WHATSAPP: +34 674 26 26 22", 14, footerY + 25); // Правка: додано телефон
+  // 4. Дисклеймер та Футер (як у тебе)
+  const finalY = (doc as any).lastAutoTable.finalY + 10;
+  doc.setFontSize(5.6); doc.setTextColor(140);
+  const disclaimer = "NOTICE: THE WEIGHT AND PRICE INDICATED ARE PRELIMINARY AND SUBJECT TO MINOR CHANGES BASED ON COMPONENT AVAILABILITY AND TECHNICAL ASSEMBLY SPECIFICATIONS. ADICTO.BIKE RESERVES THE RIGHT TO MODIFY SPECIFICATIONS WITHOUT PRIOR NOTICE.";
+  doc.text(doc.splitTextToSize(disclaimer, pageWidth - 28), 14, finalY);
 
-    try { doc.addImage("/design/qr-code.png", "PNG", pageWidth - 35, footerY + 5, 20, 20); } catch (e) {}
-    doc.save(`ADICTO_BUILD.pdf`);
-  };
+  const footerY = pageHeight - 35;
+  doc.setFontSize(6.3);
+  doc.text("WWW.ADICTO.BIKE", 14, footerY + 10);
+  doc.text("INSTAGRAM: @ADICTO.BIKE", 14, footerY + 15);
+  doc.text("EMAIL: HELLO@ADICTO.BIKE", 14, footerY + 20);
+  doc.text("TEL/WHATSAPP: +34 674 26 26 22", 14, footerY + 25);
 
+  try { doc.addImage("/design/qr-code.png", "PNG", pageWidth - 35, footerY + 5, 20, 20); } catch (e) {}
+  doc.save(`ADICTO_BUILD.pdf`);
+};
   return (
     <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-8 text-center font-sans">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-2xl w-full">
