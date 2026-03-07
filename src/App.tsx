@@ -52,8 +52,8 @@ const Visualizer = ({ selectedComponents }: { selectedComponents: Component[] })
         {selectedComponents.map((comp) => (
           <motion.img
             key={comp.id}
-            src={comp.imageUrl || (comp as any).image || (comp as any).ImageURL}
-            crossOrigin="anonymous"
+            src={`${comp.imageUrl}?t=${new Date().getTime()}`} // Додаємо хвіст, щоб обійти кеш
+            crossOrigin="anonymous" // Обов'язково ПЕРШИМ атрибутом
             alt={comp.name}
             initial={{ opacity: 0, scale: 1.05 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -276,21 +276,26 @@ function SummaryView({ selections, onReset }: any) {
 
     // 2. ДОДАВАННЯ ФОТО (важливо!)
     const visualizerElement = document.getElementById('bike-visualizer');
-    if (visualizerElement && (window as any).html2canvas) {
-      try {
-        const canvas = await (window as any).html2canvas(visualizerElement, {
-          backgroundColor: '#000000',
-          useCORS: true,
-          scale: 2,
-          logging: false
-        });
-        const imgData = canvas.toDataURL('image/png');
-        // Вставляємо фото (ширина 180, висота 85)
-        doc.addImage(imgData, 'PNG', 15, 22, 180, 85);
-      } catch (e) {
-        console.error("Photo error:", e);
-      }
-    }
+if (visualizerElement && (window as any).html2canvas) {
+  try {
+    const canvas = await (window as any).html2canvas(visualizerElement, {
+      backgroundColor: '#000000',
+      useCORS: true,        // Дозволяє запити між доменами
+      allowTaint: false,    // Важливо для безпеки
+      scale: 2,             // Якість
+      logging: true,        // Увімкніть, щоб побачити помилки в F12
+      imageTimeout: 15000,  // Чекаємо до 15 секунд завантаження картинок
+    });
+    
+    const imgData = canvas.toDataURL('image/png');
+    // Перевірка в консолі: якщо тут порожньо, значить картинки заблоковані
+    console.log("Image Data generated:", imgData.length > 100); 
+    
+    doc.addImage(imgData, 'PNG', 15, 22, 180, 85);
+  } catch (e) {
+    console.error("Photo error:", e);
+  }
+}
 
     // 3. Дані таблиці
     const tableData = selections.map((c: any) => [
