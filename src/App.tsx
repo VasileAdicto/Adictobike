@@ -194,7 +194,7 @@ export default function BikeConfigurator() {
       <main className="max-w-[1500px] mx-auto px-4 lg:px-6 pt-6 lg:pt-10">
         <div className="flex flex-col lg:grid lg:grid-cols-12 gap-6 lg:gap-10 lg:h-[550px] items-stretch">
           
-          {/* Visualizer */}
+          {/* Visualizer Side */}
           <div className="lg:col-span-9 flex flex-col gap-6 order-1">
             <div className="flex overflow-x-auto no-scrollbar lg:overflow-visible lg:flex-wrap justify-start items-center px-4 gap-x-6 gap-y-2 pb-2">
               {steps.map((step, idx) => (
@@ -209,39 +209,65 @@ export default function BikeConfigurator() {
                 </button>
               ))}
             </div>
-            <div className="h-[250px] md:h-[400px] lg:flex-1">
+            <div className="h-[280px] md:h-[400px] lg:flex-1">
               <Visualizer selectedComponents={selectedComponents} />
             </div>
           </div>
 
-          {/* Options */}
+          {/* Options Side - ТУТ ВИПРАВЛЕННЯ КАРУСЕЛІ */}
           <div className="lg:col-span-3 flex flex-col bg-zinc-900/40 rounded-[2.5rem] border border-white/5 p-4 lg:p-6 relative overflow-hidden order-2">
-            <style>{`
-              .mobile-carousel-container { direction: rtl; transform: scaleY(-1); }
-              .mobile-carousel-content { direction: ltr; transform: scaleY(-1); }
-              .velocraft-scrollbar::-webkit-scrollbar { height: 4px; width: 4px; }
-              .velocraft-scrollbar::-webkit-scrollbar-thumb { background: #ef4444; border-radius: 10px; }
-              .velocraft-scrollbar::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); }
-            `}</style>
             
-            <div ref={listRef} className="flex-1 velocraft-scrollbar overflow-x-auto lg:overflow-y-auto lg:overflow-x-hidden mobile-carousel-container">
-                <div className="mobile-carousel-content">
-                  {error && <div className="mb-4 text-red-500 bg-red-600/10 p-2 rounded-lg text-[9px] font-bold uppercase">{error}</div>}
-                  <div className="flex lg:flex-col gap-3 lg:space-y-2">
-                    <AnimatePresence mode="popLayout">
-                      {currentStep.options.map((option) => (
-                        <div key={option.id} className="w-[30%] lg:w-full shrink-0">
-                          <OptionCard 
-                            component={option} 
-                            isSelected={selections[currentStep.id] === option.id} 
-                            onClick={() => { setSelections(prev => ({...prev, [currentStep.id]: option.id})); setError(null); }} 
-                          />
-                        </div>
-                      ))}
-                    </AnimatePresence>
-                  </div>
+            {/* Стилі для кастомного скролбару зверху на мобільних */}
+            <style>{`
+              .custom-scroll-container::-webkit-scrollbar {
+                height: 3px;
+              }
+              .custom-scroll-container::-webkit-scrollbar-track {
+                background: rgba(255, 255, 255, 0.05);
+              }
+              .custom-scroll-container::-webkit-scrollbar-thumb {
+                background: #ef4444;
+                border-radius: 10px;
+              }
+              /* Для Firefox */
+              .custom-scroll-container {
+                scrollbar-width: thin;
+                scrollbar-color: #ef4444 rgba(255, 255, 255, 0.05);
+              }
+            `}</style>
+
+            <div 
+              ref={listRef} 
+              className="flex-1 overflow-x-auto lg:overflow-y-auto lg:overflow-x-hidden custom-scroll-container pb-2 lg:pb-0"
+              style={{ 
+                display: 'flex', 
+                flexDirection: 'column' 
+              }}
+            >
+                {error && <div className="mb-4 text-red-500 bg-red-600/10 p-2 rounded-lg text-[9px] font-bold uppercase">{error}</div>}
+                
+                {/* На мобілці цей div стає горизонтальним рядом, на десктопі - колонкою */}
+                <div className="flex flex-row lg:flex-col gap-3 min-w-full">
+                  <AnimatePresence mode="popLayout">
+                    {currentStep.options.map((option) => (
+                      <div key={option.id} className="w-[31%] min-w-[31%] lg:w-full lg:min-w-0 shrink-0">
+                        <OptionCard 
+                          component={option} 
+                          isSelected={selections[currentStep.id] === option.id} 
+                          onClick={() => { setSelections(prev => ({...prev, [currentStep.id]: option.id})); setError(null); }} 
+                        />
+                      </div>
+                    ))}
+                  </AnimatePresence>
                 </div>
             </div>
+
+            {/* Підказка скролу для мобілок (з'являється якщо опцій багато) */}
+            {currentStep.options.length > 3 && (
+              <div className="lg:hidden text-[7px] text-zinc-600 text-center mt-2 uppercase font-bold tracking-widest">
+                Scroll right for more →
+              </div>
+            )}
           </div>
         </div>
       </main>
