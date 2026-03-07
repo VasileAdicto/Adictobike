@@ -289,11 +289,6 @@ function SummaryView({ selections, onReset }: any) {
     doc.setFontSize(12); doc.setTextColor(220, 38, 38);
     doc.text("ADICTO.BIKE", pageWidth / 2, 15, { align: 'center' });
 
-    // 2. МАЛЮЄМО ВЕЛОСИПЕД ШАРАМИ (Накладання картинок прямо в PDF)
-    // Малюємо чорний фон
-    doc.setFillColor(5, 5, 5);
-    doc.roundedRect(15, 22, 180, 85, 5, 5, "F");
-
     try {
       // Сортуємо по zIndex, щоб рама була знизу, а дрібниці зверху
       const sortedByZ = [...selections].sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
@@ -303,7 +298,7 @@ function SummaryView({ selections, onReset }: any) {
           const imgBase64 = await getBase64Image(comp.imageUrl);
           if (imgBase64) {
             // Малюємо кожен шар один на одного в тих же координатах
-            doc.addImage(imgBase64, 'PNG', 15, 22, 180, 97, undefined, 'FAST');
+            doc.addImage(imgBase64, 'PNG', 15, 15, 180, 105, undefined, 'FAST');
           }
         }
       }
