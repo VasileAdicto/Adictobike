@@ -231,25 +231,24 @@ export default function BikeConfigurator() {
         </div>
       </main>
 
-      {/* FOOTER: TOTALS ON THE LEFT */}
-      <div className="fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur-2xl border-t border-white/5 px-12 py-6 flex justify-between items-center z-40">
-        <div className="flex items-center gap-10">
-          <button onClick={() => currentStepIndex > 0 && setCurrentStepIndex(currentStepIndex - 1)} className="flex items-center gap-3 text-zinc-500 hover:text-white disabled:opacity-10 transition-all font-black uppercase text-[10px] tracking-widest border-r border-white/10 pr-6">
-            <ChevronLeft size={20} /> Back
-          </button>
-          
-          <div className="flex gap-10 items-center">
-            <div className="text-left">
-              <p className="text-[8px] text-zinc-600 uppercase font-black mb-1">Weight</p>
-              <p className="font-mono text-sm">{selectedComponents.reduce((acc, c) => acc + c.weight, 0)}g</p>
-            </div>
-            <div className="h-8 w-px bg-white/10" />
-            <div className="text-left">
-              <p className="text-[8px] text-zinc-600 uppercase font-black mb-1">Price</p>
-              <p className="font-mono text-sm text-red-600">€{selectedComponents.reduce((acc, c) => acc + c.price, 0).toLocaleString()}</p>
-            </div>
-          </div>
-        </div>
+      {/* 3. Блок Weight та Price (тепер вони під правим кутом візуалізатора) */}
+    <div className="flex gap-10 items-center pr-10 border-r border-white/10 mr-10">
+      <div className="text-right">
+        <p className="text-[8px] text-zinc-600 uppercase font-black mb-1">Weight</p>
+        <p className="font-mono text-sm tracking-tighter">
+          {selectedComponents.reduce((acc, c) => acc + c.weight, 0)}g
+        </p>
+      </div>
+      
+      <div className="h-8 w-px bg-white/10" />
+      
+      <div className="text-right">
+        <p className="text-[8px] text-zinc-600 uppercase font-black mb-1">Price</p>
+        <p className="font-mono text-sm text-red-600 tracking-tighter">
+          €{selectedComponents.reduce((acc, c) => acc + c.price, 0).toLocaleString()}
+        </p>
+      </div>
+    </div>
 
         <button 
           onClick={() => {
