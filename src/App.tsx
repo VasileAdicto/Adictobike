@@ -341,7 +341,7 @@ function SummaryView({ selections, onReset }: any) {
       if (logoBase64) {
           doc.saveGraphicsState();
           doc.setGState(new (doc as any).GState({ opacity: 0.8 }));
-          doc.addImage(logoBase64, 'PNG', (pageWidth / 2) - 15, 8, 30, 30); 
+          doc.addImage(logoBase64, 'PNG', (pageWidth / 2) - 15, 8, 10, 10); 
           doc.restoreGraphicsState();
       }
     } catch (e) {}
@@ -369,7 +369,7 @@ function SummaryView({ selections, onReset }: any) {
       styles: { font: "helvetica", fontSize: 5.8, cellPadding: 2 },
       headStyles: { fillColor: [20, 20, 20], textColor: [255, 255, 255] },
       columnStyles: { 0: { fontStyle: 'bold', cellWidth: 25 } },
-      foot: [['TOTAL SPECIFICATION', '', '', `${totalWeight} g`, `${totalPrice.toLocaleString()} €`]],
+      foot: [['TOTAL', '', '', `${totalWeight} g`, `${totalPrice.toLocaleString()} €`]],
       footStyles: { fillColor: [220, 38, 38], textColor: [255, 255, 255], fontSize: 9, fontStyle: 'bold', cellPadding: 3 },
       didParseCell: (data) => { if (data.section === 'foot' && data.column.index === 0) { data.cell.styles.cellWidth = 'wrap'; } },
       theme: 'grid'
