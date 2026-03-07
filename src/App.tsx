@@ -4,7 +4,7 @@ import { ChevronLeft, ChevronRight, Download, CheckCircle2 } from 'lucide-react'
 import { cn } from './lib/utils';
 import { ExcelImporter } from './components/ExcelImporter';
 
-import jsPDF from 'jsPDF';
+import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
 // --- TYPES ---
