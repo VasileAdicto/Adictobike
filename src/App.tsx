@@ -303,7 +303,7 @@ function SummaryView({ selections, onReset }: any) {
           const imgBase64 = await getBase64Image(comp.imageUrl);
           if (imgBase64) {
             // Малюємо кожен шар один на одного в тих же координатах
-            doc.addImage(imgBase64, 'PNG', 15, 22, 152, 85, undefined, 'FAST');
+            doc.addImage(imgBase64, 'PNG', 15, 22, 180, 97, undefined, 'FAST');
           }
         }
       }
