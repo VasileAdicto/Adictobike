@@ -328,10 +328,18 @@ function SummaryView({ selections, onReset }: any) {
       columnStyles: {
         0: { fontStyle: 'bold', cellWidth: 25 }, 
       },
-      foot: [['TOTAL SPECIFICATION', '', '', `${totalWeight} g`, `${totalPrice.toLocaleString()} €`]],
-      footStyles: { fillColor: [220, 38, 38], textColor: [255, 255, 255] },
-      theme: 'grid'
-    });
+      // Самі дані підсумку
+  foot: [['TOTAL SPECIFICATION', '', '', `${totalWeight} g`, `${totalPrice.toLocaleString()} €`]],
+  // Змінюємо ТУТ:
+  footStyles: { 
+    fillColor: [220, 38, 38], 
+    textColor: [255, 255, 255], 
+    fontSize: 10,           // Було за замовчуванням як у таблиці, тепер 9 (можна поставити 10)
+    fontStyle: 'bold',     // Робимо жирним для акценту
+    cellPadding: 3         // Додаємо трохи простору всередині комірок
+  },
+  theme: 'grid'
+});
 
     const footerY = pageHeight - 20;
     doc.setFontSize(6.3); doc.setTextColor(100);
