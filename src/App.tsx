@@ -293,7 +293,7 @@ function SummaryView({ selections, onReset }: any) {
       if (logoBase64) {
           doc.saveGraphicsState();
           doc.setGState(new (doc as any).GState({ opacity: 0.8 }));
-          doc.addImage(logoBase64, 'PNG', (pageWidth / 2) - 15, 8, 30, 10); 
+          doc.addImage(logoBase64, 'PNG', (pageWidth / 2) - 15, 8, 30, 30); 
           doc.restoreGraphicsState();
       }
     } catch (e) {}
@@ -304,7 +304,7 @@ function SummaryView({ selections, onReset }: any) {
         if (comp.imageUrl) {
           const imgBase64 = await getBase64Image(comp.imageUrl);
           if (imgBase64) {
-            doc.addImage(imgBase64, 'PNG', 30, 22, 150, 75, undefined, 'FAST');
+            doc.addImage(imgBase64, 'PNG', 15, 22, 180, 105, undefined, 'FAST');
           }
         }
       }
