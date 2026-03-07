@@ -74,7 +74,7 @@ const OptionCard = ({ component, isSelected, onClick }: { component: Component, 
       layout
       onClick={(e) => { e.preventDefault(); onClick(); }}
       className={cn(
-        "relative flex flex-col p-2 lg:p-3 rounded-xl lg:rounded-2xl border text-left transition-all group w-full shrink-0 lg:shrink",
+        "relative flex flex-col p-2 lg:p-3 rounded-xl lg:rounded-2xl border text-left transition-all group w-full shrink-0",
         isSelected 
         ? "border-red-600 bg-red-600/5 ring-1 ring-red-600/20 shadow-[0_0_20px_rgba(255,0,0,0.1)]" 
         : "border-white/5 bg-zinc-900/50 hover:border-white/20 hover:bg-zinc-900"
@@ -114,7 +114,6 @@ export default function BikeConfigurator() {
   const listRef = useRef<HTMLDivElement>(null);
   const stepRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
-  // Авто-скрол до активного кроку в мобільному меню
   useEffect(() => {
     stepRefs.current[currentStepIndex]?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
   }, [currentStepIndex]);
@@ -176,7 +175,6 @@ export default function BikeConfigurator() {
 
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-red-600 pb-28 lg:pb-24 overflow-x-hidden">
-      {/* --- NAV --- */}
       <nav className="border-b border-white/5 px-4 lg:px-8 py-4 flex justify-between items-center bg-black/80 backdrop-blur-2xl sticky top-0 z-50">
         <div className="flex items-center gap-4 pl-2">
           <img src="/design/Logo.png" alt="Logo" className="h-5 lg:h-6 w-auto object-contain" />
@@ -193,13 +191,11 @@ export default function BikeConfigurator() {
         </div>
       </nav>
 
-      {/* --- MAIN --- */}
       <main className="max-w-[1500px] mx-auto px-4 lg:px-6 pt-6 lg:pt-10">
         <div className="flex flex-col lg:grid lg:grid-cols-12 gap-6 lg:gap-10 lg:h-[550px] items-stretch">
           
-          {/* Visualizer Side */}
+          {/* Visualizer */}
           <div className="lg:col-span-9 flex flex-col gap-6 order-1">
-            {/* Steps bar with auto-scroll */}
             <div className="flex overflow-x-auto no-scrollbar lg:overflow-visible lg:flex-wrap justify-start items-center px-4 gap-x-6 gap-y-2 pb-2">
               {steps.map((step, idx) => (
                 <button 
@@ -213,28 +209,28 @@ export default function BikeConfigurator() {
                 </button>
               ))}
             </div>
-            <div className="flex-1 min-h-[300px] lg:min-h-0">
+            <div className="h-[250px] md:h-[400px] lg:flex-1">
               <Visualizer selectedComponents={selectedComponents} />
             </div>
           </div>
 
-          {/* Options Side */}
+          {/* Options */}
           <div className="lg:col-span-3 flex flex-col bg-zinc-900/40 rounded-[2.5rem] border border-white/5 p-4 lg:p-6 relative overflow-hidden order-2">
-            {/* Top scrollbar for mobile carousel */}
             <style>{`
               .mobile-carousel-container { direction: rtl; transform: scaleY(-1); }
               .mobile-carousel-content { direction: ltr; transform: scaleY(-1); }
-              .velocraft-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
-              .velocraft-scrollbar::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 10px; }
+              .velocraft-scrollbar::-webkit-scrollbar { height: 4px; width: 4px; }
+              .velocraft-scrollbar::-webkit-scrollbar-thumb { background: #ef4444; border-radius: 10px; }
+              .velocraft-scrollbar::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); }
             `}</style>
             
             <div ref={listRef} className="flex-1 velocraft-scrollbar overflow-x-auto lg:overflow-y-auto lg:overflow-x-hidden mobile-carousel-container">
                 <div className="mobile-carousel-content">
                   {error && <div className="mb-4 text-red-500 bg-red-600/10 p-2 rounded-lg text-[9px] font-bold uppercase">{error}</div>}
-                  <div className="flex lg:flex-col gap-2 lg:space-y-2">
+                  <div className="flex lg:flex-col gap-3 lg:space-y-2">
                     <AnimatePresence mode="popLayout">
                       {currentStep.options.map((option) => (
-                        <div key={option.id} className="w-[31%] shrink-0 lg:w-full">
+                        <div key={option.id} className="w-[30%] lg:w-full shrink-0">
                           <OptionCard 
                             component={option} 
                             isSelected={selections[currentStep.id] === option.id} 
@@ -250,16 +246,17 @@ export default function BikeConfigurator() {
         </div>
       </main>
 
-      {/* --- FOOTER --- */}
       <div className="fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur-2xl border-t border-white/5 z-40">
-        <div className="max-w-[1500px] mx-auto px-4 lg:px-6 py-6 grid grid-cols-12 gap-2 lg:gap-10 items-center">
+        <div className="max-w-[1500px] mx-auto px-4 lg:px-6 py-6 grid grid-cols-12 gap-2 items-center">
           
+          {/* Back Button */}
           <div className="col-span-3 lg:col-span-2">
             <button onClick={() => currentStepIndex > 0 && setCurrentStepIndex(currentStepIndex - 1)} className="flex items-center gap-1 lg:gap-3 text-zinc-500 hover:text-white transition-all font-black uppercase text-[10px] tracking-widest">
-              <ChevronLeft size={20} /> <span className="hidden xs:inline">Back</span>
+              <ChevronLeft size={20} /> Back
             </button>
           </div>
 
+          {/* Stats in Middle */}
           <div className="col-span-6 lg:col-span-7 flex justify-center lg:justify-end items-center gap-4 lg:gap-10">
             <div className="text-center lg:text-right">
               <p className="text-[7px] lg:text-[8px] text-zinc-600 uppercase font-black mb-0.5">Weight</p>
@@ -272,16 +269,16 @@ export default function BikeConfigurator() {
             </div>
           </div>
 
+          {/* Next Button */}
           <div className="col-span-3 flex justify-end">
             <button 
               onClick={() => {
                 if (currentStep.options.length > 0 && !selections[currentStep.id]) { setError("Select!"); return; }
                 currentStepIndex < steps.length - 1 ? setCurrentStepIndex(currentStepIndex + 1) : setIsFinished(true);
               }}
-              className="bg-red-600 hover:bg-red-700 text-white h-[32px] px-3 lg:px-[22px] rounded-lg font-black uppercase text-[10px] tracking-widest flex items-center gap-1 lg:gap-3 transition-all"
+              className="bg-red-600 hover:bg-red-700 text-white h-[32px] px-3 lg:px-[22px] rounded-lg font-black uppercase text-[10px] tracking-widest flex items-center gap-1 lg:gap-3 transition-all active:scale-95 shadow-lg shadow-red-600/20"
             >
-              <span className="hidden xs:inline">{currentStepIndex === steps.length - 1 ? 'Finish' : 'Next'}</span>
-              <ChevronRight size={14} />
+              {currentStepIndex === steps.length - 1 ? 'Finish' : 'Next'} <ChevronRight size={14} />
             </button>
           </div>
         </div>
@@ -318,7 +315,7 @@ function SummaryView({ selections, onReset }: any) {
       if (logoBase64) {
           doc.saveGraphicsState();
           doc.setGState(new (doc as any).GState({ opacity: 0.8 }));
-          doc.addImage(logoBase64, 'PNG', (pageWidth / 2) - 5, 8, 10, 10); 
+          doc.addImage(logoBase64, 'PNG', (pageWidth / 2) - 15, 8, 30, 30); 
           doc.restoreGraphicsState();
       }
     } catch (e) {}
