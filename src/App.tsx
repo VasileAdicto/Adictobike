@@ -90,22 +90,13 @@ const OptionCard = ({ component, isSelected, onClick }: { component: Component, 
       </div>
       <div className="flex-1 flex flex-col justify-between overflow-hidden">
         <div>
-          {/* Зменшено шрифт назви для мобілок: з text-[8px] на text-[6.5px] */}
-          <h3 className="text-[6.5px] lg:text-[11px] font-bold leading-tight tracking-tighter line-clamp-2 text-zinc-300 uppercase">
-            {component.name}
-          </h3>
-          {/* Також трішки зменшено шрифт бренду для балансу */}
-          <p className="text-[6px] lg:text-[9px] text-zinc-500 uppercase font-black">
-            {component.brand}
-          </p>
+          {/* Зменшено шрифт для мобілок на 20% (з 8px до 6.5px) */}
+          <h3 className="text-[6.5px] lg:text-[11px] font-bold leading-tight tracking-tighter line-clamp-2 text-zinc-300 uppercase">{component.name}</h3>
+          <p className="text-[6px] lg:text-[9px] text-zinc-500 uppercase font-black">{component.brand}</p>
         </div>
         <div className="flex justify-between items-end mt-1 lg:mt-2">
-          <p className="font-mono text-[9px] lg:text-sm text-red-600 tracking-tighter">
-            €{component.price.toLocaleString()}
-          </p>
-          <p className="text-[8px] lg:text-sm text-zinc-600 font-mono italic">
-            {component.weight}g
-          </p>
+          <p className="font-mono text-[10px] lg:text-sm text-red-600 tracking-tighter">€{component.price.toLocaleString()}</p>
+          <p className="text-[9px] lg:text-sm text-zinc-600 font-mono italic">{component.weight}g</p>
         </div>
       </div>
     </motion.button>
@@ -185,6 +176,7 @@ export default function BikeConfigurator() {
 
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-red-600 pb-28 lg:pb-24 overflow-x-hidden">
+      {/* ПІДНЯТО ЛІНІЮ (py-2 замість py-4) */}
       <nav className="border-b border-white/5 px-4 lg:px-8 py-2 flex justify-between items-center bg-black/80 backdrop-blur-2xl sticky top-0 z-50">
         <div className="flex items-center gap-4 pl-2">
           <img src="/design/Logo.png" alt="Logo" className="h-5 lg:h-6 w-auto object-contain" />
@@ -206,6 +198,7 @@ export default function BikeConfigurator() {
         </div>
       </nav>
 
+      {/* ЗМЕНШЕНО ВІДСТАНЬ (pt-2 замість pt-6) */}
       <main className="max-w-[1500px] mx-auto px-4 lg:px-6 pt-2 lg:pt-3">
         <div className="flex flex-col lg:grid lg:grid-cols-12 gap-6 lg:gap-10 lg:h-[550px] items-stretch">
           
