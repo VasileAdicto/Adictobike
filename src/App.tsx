@@ -18,7 +18,7 @@ interface Component {
   imageUrl: string;      
   cardImageUrl: string;  
   zIndex: number;
-  stepTitle?: string; // Додано для відображення розділу в PDF
+  stepTitle?: string; // Потрібно для PDF
 }
 
 interface Step {
@@ -27,6 +27,7 @@ interface Step {
   options: Component[];
 }
 
+// --- INITIAL DATA ---
 const INITIAL_STEPS: Step[] = [
   { id: 'frame', title: 'Frame', options: [] },
   { id: 'wheelset', title: 'Wheelset', options: [] },
@@ -40,6 +41,8 @@ const INITIAL_STEPS: Step[] = [
   { id: 'cassette', title: 'Cassette', options: [] },
   { id: 'discs', title: 'Discs', options: [] }
 ];
+
+// --- COMPONENTS ---
 
 const Visualizer = ({ selectedComponents }: { selectedComponents: Component[] }) => {
   return (
@@ -87,6 +90,7 @@ const OptionCard = ({ component, isSelected, onClick }: { component: Component, 
           </div>
         )}
       </div>
+
       <div className="flex-1 flex flex-col justify-between overflow-hidden">
         <div>
           <h3 className="text-[11px] font-bold leading-tight tracking-tighter line-clamp-2 text-zinc-300 uppercase">{component.name}</h3>
@@ -109,6 +113,10 @@ export default function BikeConfigurator() {
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [selections, setSelections] = useState<Record<string, string>>({});
   const [isFinished, setIsFinished] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const currentStep = steps[currentStepIndex] || steps[0];
+  const listRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const autoLoadExcel = async () => {
@@ -151,11 +159,18 @@ export default function BikeConfigurator() {
 
   const selectedComponents = useMemo(() => {
     return steps.map(step => {
-      const opt = step.options.find(opt => opt.id === selections[step.id]);
-      if (opt) return { ...opt, stepTitle: step.title }; // Додаємо назву розділу
-      return null;
+        const opt = step.options.find(o => o.id === selections[step.id]);
+        if (opt) return { ...opt, stepTitle: step.title };
+        return null;
     }).filter((c): c is Component => !!c);
   }, [selections, steps]);
+
+  const jumpToStep = (index: number) => {
+    if (index === 0 || !!selections[steps[index - 1]?.id] || index < currentStepIndex) {
+      setCurrentStepIndex(index);
+      setError(null);
+    }
+  };
 
   if (isFinished) return <SummaryView selections={selectedComponents} onReset={() => window.location.reload()} />;
 
@@ -164,7 +179,7 @@ export default function BikeConfigurator() {
       <nav className="border-b border-white/5 px-8 py-4 flex justify-between items-center bg-black/80 backdrop-blur-2xl sticky top-0 z-50">
         <div className="flex items-center gap-4 pl-2">
           <img src="/design/Logo.png" alt="Logo" className="h-6 w-auto object-contain" />
-          <div className="hidden sm:flex flex-col border-l border-white/10 pl-4 w-[85px]">
+          <div className="hidden sm:flex flex-col border-l border-white/10 pl-4 gap-0.4 w-[85px]">
             <div className="flex justify-between w-full leading-none">
               {"ADICTO.BIKE".split("").map((char, i) => <span key={i} className="text-[9px] font-black italic uppercase text-white">{char}</span>)}
             </div>
@@ -178,16 +193,11 @@ export default function BikeConfigurator() {
       </nav>
 
       <main className="max-w-[1500px] mx-auto px-6 pt-10">
-        <div className="grid grid-cols-12 gap-10 h-[550px]">
-          <div className="col-span-9 flex flex-col gap-6">
+        <div className="grid grid-cols-12 gap-10 h-[550px] items-stretch">
+          <div className="col-span-9 flex flex-col gap-6 order-1">
             <div className="flex flex-wrap justify-start items-center px-4 gap-x-6 gap-y-2">
               {steps.map((step, idx) => (
-                <button 
-                  key={step.id} 
-                  onClick={() => idx <= currentStepIndex && setCurrentStepIndex(idx)} 
-                  className={cn("transition-all duration-300 text-[10px] font-black italic uppercase tracking-widest pb-1 border-b-2 whitespace-nowrap", 
-                  idx === currentStepIndex ? "text-red-600 border-red-600 drop-shadow-[0_0_9px_rgba(255,0,0,0.3)]" : "text-white opacity-20 border-transparent")}
-                >
+                <button key={step.id} onClick={() => jumpToStep(idx)} className={cn("transition-all duration-300 text-[10px] font-black italic uppercase tracking-widest pb-1 border-b-2 whitespace-nowrap", idx === currentStepIndex ? "text-red-600 border-red-600 drop-shadow-[0_0_9px_rgba(255,0,0,0.3)]" : "text-white opacity-20 border-transparent hover:opacity-100")}>
                   {step.title}
                 </button>
               ))}
@@ -196,38 +206,52 @@ export default function BikeConfigurator() {
               <Visualizer selectedComponents={selectedComponents} />
             </div>
           </div>
-          <div className="col-span-3 flex flex-col h-full bg-zinc-900/40 rounded-[2.5rem] border border-white/5 p-6 overflow-hidden">
-            <div className="flex-1 space-y-2 overflow-y-auto pr-1 velocraft-scrollbar">
-              {currentStep.options.map((option) => (
-                <OptionCard 
-                  key={option.id} 
-                  component={option} 
-                  isSelected={selections[currentStep.id] === option.id} 
-                  onClick={() => setSelections(prev => ({...prev, [currentStep.id]: option.id}))} 
-                />
-              ))}
+
+          <div className="col-span-3 flex flex-col h-full bg-zinc-900/40 rounded-[2.5rem] border border-white/5 p-6 relative overflow-hidden order-2">
+            <div ref={listRef} className="flex-1 space-y-2 velocraft-scrollbar overflow-y-auto pr-1">
+                {error && <div className="mb-4 text-red-500 bg-red-600/10 p-2 rounded-lg text-[9px] font-bold uppercase">{error}</div>}
+                <AnimatePresence mode="popLayout">
+                  {currentStep.options.map((option) => (
+                    <OptionCard 
+                      key={option.id} 
+                      component={option} 
+                      isSelected={selections[currentStep.id] === option.id} 
+                      onClick={() => { setSelections(prev => ({...prev, [currentStep.id]: option.id})); setError(null); }} 
+                    />
+                  ))}
+                </AnimatePresence>
             </div>
           </div>
         </div>
       </main>
 
-      <div className="fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur-2xl border-t border-white/5 z-40">
-        <div className="max-w-[1500px] mx-auto px-6 py-6 flex justify-between items-center">
-          <button onClick={() => currentStepIndex > 0 && setCurrentStepIndex(currentStepIndex - 1)} className="flex items-center gap-3 text-zinc-500 hover:text-white transition-all font-black uppercase text-[10px] tracking-widest">
-            <ChevronLeft size={20} /> Back
-          </button>
-          <div className="flex gap-10 items-center">
+      <div className="fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur-2xl border-t border-white/5 z-40 font-sans">
+        <div className="max-w-[1500px] mx-auto px-6 py-6 grid grid-cols-12 gap-10 items-center">
+          <div className="col-span-2">
+            <button onClick={() => currentStepIndex > 0 && setCurrentStepIndex(currentStepIndex - 1)} className="flex items-center gap-3 text-zinc-500 hover:text-white disabled:opacity-10 transition-all font-black uppercase text-[10px] tracking-widest">
+              <ChevronLeft size={20} /> Back
+            </button>
+          </div>
+
+          <div className="col-span-7 flex justify-end items-center gap-10 pr-4">
             <div className="text-right">
               <p className="text-[8px] text-zinc-600 uppercase font-black mb-1">Weight</p>
-              <p className="font-mono text-sm">{selectedComponents.reduce((acc, c) => acc + c.weight, 0)}g</p>
+              <p className="font-mono text-sm tracking-tighter">{selectedComponents.reduce((acc, c) => acc + c.weight, 0)}g</p>
             </div>
+            <div className="h-8 w-px bg-white/10" />
             <div className="text-right">
               <p className="text-[8px] text-zinc-600 uppercase font-black mb-1">Price</p>
-              <p className="font-mono text-sm text-red-600">€{selectedComponents.reduce((acc, c) => acc + c.price, 0).toLocaleString()}</p>
+              <p className="font-mono text-sm text-red-600 tracking-tighter">€{selectedComponents.reduce((acc, c) => acc + c.price, 0).toLocaleString()}</p>
             </div>
+          </div>
+
+          <div className="col-span-3 flex justify-end">
             <button 
-              onClick={() => currentStepIndex < steps.length - 1 ? setCurrentStepIndex(currentStepIndex + 1) : setIsFinished(true)}
-              className="bg-red-600 hover:bg-red-700 text-white h-[32px] px-[22px] rounded-lg font-black uppercase text-[10px] tracking-widest flex items-center gap-3 transition-all"
+              onClick={() => {
+                if (currentStep.options.length > 0 && !selections[currentStep.id]) { setError("Select a component"); return; }
+                currentStepIndex < steps.length - 1 ? setCurrentStepIndex(currentStepIndex + 1) : setIsFinished(true);
+              }}
+              className="bg-red-600 hover:bg-red-700 text-white h-[32px] px-[22px] rounded-lg font-black uppercase text-[10px] tracking-widest flex items-center gap-3 shadow-lg shadow-red-600/20 active:scale-95 transition-all"
             >
               {currentStepIndex === steps.length - 1 ? 'Finish' : 'Next Step'} <ChevronRight size={14} />
             </button>
@@ -252,75 +276,80 @@ function SummaryView({ selections, onReset }: any) {
         reader.onerror = reject;
         reader.readAsDataURL(blob);
       });
-    } catch (e) { return ""; }
+    } catch (e) {
+      return "";
+    }
   };
 
   const handleExport = async () => {
-    const doc = new jsPDF({ compress: true });
+    const doc = new jsPDF(); // Без compress: true
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
     const cleanText = (text: string) => text ? String(text).replace(/[^\x00-\x7F]/g, "").toUpperCase() : "";
 
-    // 1. Логотип (Logo.png) напівпрозорий
+    // 1. Логотип замість тексту
     try {
-        const logoBase64 = await getBase64Image("/design/Logo.png");
-        if (logoBase64) {
-            doc.saveGraphicsState();
-            doc.setGState(new (doc as any).GState({ opacity: 0.8 })); // Напівпрозорість
-            doc.addImage(logoBase64, 'PNG', (pageWidth / 2) - 10, 10, 20, 8); // Розмір ~40-50px (20мм)
-            doc.restoreGraphicsState();
-        }
+      const logoBase64 = await getBase64Image("/design/Logo.png");
+      if (logoBase64) {
+          doc.saveGraphicsState();
+          doc.setGState(new (doc as any).GState({ opacity: 0.8 }));
+          doc.addImage(logoBase64, 'PNG', (pageWidth / 2) - 15, 8, 30, 10); 
+          doc.restoreGraphicsState();
+      }
     } catch (e) {}
 
-    // 2. Малюємо велосипед шарами
     try {
       const sortedByZ = [...selections].sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
       for (const comp of sortedByZ) {
         if (comp.imageUrl) {
           const imgBase64 = await getBase64Image(comp.imageUrl);
-          if (imgBase64) doc.addImage(imgBase64, 'PNG', 30, 20, 150, 75, undefined, 'FAST');
+          if (imgBase64) {
+            doc.addImage(imgBase64, 'PNG', 30, 22, 150, 75, undefined, 'FAST');
+          }
         }
       }
     } catch (e) {}
 
-    // 3. Таблиця з новим стовпчиком розділу
+    // 3. Таблиця з розділом SECTION
     const tableData = selections.map((c: any) => [
       cleanText(c.stepTitle || ""), // Розділ
-      cleanText(c.name),           // Компонент
-      cleanText(c.brand),          // Бренд
-      `${c.weight} g`,             // Вага
-      `${c.price.toLocaleString()} €` // Ціна
+      cleanText(c.name), 
+      cleanText(c.brand), 
+      `${c.weight} g`, 
+      `${c.price.toLocaleString()} €`
     ]);
 
     autoTable(doc, {
       startY: 105,
       head: [['SECTION', 'COMPONENT', 'BRAND', 'WEIGHT', 'PRICE']],
       body: tableData,
-      styles: { font: "helvetica", fontSize: 6, cellPadding: 2 },
+      styles: { font: "helvetica", fontSize: 5.8, cellPadding: 2 },
       headStyles: { fillColor: [20, 20, 20], textColor: [255, 255, 255] },
       columnStyles: {
-        0: { fontStyle: 'bold', cellWidth: 25 }, // Стиль для стовпця SECTION
+        0: { fontStyle: 'bold', cellWidth: 25 }, 
       },
-      foot: [['TOTAL', '', '', `${totalWeight} g`, `${totalPrice.toLocaleString()} €`]],
+      foot: [['TOTAL SPECIFICATION', '', '', `${totalWeight} g`, `${totalPrice.toLocaleString()} €`]],
       footStyles: { fillColor: [220, 38, 38], textColor: [255, 255, 255] },
       theme: 'grid'
     });
 
-    // 4. Футер
-    const footerY = pageHeight - 30;
-    doc.setFontSize(5); doc.setTextColor(150);
+    const footerY = pageHeight - 20;
+    doc.setFontSize(6.3); doc.setTextColor(100);
     doc.text("WWW.ADICTO.BIKE  |  @ADICTO.BIKE", pageWidth / 2, footerY, { align: 'center' });
-    
+
+    try { doc.addImage("/design/qr-code.png", "PNG", pageWidth - 35, pageHeight - 35, 20, 20); } catch (e) {}
+
     doc.save(`ADICTO_BUILD.pdf`);
   };
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-8 text-center">
+    <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-8 text-center font-sans">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-2xl w-full">
         <CheckCircle2 size={32} className="text-red-600 mx-auto mb-4" /> 
-        <h2 className="text-[27px] font-black italic uppercase mb-4 leading-none">
+        <h2 className="text-[27px] font-black italic uppercase tracking-tighter mb-4 leading-none">
           Configuration <br/> <span className="text-red-600">Complete</span>
         </h2>
+
         <div className="flex justify-center gap-10 my-8 bg-zinc-900/50 p-6 rounded-3xl border border-white/5">
           <div>
             <p className="text-zinc-500 text-[10px] uppercase font-bold tracking-widest">Total Price</p>
@@ -332,11 +361,12 @@ function SummaryView({ selections, onReset }: any) {
             <p className="text-[27px] font-mono">{totalWeight}g</p>
           </div>
         </div>
+
         <div className="flex gap-4 justify-center">
           <button onClick={handleExport} className="px-8 py-4 bg-red-600 text-white rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-red-700 transition-all flex items-center gap-2">
             <Download size={16} /> Export PDF
           </button>
-          <button onClick={onReset} className="px-8 py-4 border border-white/10 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-white/5 transition-all">
+          <button onReset={onReset} className="px-8 py-4 border border-white/10 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-white/5 transition-all">
             Start Over
           </button>
         </div>
