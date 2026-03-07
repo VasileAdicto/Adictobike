@@ -192,7 +192,7 @@ export default function BikeConfigurator() {
               }} 
             />
           )}
-          <div className="text-zinc-400 font-mono text-[9px] pr-2 opacity-60 uppercase tracking-widest">
+          <div className="text-zinc-400 font-mono text-[7px] pr-2 opacity-70 uppercase tracking-widest">
             Build by Vasile
           </div>
         </div>
@@ -203,7 +203,7 @@ export default function BikeConfigurator() {
         <div className="flex flex-col lg:grid lg:grid-cols-12 gap-6 lg:gap-10 lg:h-[550px] items-stretch">
           
           {/* Visualizer Side */}
-          <div className="lg:col-span-9 flex flex-col gap-6 order-1">
+          <div className="lg:col-span-9 flex flex-col gap-2 order-1">
             <div className="flex overflow-x-auto no-scrollbar lg:overflow-visible lg:flex-wrap justify-start items-center px-4 gap-x-6 gap-y-2 pb-2">
               {steps.map((step, idx) => (
                 <button 
@@ -366,7 +366,7 @@ function SummaryView({ selections, onReset }: any) {
       styles: { font: "helvetica", fontSize: 5.8, cellPadding: 2 },
       headStyles: { fillColor: [20, 20, 20], textColor: [255, 255, 255] },
       columnStyles: { 0: { fontStyle: 'bold', cellWidth: 25 } },
-      foot: [['TOTAL SPECIFICATION', '', '', `${totalWeight} g`, `${totalPrice.toLocaleString()} €`]],
+      foot: [['TOTAL', '', '', `${totalWeight} g`, `${totalPrice.toLocaleString()} €`]],
       footStyles: { fillColor: [220, 38, 38], textColor: [255, 255, 255], fontSize: 9, fontStyle: 'bold', cellPadding: 3 },
       didParseCell: (data) => { if (data.section === 'foot' && data.column.index === 0) { data.cell.styles.cellWidth = 'wrap'; } },
       theme: 'grid'
@@ -390,9 +390,9 @@ function SummaryView({ selections, onReset }: any) {
         <CheckCircle2 size={32} className="text-red-600 mx-auto mb-4" /> 
         <h2 className="text-[27px] font-black italic uppercase tracking-tighter mb-4 leading-none">Configuration <br/> <span className="text-red-600">Complete</span></h2>
         <div className="flex justify-center gap-10 my-8 bg-zinc-900/50 p-6 rounded-3xl border border-white/5">
-          <div><p className="text-zinc-500 text-[10px] uppercase font-bold tracking-widest">Total Price</p><p className="text-[27px] font-mono text-red-600">€{totalPrice.toLocaleString()}</p></div>
+          <div><p className="text-zinc-500 text-[10px] uppercase font-bold tracking-widest">Price</p><p className="text-[27px] font-mono text-red-600">€{totalPrice.toLocaleString()}</p></div>
           <div className="w-px bg-white/10" />
-          <div><p className="text-zinc-500 text-[10px] uppercase font-bold tracking-widest">Total Weight</p><p className="text-[27px] font-mono">{totalWeight}g</p></div>
+          <div><p className="text-zinc-500 text-[10px] uppercase font-bold tracking-widest">Weight</p><p className="text-[27px] font-mono">{totalWeight}g</p></div>
         </div>
         <div className="flex gap-4 justify-center">
           <button onClick={handleExport} className="px-8 py-4 bg-red-600 text-white rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-red-700 transition-all flex items-center gap-2"><Download size={16} /> Export PDF</button>
