@@ -329,7 +329,7 @@ function SummaryView({ selections, onReset }: any) {
       footStyles: { 
         fillColor: [220, 38, 38], 
         textColor: [255, 255, 255], 
-        fontSize: 10,  
+        fontSize: 9,  
         fontStyle: 'bold',
         cellPadding: 3 
       },
@@ -355,7 +355,7 @@ function SummaryView({ selections, onReset }: any) {
     doc.setTextColor(100);
     doc.text("WWW.ADICTO.BIKE  |  @ADICTO.BIKE", pageWidth / 2, footerY, { align: 'center' });
 
-    try { doc.addImage("/design/qr-code.png", "PNG", pageWidth - 35, pageHeight - 35, 35, 32); } catch (e) {}
+    try { doc.addImage("/design/qr-code.png", "PNG", pageWidth - 50, pageHeight - 50, 35, 35); } catch (e) {}
 
     doc.save(`ADICTO_BUILD.pdf`);
   };
