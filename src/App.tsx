@@ -52,7 +52,7 @@ const Visualizer = ({ selectedComponents }: { selectedComponents: Component[] })
         {selectedComponents.map((comp) => (
           <motion.img
             key={comp.id}
-            src={comp.imageUrl} // Використовуємо чисте посилання з Excel
+            src={comp.imageUrl}
             crossOrigin="anonymous" 
             loading="eager"
             alt={comp.name}
@@ -261,40 +261,57 @@ function SummaryView({ selections, onReset }: any) {
   const totalPrice = selections.reduce((acc: number, c: any) => acc + c.price, 0);
   const totalWeight = selections.reduce((acc: number, c: any) => acc + c.weight, 0);
 
+  // Функція для завантаження картинок безпосередньо (минаючи html2canvas)
+  const getBase64Image = async (url: string): Promise<string> => {
+    try {
+      const res = await fetch(url);
+      const blob = await res.blob();
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    } catch (e) {
+      console.error("Failed to fetch image:", url);
+      return "";
+    }
+  };
+
   const handleExport = async () => {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
     const cleanText = (text: string) => text ? String(text).replace(/[^\x00-\x7F]/g, "").toUpperCase() : "";
 
+    // 1. Логотип
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12); doc.setTextColor(220, 38, 38);
     doc.text("ADICTO.BIKE", pageWidth / 2, 15, { align: 'center' });
 
-    const visualizerElement = document.getElementById('bike-visualizer');
-    
-    if (visualizerElement && (window as any).html2canvas) {
-      // Чекаємо 1 секунду, щоб шари точно завантажилися
-      await new Promise(resolve => setTimeout(resolve, 1000));
+    // 2. МАЛЮЄМО ВЕЛОСИПЕД ШАРАМИ (Накладання картинок прямо в PDF)
+    // Малюємо чорний фон
+    doc.setFillColor(5, 5, 5);
+    doc.roundedRect(15, 22, 180, 85, 5, 5, "F");
 
-      try {
-        const canvas = await (window as any).html2canvas(visualizerElement, {
-          backgroundColor: '#000000',
-          useCORS: true,      // Дозволяє читати картинки з GitHub
-          allowTaint: false,  // Безпечне малювання
-          scale: 3,           // Збільшуємо якість до максимуму
-          logging: true,      // Увімкни, щоб бачити помилки в F12
-          useCORS: true
-        });
-        
-        const imgData = canvas.toDataURL('image/png');
-        // Додаємо фото (ширина 180, висота 85)
-        doc.addImage(imgData, 'PNG', 15, 22, 180, 85);
-      } catch (e) {
-        console.error("Error Critic of photo:", e);
+    try {
+      // Сортуємо по zIndex, щоб рама була знизу, а дрібниці зверху
+      const sortedByZ = [...selections].sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
+      
+      for (const comp of sortedByZ) {
+        if (comp.imageUrl) {
+          const imgBase64 = await getBase64Image(comp.imageUrl);
+          if (imgBase64) {
+            // Малюємо кожен шар один на одного в тих же координатах
+            doc.addImage(imgBase64, 'PNG', 15, 22, 180, 85, undefined, 'FAST');
+          }
+        }
       }
+    } catch (e) {
+      console.error("Error drawing layers:", e);
     }
 
+    // 3. Таблиця
     const tableData = selections.map((c: any) => [
       cleanText(c.name), 
       cleanText(c.brand), 
@@ -303,7 +320,7 @@ function SummaryView({ selections, onReset }: any) {
     ]);
 
     autoTable(doc, {
-      startY: 122, 
+      startY: 122,
       head: [['COMPONENT', 'BRAND', 'WEIGHT', 'PRICE']],
       body: tableData,
       styles: { font: "helvetica", fontSize: 6.3 },
@@ -313,19 +330,21 @@ function SummaryView({ selections, onReset }: any) {
       theme: 'grid'
     });
 
+    // 4. Дисклеймер та Футер
     const finalY = (doc as any).lastAutoTable.finalY + 10;
     doc.setFontSize(5.6); doc.setTextColor(140);
     const disclaimer = "NOTICE: THE WEIGHT AND PRICE INDICATED ARE PRELIMINARY AND SUBJECT TO MINOR CHANGES BASED ON COMPONENT AVAILABILITY AND TECHNICAL ASSEMBLY SPECIFICATIONS. ADICTO.BIKE RESERVES THE RIGHT TO MODIFY SPECIFICATIONS WITHOUT PRIOR NOTICE.";
     doc.text(doc.splitTextToSize(disclaimer, pageWidth - 28), 14, finalY);
 
     const footerY = pageHeight - 35;
-    doc.setFontSize(6.3);
+    doc.setFontSize(6.3); doc.setTextColor(100);
     doc.text("WWW.ADICTO.BIKE", 14, footerY + 10);
     doc.text("INSTAGRAM: @ADICTO.BIKE", 14, footerY + 15);
     doc.text("EMAIL: HELLO@ADICTO.BIKE", 14, footerY + 20);
     doc.text("TEL/WHATSAPP: +34 674 26 26 22", 14, footerY + 25);
 
     try { doc.addImage("/design/qr-code.png", "PNG", pageWidth - 35, footerY + 5, 20, 20); } catch (e) {}
+
     doc.save(`ADICTO_BUILD.pdf`);
   };
 
@@ -333,7 +352,6 @@ function SummaryView({ selections, onReset }: any) {
     <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-8 text-center font-sans">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-2xl w-full">
         <CheckCircle2 size={32} className="text-red-600 mx-auto mb-4" /> 
-        
         <h2 className="text-[27px] font-black italic uppercase tracking-tighter mb-4 leading-none">
           Configuration <br/> <span className="text-red-600">Complete</span>
         </h2>
