@@ -231,7 +231,22 @@ export default function BikeConfigurator() {
         </div>
       </main>
 
-      {/* 3. Блок Weight та Price (тепер вони під правим кутом візуалізатора) */}
+      {/* FOOTER CONTROLS */}
+<div className="fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur-2xl border-t border-white/5 z-40 font-sans">
+  <div className="max-w-[1500px] mx-auto px-6 py-6 flex items-center">
+    
+    {/* 1. Кнопка Back (крайній лівий край) */}
+    <button 
+      onClick={() => currentStepIndex > 0 && setCurrentStepIndex(currentStepIndex - 1)} 
+      className="flex items-center gap-3 text-zinc-500 hover:text-white disabled:opacity-10 transition-all font-black uppercase text-[10px] tracking-widest"
+    >
+      <ChevronLeft size={20} /> Back
+    </button>
+    
+    {/* 2. Порожній простір, який штовхає все інше вправо */}
+    <div className="flex-1" />
+
+    {/* 3. Блок Weight та Price (тепер вони під правим кутом візуалізатора) */}
     <div className="flex gap-10 items-center pr-10 border-r border-white/10 mr-10">
       <div className="text-right">
         <p className="text-[8px] text-zinc-600 uppercase font-black mb-1">Weight</p>
@@ -250,23 +265,25 @@ export default function BikeConfigurator() {
       </div>
     </div>
 
-        <button 
-          onClick={() => {
-            if (currentStep.options.length > 0 && !selections[currentStep.id]) {
-              setError("Select a component");
-              return;
-            }
-            currentStepIndex < steps.length - 1 ? setCurrentStepIndex(currentStepIndex + 1) : setIsFinished(true);
-          }}
-          className="bg-red-600 hover:bg-red-700 text-white px-8 py-2 rounded-lg font-black uppercase text-[11px] tracking-widest flex items-center gap-3 shadow-lg shadow-red-600/20 active:scale-95 transition-all"
-        >
-          {currentStepIndex === steps.length - 1 ? 'Finish' : 'Next Step'} <ChevronRight size={18} />
-        </button>
-      </div>
-    </div>
+    {/* 4. Кнопка Next Step (крайній правий край всього макету) */}
+    <button 
+      onClick={() => {
+        if (currentStep.options.length > 0 && !selections[currentStep.id]) {
+          setError("Select a component");
+          return;
+        }
+        currentStepIndex < steps.length - 1 ? setCurrentStepIndex(currentStepIndex + 1) : setIsFinished(true);
+      }}
+      className="bg-red-600 hover:bg-red-700 text-white px-8 py-2 rounded-lg font-black uppercase text-[11px] tracking-widest flex items-center gap-3 shadow-lg shadow-red-600/20 active:scale-95 transition-all"
+    >
+      {currentStepIndex === steps.length - 1 ? 'Finish' : 'Next Step'} <ChevronRight size={18} />
+    </button>
+
+  </div>
+</div>
   );
 }
-
+      
 function SummaryView({ selections, onReset }: any) {
   const totalPrice = selections.reduce((acc: number, c: any) => acc + c.price, 0);
   const totalWeight = selections.reduce((acc: number, c: any) => acc + c.weight, 0);
