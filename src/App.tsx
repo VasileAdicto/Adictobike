@@ -282,12 +282,12 @@ function SummaryView({ selections, onReset }: any) {
   };
 
   const handleExport = async () => {
-    const doc = new jsPDF(); // Без compress: true
+    const doc = new jsPDF(); 
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
     const cleanText = (text: string) => text ? String(text).replace(/[^\x00-\x7F]/g, "").toUpperCase() : "";
 
-    // 1. Логотип замість тексту
+    // 1. Логотип
     try {
       const logoBase64 = await getBase64Image("/design/Logo.png");
       if (logoBase64) {
@@ -312,7 +312,7 @@ function SummaryView({ selections, onReset }: any) {
 
     // 3. Таблиця з розділом SECTION
     const tableData = selections.map((c: any) => [
-      cleanText(c.stepTitle || ""), // Розділ
+      cleanText(c.stepTitle || ""), 
       cleanText(c.name), 
       cleanText(c.brand), 
       `${c.weight} g`, 
@@ -320,7 +320,7 @@ function SummaryView({ selections, onReset }: any) {
     ]);
 
     autoTable(doc, {
-      startY: 105,
+      startY: 140, // Опустив таблицю нижче
       head: [['SECTION', 'COMPONENT', 'BRAND', 'WEIGHT', 'PRICE']],
       body: tableData,
       styles: { font: "helvetica", fontSize: 5.8, cellPadding: 2 },
@@ -328,18 +328,22 @@ function SummaryView({ selections, onReset }: any) {
       columnStyles: {
         0: { fontStyle: 'bold', cellWidth: 25 }, 
       },
-      // Самі дані підсумку
-  foot: [['TOTAL SPECIFICATION', '', '', `${totalWeight} g`, `${totalPrice.toLocaleString()} €`]],
-  // Змінюємо ТУТ:
-  footStyles: { 
-    fillColor: [220, 38, 38], 
-    textColor: [255, 255, 255], 
-    fontSize: 10,           // Було за замовчуванням як у таблиці, тепер 9 (можна поставити 10)
-    fontStyle: 'bold',     // Робимо жирним для акценту
-    cellPadding: 3         // Додаємо трохи простору всередині комірок
-  },
-  theme: 'grid'
-});
+      foot: [['TOTAL SPECIFICATION', '', '', `${totalWeight} g`, `${totalPrice.toLocaleString()} €`]],
+      footStyles: { 
+        fillColor: [220, 38, 38], 
+        textColor: [255, 255, 255], 
+        fontSize: 10,  
+        fontStyle: 'bold',
+        cellPadding: 3 
+      },
+      didParseCell: (data) => {
+        // Заборона переносу тексту для TOTAL SPECIFICATION
+        if (data.section === 'foot' && data.column.index === 0) {
+            data.cell.styles.cellWidth = 'wrap'; 
+        }
+      },
+      theme: 'grid'
+    });
 
     const footerY = pageHeight - 20;
     doc.setFontSize(6.3); doc.setTextColor(100);
@@ -374,7 +378,7 @@ function SummaryView({ selections, onReset }: any) {
           <button onClick={handleExport} className="px-8 py-4 bg-red-600 text-white rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-red-700 transition-all flex items-center gap-2">
             <Download size={16} /> Export PDF
           </button>
-          <button onReset={onReset} className="px-8 py-4 border border-white/10 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-white/5 transition-all">
+          <button onClick={onReset} className="px-8 py-4 border border-white/10 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-white/5 transition-all">
             Start Over
           </button>
         </div>
