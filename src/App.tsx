@@ -81,7 +81,6 @@ const OptionCard = ({ component, isSelected, onClick }: { component: Component, 
     >
       <div className="aspect-square w-full rounded-xl bg-black/40 mb-3 overflow-hidden relative">
         <img src={component.cardImageUrl} alt={component.name} className="w-full h-full object-contain p-2 group-hover:scale-110 transition duration-500" />
-        {/* Галочка справа */}
         {isSelected && (
           <div className="absolute top-2 right-2 bg-red-600 p-1.5 rounded-full shadow-lg z-10">
             <CheckCircle2 size={12} className="text-white" />
@@ -190,8 +189,6 @@ export default function BikeConfigurator() {
 
       <main className="max-w-[1500px] mx-auto px-6 pt-10">
         <div className="grid grid-cols-12 gap-10 h-[550px] items-stretch">
-          
-          {/* LEFT: VISUALIZER */}
           <div className="col-span-9 flex flex-col gap-6 order-1">
             <div className="flex flex-wrap justify-start items-center px-4 gap-x-6 gap-y-2">
               {steps.map((step, idx) => (
@@ -212,7 +209,6 @@ export default function BikeConfigurator() {
             </div>
           </div>
 
-          {/* RIGHT: OPTIONS */}
           <div className="col-span-3 flex flex-col h-full bg-zinc-900/40 rounded-[2.5rem] border border-white/5 p-6 relative overflow-hidden order-2">
             <div ref={listRef} className="flex-1 space-y-2 velocraft-scrollbar overflow-y-auto pr-1">
               {error && <div className="mb-4 text-red-500 bg-red-600/10 p-2 rounded-lg text-[9px] font-bold uppercase">{error}</div>}
@@ -231,56 +227,42 @@ export default function BikeConfigurator() {
         </div>
       </main>
 
-      {/* FOOTER CONTROLS */}
-<div className="fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur-2xl border-t border-white/5 z-40 font-sans">
-  <div className="max-w-[1500px] mx-auto px-6 py-6 flex items-center">
-    
-    {/* 1. Кнопка Back (крайній лівий край) */}
-    <button 
-      onClick={() => currentStepIndex > 0 && setCurrentStepIndex(currentStepIndex - 1)} 
-      className="flex items-center gap-3 text-zinc-500 hover:text-white disabled:opacity-10 transition-all font-black uppercase text-[10px] tracking-widest"
-    >
-      <ChevronLeft size={20} /> Back
-    </button>
-    
-    {/* 2. Порожній простір, який штовхає все інше вправо */}
-    <div className="flex-1" />
-
-    {/* 3. Блок Weight та Price (тепер вони під правим кутом візуалізатора) */}
-    <div className="flex gap-10 items-center pr-10 border-r border-white/10 mr-10">
-      <div className="text-right">
-        <p className="text-[8px] text-zinc-600 uppercase font-black mb-1">Weight</p>
-        <p className="font-mono text-sm tracking-tighter">
-          {selectedComponents.reduce((acc, c) => acc + c.weight, 0)}g
-        </p>
-      </div>
-      
-      <div className="h-8 w-px bg-white/10" />
-      
-      <div className="text-right">
-        <p className="text-[8px] text-zinc-600 uppercase font-black mb-1">Price</p>
-        <p className="font-mono text-sm text-red-600 tracking-tighter">
-          €{selectedComponents.reduce((acc, c) => acc + c.price, 0).toLocaleString()}
-        </p>
+      <div className="fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur-2xl border-t border-white/5 z-40 font-sans">
+        <div className="max-w-[1500px] mx-auto px-6 py-6 flex items-center">
+          <button onClick={() => currentStepIndex > 0 && setCurrentStepIndex(currentStepIndex - 1)} className="flex items-center gap-3 text-zinc-500 hover:text-white disabled:opacity-10 transition-all font-black uppercase text-[10px] tracking-widest">
+            <ChevronLeft size={20} /> Back
+          </button>
+          <div className="flex-1" />
+          <div className="flex gap-10 items-center pr-10 border-r border-white/10 mr-10">
+            <div className="text-right">
+              <p className="text-[8px] text-zinc-600 uppercase font-black mb-1">Weight</p>
+              <p className="font-mono text-sm tracking-tighter">
+                {selectedComponents.reduce((acc, c) => acc + c.weight, 0)}g
+              </p>
+            </div>
+            <div className="h-8 w-px bg-white/10" />
+            <div className="text-right">
+              <p className="text-[8px] text-zinc-600 uppercase font-black mb-1">Price</p>
+              <p className="font-mono text-sm text-red-600 tracking-tighter">
+                €{selectedComponents.reduce((acc, c) => acc + c.price, 0).toLocaleString()}
+              </p>
+            </div>
+          </div>
+          <button 
+            onClick={() => {
+              if (currentStep.options.length > 0 && !selections[currentStep.id]) {
+                setError("Select a component");
+                return;
+              }
+              currentStepIndex < steps.length - 1 ? setCurrentStepIndex(currentStepIndex + 1) : setIsFinished(true);
+            }}
+            className="bg-red-600 hover:bg-red-700 text-white px-8 py-2 rounded-lg font-black uppercase text-[11px] tracking-widest flex items-center gap-3 shadow-lg shadow-red-600/20 active:scale-95 transition-all"
+          >
+            {currentStepIndex === steps.length - 1 ? 'Finish' : 'Next Step'} <ChevronRight size={18} />
+          </button>
+        </div>
       </div>
     </div>
-
-    {/* 4. Кнопка Next Step (крайній правий край всього макету) */}
-    <button 
-      onClick={() => {
-        if (currentStep.options.length > 0 && !selections[currentStep.id]) {
-          setError("Select a component");
-          return;
-        }
-        currentStepIndex < steps.length - 1 ? setCurrentStepIndex(currentStepIndex + 1) : setIsFinished(true);
-      }}
-      className="bg-red-600 hover:bg-red-700 text-white px-8 py-2 rounded-lg font-black uppercase text-[11px] tracking-widest flex items-center gap-3 shadow-lg shadow-red-600/20 active:scale-95 transition-all"
-    >
-      {currentStepIndex === steps.length - 1 ? 'Finish' : 'Next Step'} <ChevronRight size={18} />
-    </button>
-
-  </div>
-</div>
   );
 }
       
@@ -290,6 +272,7 @@ function SummaryView({ selections, onReset }: any) {
 
   const handleExport = () => {
     const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
     const cleanText = (text: string) => text ? String(text).replace(/[^\x00-\x7F]/g, "").toUpperCase() : "";
     doc.setFont("helvetica", "bold");
     doc.setFontSize(24); doc.setTextColor(220, 38, 38);
@@ -310,11 +293,16 @@ function SummaryView({ selections, onReset }: any) {
       theme: 'grid'
     });
 
+    const finalY = (doc as any).lastAutoTable.finalY + 12;
+    const disclaimer = "NOTICE: THE WEIGHT AND PRICE INDICATED ARE PRELIMINARY AND SUBJECT TO MINOR CHANGES BASED ON COMPONENT AVAILABILITY AND TECHNICAL ASSEMBLY SPECIFICATIONS. ADICTO.BIKE RESERVES THE RIGHT TO MODIFY SPECIFICATIONS WITHOUT PRIOR NOTICE.";
+    doc.setFontSize(8); doc.setTextColor(140);
+    doc.text(doc.splitTextToSize(disclaimer, pageWidth - 28), 14, finalY);
+
     const footerY = doc.internal.pageSize.getHeight() - 45;
     doc.text("WWW.ADICTO.BIKE", 14, footerY + 17);
     doc.text("INSTAGRAM: @ADICTO.BIKE", 14, footerY + 23);
     doc.text("EMAIL: HELLO@ADICTO.BIKE", 14, footerY + 29);
-    try { doc.addImage("/design/qr-code.png", "PNG", doc.internal.pageSize.getWidth() - 45, footerY + 5, 30, 30); } catch (e) {}
+    try { doc.addImage("/design/qr-code.png", "PNG", pageWidth - 45, footerY + 5, 30, 30); } catch (e) {}
     doc.save(`ADICTO_BUILD.pdf`);
   };
 
