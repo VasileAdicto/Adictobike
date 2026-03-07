@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Download, CheckCircle2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Bike, Download, CheckCircle2, AlertCircle } from 'lucide-react';
 import { cn } from './lib/utils';
 import { ExcelImporter } from './components/ExcelImporter';
 
@@ -26,6 +26,7 @@ interface Step {
   options: Component[];
 }
 
+// --- INITIAL DATA ---
 const INITIAL_STEPS: Step[] = [
   { id: 'frame', title: 'Frame', options: [] },
   { id: 'wheelset', title: 'Wheelset', options: [] },
@@ -93,7 +94,7 @@ const OptionCard = ({ component, isSelected, onClick }: { component: Component, 
           <p className="text-[9px] text-zinc-500 uppercase font-black">{component.brand}</p>
         </div>
         <div className="flex justify-between items-end mt-2">
-          {/* Стиль ціни як у загальної ціни (font-mono, text-red) */}
+          {/* Правка: Ціна картки товару в стилі та розмірі як загальна ціна */}
           <p className="font-mono text-sm text-red-600 tracking-tighter">
             €{component.price.toLocaleString()}
           </p>
@@ -201,19 +202,19 @@ export default function BikeConfigurator() {
           </div>
 
           <div className="col-span-3 flex flex-col h-full bg-zinc-900/40 rounded-[2.5rem] border border-white/5 p-6 relative overflow-hidden order-2">
-            {/* Скроллбар справа (видалено direction: rtl) */}
+            {/* Правка: Скролл бар справа (direction rtl видалено) */}
             <div ref={listRef} className="flex-1 space-y-2 velocraft-scrollbar overflow-y-auto pr-1">
-              {error && <div className="mb-4 text-red-500 bg-red-600/10 p-2 rounded-lg text-[9px] font-bold uppercase">{error}</div>}
-              <AnimatePresence mode="popLayout">
-                {currentStep.options.map((option) => (
-                  <OptionCard 
-                    key={option.id} 
-                    component={option} 
-                    isSelected={selections[currentStep.id] === option.id} 
-                    onClick={() => { setSelections(prev => ({...prev, [currentStep.id]: option.id})); setError(null); }} 
-                  />
-                ))}
-              </AnimatePresence>
+                {error && <div className="mb-4 text-red-500 bg-red-600/10 p-2 rounded-lg text-[9px] font-bold uppercase">{error}</div>}
+                <AnimatePresence mode="popLayout">
+                  {currentStep.options.map((option) => (
+                    <OptionCard 
+                      key={option.id} 
+                      component={option} 
+                      isSelected={selections[currentStep.id] === option.id} 
+                      onClick={() => { setSelections(prev => ({...prev, [currentStep.id]: option.id})); setError(null); }} 
+                    />
+                  ))}
+                </AnimatePresence>
             </div>
           </div>
         </div>
@@ -245,10 +246,10 @@ export default function BikeConfigurator() {
                 if (currentStep.options.length > 0 && !selections[currentStep.id]) { setError("Select a component"); return; }
                 currentStepIndex < steps.length - 1 ? setCurrentStepIndex(currentStepIndex + 1) : setIsFinished(true);
               }}
-              /* Зменшено розміри кнопки: h-10 замість py-4, px-5 замість px-8, text-[10px] */
-              className="bg-red-600 hover:bg-red-700 text-white h-10 px-5 rounded-lg font-black uppercase text-[10px] tracking-widest flex items-center gap-3 shadow-lg shadow-red-600/20 active:scale-95 transition-all"
+              /* Правка: Next Step компактніше на 20% по висоті та 30% по довжині, шрифт як у Back */
+              className="bg-red-600 hover:bg-red-700 text-white h-[32px] px-[22px] rounded-lg font-black uppercase text-[10px] tracking-widest flex items-center gap-3 shadow-lg shadow-red-600/20 active:scale-95 transition-all"
             >
-              {currentStepIndex === steps.length - 1 ? 'Finish' : 'Next Step'} <ChevronRight size={16} />
+              {currentStepIndex === steps.length - 1 ? 'Finish' : 'Next Step'} <ChevronRight size={14} />
             </button>
           </div>
         </div>
@@ -267,12 +268,12 @@ function SummaryView({ selections, onReset }: any) {
     const pageHeight = doc.internal.pageSize.getHeight();
     const cleanText = (text: string) => text ? String(text).replace(/[^\x00-\x7F]/g, "").toUpperCase() : "";
 
-    // Adicto.Bike зменшено в 2 рази (було 24, стало 12) та по центру
+    // Правка: Adicto.Bike зменшено в 2 рази та по центру
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12); doc.setTextColor(220, 38, 38);
     doc.text("ADICTO.BIKE", pageWidth / 2, 20, { align: 'center' });
     
-    // Текст зменшено на 30% (було 10, стало 7)
+    // Правка: Текст в ПДФ зменшено на 30% (шрифти 7 замість 10)
     doc.setFontSize(7); doc.setTextColor(100);
     doc.text(`DATE: ${new Date().toLocaleDateString('en-US').toUpperCase()}`, 14, 28);
     doc.text("CUSTOM BUILD SPECIFICATION", 14, 32); // Замість oficial - CUSTOM
@@ -280,8 +281,8 @@ function SummaryView({ selections, onReset }: any) {
     const tableData = selections.map((c: any) => [
       cleanText(c.name), 
       cleanText(c.brand), 
-      `${c.weight} g`, // Маленька g та пробіл
-      `${c.price.toLocaleString()} €` // Символ € після цифри
+      `${c.weight} g`, // Правка: між цифрою та g пробіл, g маленька
+      `${c.price.toLocaleString()} €` // Правка: символ € після цифри
     ]);
 
     autoTable(doc, {
@@ -296,16 +297,16 @@ function SummaryView({ selections, onReset }: any) {
     });
 
     const finalY = (doc as any).lastAutoTable.finalY + 10;
-    doc.setFontSize(5.6); doc.setTextColor(140); // Зменшено на 30% (було 8)
+    doc.setFontSize(5.6); doc.setTextColor(140); // Зменшено на 30%
     const disclaimer = "NOTICE: THE WEIGHT AND PRICE INDICATED ARE PRELIMINARY AND SUBJECT TO MINOR CHANGES BASED ON COMPONENT AVAILABILITY AND TECHNICAL ASSEMBLY SPECIFICATIONS. ADICTO.BIKE RESERVES THE RIGHT TO MODIFY SPECIFICATIONS WITHOUT PRIOR NOTICE.";
     doc.text(doc.splitTextToSize(disclaimer, pageWidth - 28), 14, finalY);
 
     const footerY = pageHeight - 35;
-    doc.setFontSize(6.3);
+    doc.setFontSize(6.3); // Зменшено на 30%
     doc.text("WWW.ADICTO.BIKE", 14, footerY + 10);
     doc.text("INSTAGRAM: @ADICTO.BIKE", 14, footerY + 15);
     doc.text("EMAIL: HELLO@ADICTO.BIKE", 14, footerY + 20);
-    doc.text("TEL/WHATSAPP: +34 674 26 26 22", 14, footerY + 25); // Додано телефон
+    doc.text("TEL/WHATSAPP: +34 674 26 26 22", 14, footerY + 25); // Правка: додано телефон
 
     try { doc.addImage("/design/qr-code.png", "PNG", pageWidth - 35, footerY + 5, 20, 20); } catch (e) {}
     doc.save(`ADICTO_BUILD.pdf`);
@@ -314,16 +315,18 @@ function SummaryView({ selections, onReset }: any) {
   return (
     <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-8 text-center font-sans">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-2xl w-full">
-        <CheckCircle2 size={25} className="text-red-600 mx-auto mb-4" /> {/* Значок зменшено */}
+        {/* Правка: Значок зменшено */}
+        <CheckCircle2 size={32} className="text-red-600 mx-auto mb-4" /> 
         
-        {/* Текст Configuration Complete зменшено до розміру цифр (text-2xl) */}
-        <h2 className="text-2xl font-black italic uppercase tracking-tighter mb-4 leading-none">
+        {/* Правка: Текст Configuration Complete зменшено до розміру цифр (text-[27px]) */}
+        <h2 className="text-[27px] font-black italic uppercase tracking-tighter mb-4 leading-none">
           Configuration <br/> <span className="text-red-600">Complete</span>
         </h2>
 
         <div className="flex justify-center gap-10 my-8 bg-zinc-900/50 p-6 rounded-3xl border border-white/5">
           <div>
             <p className="text-zinc-500 text-[10px] uppercase font-bold tracking-widest">Total Price</p>
+            {/* Трішки менший за 3xl шрифт */}
             <p className="text-[27px] font-mono text-red-600">€{totalPrice.toLocaleString()}</p>
           </div>
           <div className="w-px bg-white/10" />
@@ -334,7 +337,7 @@ function SummaryView({ selections, onReset }: any) {
         </div>
 
         <div className="flex gap-4 justify-center">
-          {/* Кнопка Export PDF по розмірам як Start Over (px-8 py-4 зменшено до стандартного) */}
+          {/* Правка: Export PDF по розмірам як Start Over */}
           <button onClick={handleExport} className="px-8 py-4 bg-red-600 text-white rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-red-700 transition-all flex items-center gap-2">
             <Download size={16} /> Export PDF
           </button>
