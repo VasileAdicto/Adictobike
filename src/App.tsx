@@ -264,68 +264,73 @@ function SummaryView({ selections, onReset }: any) {
   const totalWeight = selections.reduce((acc: number, c: any) => acc + c.weight, 0);
 
   const handleExport = async () => {
-  const doc = new jsPDF();
-  const pageWidth = doc.internal.pageSize.getWidth();
-  const pageHeight = doc.internal.pageSize.getHeight();
-  const cleanText = (text: string) => text ? String(text).replace(/[^\x00-\x7F]/g, "").toUpperCase() : "";
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const cleanText = (text: string) => text ? String(text).replace(/[^\x00-\x7F]/g, "").toUpperCase() : "";
 
-  // 1. Логотип по центру
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(12); doc.setTextColor(220, 38, 38);
-  doc.text("ADICTO.BIKE", pageWidth / 2, 15, { align: 'center' });
+    // 1. Логотип по центру
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12); doc.setTextColor(220, 38, 38);
+    doc.text("ADICTO.BIKE", pageWidth / 2, 15, { align: 'center' });
 
-  // 2. ДОДАВАННЯ ФОТО (важливо!)
-  const visualizerElement = document.getElementById('bike-visualizer');
-  if (visualizerElement && (window as any).html2canvas) {
-    try {
-      const canvas = await (window as any).html2canvas(visualizerElement, {
-        backgroundColor: '#000000',
-        useCORS: true,
-        scale: 2
-      });
-      const imgData = canvas.toDataURL('image/png');
-      // Вставляємо фото (ширина 180, висота 85)
-      doc.addImage(imgData, 'PNG', 15, 22, 180, 85);
-    } catch (e) {
-      console.error("Photo error:", e);
+    // 2. ДОДАВАННЯ ФОТО (важливо!)
+    const visualizerElement = document.getElementById('bike-visualizer');
+    if (visualizerElement && (window as any).html2canvas) {
+      try {
+        const canvas = await (window as any).html2canvas(visualizerElement, {
+          backgroundColor: '#000000',
+          useCORS: true,
+          scale: 2,
+          logging: false
+        });
+        const imgData = canvas.toDataURL('image/png');
+        // Вставляємо фото (ширина 180, висота 85)
+        doc.addImage(imgData, 'PNG', 15, 22, 180, 85);
+      } catch (e) {
+        console.error("Photo error:", e);
+      }
     }
-  }
 
-  // 3. Дані таблиці (тут твій код з корекціями)
-  const tableData = selections.map((c: any) => [
-    cleanText(c.name), 
-    cleanText(c.brand), 
-    `${c.weight} g`, 
-    `${c.price.toLocaleString()} €`
-  ]);
+    // 3. Дані таблиці
+    const tableData = selections.map((c: any) => [
+      cleanText(c.name), 
+      cleanText(c.brand), 
+      `${c.weight} g`, 
+      `${c.price.toLocaleString()} €`
+    ]);
 
-  autoTable(doc, {
-    startY: 122, // ЗМІНИ ЦЕ: 122 замість 38, щоб таблиця була ПІД фото
-    head: [['COMPONENT', 'BRAND', 'WEIGHT', 'PRICE']],
-    body: tableData,
-    styles: { font: "helvetica", fontSize: 6.3 },
-    headStyles: { fillColor: [20, 20, 20], textColor: [255, 255, 255] },
-    foot: [['TOTAL SPECIFICATION', '', `${totalWeight} g`, `${totalPrice.toLocaleString()} €`]],
-    footStyles: { fillColor: [220, 38, 38], textColor: [255, 255, 255] },
-    theme: 'grid'
-  });
+    autoTable(doc, {
+      startY: 122, // 122 замість 38, щоб таблиця була ПІД фото
+      head: [['COMPONENT', 'BRAND', 'WEIGHT', 'PRICE']],
+      body: tableData,
+      styles: { font: "helvetica", fontSize: 6.3 },
+      headStyles: { fillColor: [20, 20, 20], textColor: [255, 255, 255] },
+      foot: [['TOTAL SPECIFICATION', '', `${totalWeight} g`, `${totalPrice.toLocaleString()} €`]],
+      footStyles: { fillColor: [220, 38, 38], textColor: [255, 255, 255] },
+      theme: 'grid'
+    });
 
-  // 4. Дисклеймер та Футер (як у тебе)
-  const finalY = (doc as any).lastAutoTable.finalY + 10;
-  doc.setFontSize(5.6); doc.setTextColor(140);
-  const disclaimer = "NOTICE: THE WEIGHT AND PRICE INDICATED ARE PRELIMINARY AND SUBJECT TO MINOR CHANGES BASED ON COMPONENT AVAILABILITY AND TECHNICAL ASSEMBLY SPECIFICATIONS. ADICTO.BIKE RESERVES THE RIGHT TO MODIFY SPECIFICATIONS WITHOUT PRIOR NOTICE.";
-  doc.text(doc.splitTextToSize(disclaimer, pageWidth - 28), 14, finalY);
+    // 4. Дисклеймер та Футер
+    const finalY = (doc as any).lastAutoTable.finalY + 10;
+    doc.setFontSize(5.6); doc.setTextColor(140);
+    const disclaimer = "NOTICE: THE WEIGHT AND PRICE INDICATED ARE PRELIMINARY AND SUBJECT TO MINOR CHANGES BASED ON COMPONENT AVAILABILITY AND TECHNICAL ASSEMBLY SPECIFICATIONS. ADICTO.BIKE RESERVES THE RIGHT TO MODIFY SPECIFICATIONS WITHOUT PRIOR NOTICE.";
+    doc.text(doc.splitTextToSize(disclaimer, pageWidth - 28), 14, finalY);
 
-  const footerY = pageHeight - 35;
-  doc.setFontSize(6.3);
-  doc.text("WWW.ADICTO.BIKE", 14, footerY + 10);
-  doc.text("INSTAGRAM: @ADICTO.BIKE", 14, footerY + 15);
-  doc.text("EMAIL: HELLO@ADICTO.BIKE", 14, footerY + 20);
-  doc.text("TEL/WHATSAPP: +34 674 26 26 22", 14, footerY + 25);
+    const footerY = pageHeight - 35;
+    doc.setFontSize(6.3); doc.setTextColor(100);
+    doc.text("WWW.ADICTO.BIKE", 14, footerY + 10);
+    doc.text("INSTAGRAM: @ADICTO.BIKE", 14, footerY + 15);
+    doc.text("EMAIL: HELLO@ADICTO.BIKE", 14, footerY + 20);
+    doc.text("TEL/WHATSAPP: +34 674 26 26 22", 14, footerY + 25);
 
-  try { doc.addImage("/design/qr-code.png", "PNG", pageWidth - 35, footerY + 5, 20, 20); } catch (e) {}
-  doc.save(`ADICTO_BUILD.pdf`);
-};
+    try { 
+      doc.addImage("/design/qr-code.png", "PNG", pageWidth - 35, footerY + 5, 20, 20); 
+    } catch (e) {}
+    
+    doc.save(`ADICTO_BUILD.pdf`);
+  };
+
   return (
     <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-8 text-center font-sans">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-2xl w-full">
@@ -340,7 +345,6 @@ function SummaryView({ selections, onReset }: any) {
         <div className="flex justify-center gap-10 my-8 bg-zinc-900/50 p-6 rounded-3xl border border-white/5">
           <div>
             <p className="text-zinc-500 text-[10px] uppercase font-bold tracking-widest">Total Price</p>
-            {/* Трішки менший за 3xl шрифт */}
             <p className="text-[27px] font-mono text-red-600">€{totalPrice.toLocaleString()}</p>
           </div>
           <div className="w-px bg-white/10" />
@@ -351,7 +355,6 @@ function SummaryView({ selections, onReset }: any) {
         </div>
 
         <div className="flex gap-4 justify-center">
-          {/* Правка: Export PDF по розмірам як Start Over */}
           <button onClick={handleExport} className="px-8 py-4 bg-red-600 text-white rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-red-700 transition-all flex items-center gap-2">
             <Download size={16} /> Export PDF
           </button>
