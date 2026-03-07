@@ -4,7 +4,7 @@ import { ChevronLeft, ChevronRight, Download, CheckCircle2 } from 'lucide-react'
 import { cn } from './lib/utils';
 import { ExcelImporter } from './components/ExcelImporter';
 
-import jsPDF from 'jspdf';
+import jsPDF from 'jsPDF';
 import autoTable from 'jspdf-autotable';
 
 // --- TYPES ---
@@ -90,12 +90,22 @@ const OptionCard = ({ component, isSelected, onClick }: { component: Component, 
       </div>
       <div className="flex-1 flex flex-col justify-between overflow-hidden">
         <div>
-          <h3 className="text-[8px] lg:text-[11px] font-bold leading-tight tracking-tighter line-clamp-2 text-zinc-300 uppercase">{component.name}</h3>
-          <p className="text-[7px] lg:text-[9px] text-zinc-500 uppercase font-black">{component.brand}</p>
+          {/* Зменшено шрифт назви для мобілок: з text-[8px] на text-[6.5px] */}
+          <h3 className="text-[6.5px] lg:text-[11px] font-bold leading-tight tracking-tighter line-clamp-2 text-zinc-300 uppercase">
+            {component.name}
+          </h3>
+          {/* Також трішки зменшено шрифт бренду для балансу */}
+          <p className="text-[6px] lg:text-[9px] text-zinc-500 uppercase font-black">
+            {component.brand}
+          </p>
         </div>
         <div className="flex justify-between items-end mt-1 lg:mt-2">
-          <p className="font-mono text-[10px] lg:text-sm text-red-600 tracking-tighter">€{component.price.toLocaleString()}</p>
-          <p className="text-[9px] lg:text-sm text-zinc-600 font-mono italic">{component.weight}g</p>
+          <p className="font-mono text-[9px] lg:text-sm text-red-600 tracking-tighter">
+            €{component.price.toLocaleString()}
+          </p>
+          <p className="text-[8px] lg:text-sm text-zinc-600 font-mono italic">
+            {component.weight}g
+          </p>
         </div>
       </div>
     </motion.button>
@@ -175,23 +185,28 @@ export default function BikeConfigurator() {
 
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-red-600 pb-28 lg:pb-24 overflow-x-hidden">
-      <nav className="border-b border-white/5 px-4 lg:px-8 py-4 flex justify-between items-center bg-black/80 backdrop-blur-2xl sticky top-0 z-50">
+      <nav className="border-b border-white/5 px-4 lg:px-8 py-2 flex justify-between items-center bg-black/80 backdrop-blur-2xl sticky top-0 z-50">
         <div className="flex items-center gap-4 pl-2">
           <img src="/design/Logo.png" alt="Logo" className="h-5 lg:h-6 w-auto object-contain" />
-          <div className="flex flex-col border-l border-white/10 pl-4 gap-0.4 w-[85px]">
-            <div className="flex justify-between w-full leading-none">
-              {"ADICTO.BIKE".split("").map((char, i) => <span key={i} className="text-[7px] lg:text-[9px] font-black italic uppercase text-white">{char}</span>)}
-            </div>
-            <span className="text-[6px] lg:text-[8px] uppercase tracking-[0.06em] text-zinc-500 font-bold block w-full text-center leading-none">Configurator</span>
-          </div>
         </div>
+
         <div className="flex items-center gap-6">
-          {isAdmin && <ExcelImporter onDataLoaded={(newSteps) => { setSteps(newSteps); setSelections({}); setCurrentStepIndex(0); }} />}
-          <div className="text-zinc-400 font-mono text-[9px] pr-2 opacity-60 uppercase tracking-widest">Build by Vasile</div>
+          {isAdmin && (
+            <ExcelImporter 
+              onDataLoaded={(newSteps) => { 
+                setSteps(newSteps); 
+                setSelections({}); 
+                setCurrentStepIndex(0); 
+              }} 
+            />
+          )}
+          <div className="text-zinc-400 font-mono text-[9px] pr-2 opacity-60 uppercase tracking-widest">
+            Build by Vasile
+          </div>
         </div>
       </nav>
 
-      <main className="max-w-[1500px] mx-auto px-4 lg:px-6 pt-6 lg:pt-10">
+      <main className="max-w-[1500px] mx-auto px-4 lg:px-6 pt-2 lg:pt-3">
         <div className="flex flex-col lg:grid lg:grid-cols-12 gap-6 lg:gap-10 lg:h-[550px] items-stretch">
           
           {/* Visualizer Side */}
@@ -214,10 +229,8 @@ export default function BikeConfigurator() {
             </div>
           </div>
 
-          {/* Options Side - ТУТ ВИПРАВЛЕННЯ КАРУСЕЛІ */}
+          {/* Options Side */}
           <div className="lg:col-span-3 flex flex-col bg-zinc-900/40 rounded-[2.5rem] border border-white/5 p-4 lg:p-6 relative overflow-hidden order-2">
-            
-            {/* Стилі для кастомного скролбару зверху на мобільних */}
             <style>{`
               .custom-scroll-container::-webkit-scrollbar {
                 height: 3px;
@@ -229,7 +242,6 @@ export default function BikeConfigurator() {
                 background: #ef4444;
                 border-radius: 10px;
               }
-              /* Для Firefox */
               .custom-scroll-container {
                 scrollbar-width: thin;
                 scrollbar-color: #ef4444 rgba(255, 255, 255, 0.05);
@@ -239,14 +251,10 @@ export default function BikeConfigurator() {
             <div 
               ref={listRef} 
               className="flex-1 overflow-x-auto lg:overflow-y-auto lg:overflow-x-hidden custom-scroll-container pb-2 lg:pb-0"
-              style={{ 
-                display: 'flex', 
-                flexDirection: 'column' 
-              }}
+              style={{ display: 'flex', flexDirection: 'column' }}
             >
                 {error && <div className="mb-4 text-red-500 bg-red-600/10 p-2 rounded-lg text-[9px] font-bold uppercase">{error}</div>}
                 
-                {/* На мобілці цей div стає горизонтальним рядом, на десктопі - колонкою */}
                 <div className="flex flex-row lg:flex-col gap-3 min-w-full">
                   <AnimatePresence mode="popLayout">
                     {currentStep.options.map((option) => (
@@ -262,7 +270,6 @@ export default function BikeConfigurator() {
                 </div>
             </div>
 
-            {/* Підказка скролу для мобілок (з'являється якщо опцій багато) */}
             {currentStep.options.length > 3 && (
               <div className="lg:hidden text-[7px] text-zinc-600 text-center mt-2 uppercase font-bold tracking-widest">
                 Scroll right for more →
@@ -275,14 +282,12 @@ export default function BikeConfigurator() {
       <div className="fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur-2xl border-t border-white/5 z-40">
         <div className="max-w-[1500px] mx-auto px-4 lg:px-6 py-6 grid grid-cols-12 gap-2 items-center">
           
-          {/* Back Button */}
           <div className="col-span-3 lg:col-span-2">
             <button onClick={() => currentStepIndex > 0 && setCurrentStepIndex(currentStepIndex - 1)} className="flex items-center gap-1 lg:gap-3 text-zinc-500 hover:text-white transition-all font-black uppercase text-[10px] tracking-widest">
               <ChevronLeft size={20} /> Back
             </button>
           </div>
 
-          {/* Stats in Middle */}
           <div className="col-span-6 lg:col-span-7 flex justify-center lg:justify-end items-center gap-4 lg:gap-10">
             <div className="text-center lg:text-right">
               <p className="text-[7px] lg:text-[8px] text-zinc-600 uppercase font-black mb-0.5">Weight</p>
@@ -295,7 +300,6 @@ export default function BikeConfigurator() {
             </div>
           </div>
 
-          {/* Next Button */}
           <div className="col-span-3 flex justify-end">
             <button 
               onClick={() => {
@@ -369,7 +373,7 @@ function SummaryView({ selections, onReset }: any) {
       styles: { font: "helvetica", fontSize: 5.8, cellPadding: 2 },
       headStyles: { fillColor: [20, 20, 20], textColor: [255, 255, 255] },
       columnStyles: { 0: { fontStyle: 'bold', cellWidth: 25 } },
-      foot: [['TOTAL', '', '', `${totalWeight} g`, `${totalPrice.toLocaleString()} €`]],
+      foot: [['TOTAL SPECIFICATION', '', '', `${totalWeight} g`, `${totalPrice.toLocaleString()} €`]],
       footStyles: { fillColor: [220, 38, 38], textColor: [255, 255, 255], fontSize: 9, fontStyle: 'bold', cellPadding: 3 },
       didParseCell: (data) => { if (data.section === 'foot' && data.column.index === 0) { data.cell.styles.cellWidth = 'wrap'; } },
       theme: 'grid'
