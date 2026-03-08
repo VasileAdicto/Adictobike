@@ -19,6 +19,7 @@ interface Component {
   cardImageUrl: string;  
   zIndex: number;
   stepTitle?: string; 
+  logic: string; // Додано для сумісності
 }
 
 interface Step {
@@ -90,7 +91,6 @@ const OptionCard = ({ component, isSelected, onClick }: { component: Component, 
       </div>
       <div className="flex-1 flex flex-col justify-between overflow-hidden">
         <div>
-          {/* Зменшено шрифт для мобілок на 20% (з 8px до 6.5px) */}
           <h3 className="text-[6.5px] lg:text-[11px] font-bold leading-tight tracking-tighter line-clamp-2 text-zinc-300 uppercase">{component.name}</h3>
           <p className="text-[6px] lg:text-[9px] text-zinc-500 uppercase font-black">{component.brand}</p>
         </div>
@@ -114,6 +114,32 @@ export default function BikeConfigurator() {
   const currentStep = steps[currentStepIndex] || steps[0];
   const listRef = useRef<HTMLDivElement>(null);
   const stepRefs = useRef<(HTMLButtonElement | null)[]>([]);
+
+  // --- ЛОГІКА СУМІСНОСТІ ---
+  const activeLogic = useMemo(() => {
+    // Шукаємо останню задану логіку серед вже обраних компонентів
+    for (let i = currentStepIndex - 1; i >= 0; i--) {
+      const stepId = steps[i].id;
+      const selectedId = selections[stepId];
+      const component = steps[i].options.find(o => o.id === selectedId);
+      if (component?.logic && component.logic.trim() !== "") {
+        return component.logic.trim();
+      }
+    }
+    return null;
+  }, [selections, currentStepIndex, steps]);
+
+  const filteredOptions = useMemo(() => {
+    if (!currentStep) return [];
+    return currentStep.options.filter(option => {
+      // Якщо логіка в конфігурації ще не задана (activeLogic === null), показуємо все
+      if (!activeLogic) return true;
+      // Якщо у товара поле Logic порожнє, він сумісний з усім
+      if (!option.logic || option.logic.trim() === "") return true;
+      // Показуємо тільки ті, що співпадають
+      return option.logic.trim() === activeLogic;
+    });
+  }, [currentStep, activeLogic]);
 
   useEffect(() => {
     stepRefs.current[currentStepIndex]?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
@@ -144,7 +170,8 @@ export default function BikeConfigurator() {
                   weight: Number(row.Weight || row.WEIGHT) || 0,
                   imageUrl: row[findKey('imageurl') || 'image'] || "",
                   cardImageUrl: row[findKey('cardimg') || 'cardimage'] || row[findKey('imageurl') || 'image'] || "",
-                  zIndex: Number(row[findKey('zindex')]) || 10
+                  zIndex: Number(row[findKey('zindex')]) || 10,
+                  logic: String(row[findKey('logic')] || "").trim() // Читаємо поле Logic
                 };
               })
             };
@@ -176,7 +203,6 @@ export default function BikeConfigurator() {
 
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-red-600 pb-28 lg:pb-24 overflow-x-hidden">
-      {/* ПІДНЯТО ЛІНІЮ (py-2 замість py-4) */}
       <nav className="border-b border-white/5 px-4 lg:px-8 py-2 flex justify-between items-center bg-black/80 backdrop-blur-2xl sticky top-0 z-50">
         <div className="flex items-center gap-4 pl-2">
           <img src="/design/Logo.png" alt="Logo" className="h-4 lg:h-6 w-auto object-contain" />
@@ -198,11 +224,9 @@ export default function BikeConfigurator() {
         </div>
       </nav>
 
-      {/* ЗМЕНШЕНО ВІДСТАНЬ (pt-2 замість pt-6) */}
       <main className="max-w-[1500px] mx-auto px-4 lg:px-6 pt-2 lg:pt-3">
         <div className="flex flex-col lg:grid lg:grid-cols-12 gap-6 lg:gap-10 lg:h-[550px] items-stretch">
           
-          {/* Visualizer Side */}
           <div className="lg:col-span-9 flex flex-col gap-2 order-1">
             <div className="flex overflow-x-auto no-scrollbar lg:overflow-visible lg:flex-wrap justify-start items-center px-4 gap-x-6 gap-y-2 pb-2">
               {steps.map((step, idx) => (
@@ -222,7 +246,6 @@ export default function BikeConfigurator() {
             </div>
           </div>
 
-          {/* Options Side */}
           <div className="lg:col-span-3 flex flex-col bg-zinc-900/40 rounded-[2.5rem] border border-white/5 p-4 lg:p-6 relative overflow-hidden order-2">
             <style>{`
               .custom-scroll-container::-webkit-scrollbar {
@@ -250,7 +273,8 @@ export default function BikeConfigurator() {
                 
                 <div className="flex flex-row lg:flex-col gap-3 min-w-full">
                   <AnimatePresence mode="popLayout">
-                    {currentStep.options.map((option) => (
+                    {/* ТУТ ВИКОРИСТОВУЄМО filteredOptions */}
+                    {filteredOptions.map((option) => (
                       <div key={option.id} className="w-[31%] min-w-[31%] lg:w-full lg:min-w-0 shrink-0">
                         <OptionCard 
                           component={option} 
@@ -263,7 +287,7 @@ export default function BikeConfigurator() {
                 </div>
             </div>
 
-            {currentStep.options.length > 3 && (
+            {filteredOptions.length > 3 && (
               <div className="lg:hidden text-[7px] text-zinc-600 text-center mt-2 uppercase font-bold tracking-widest">
                 Scroll right for more →
               </div>
