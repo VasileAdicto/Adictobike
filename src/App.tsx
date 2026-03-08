@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Download, CheckCircle2, Upload, Database, Lock, User, Settings2, Save, RotateCcw, Grid3X3, Search, Move, FolderOpen, Key, Eye, EyeOff, LogOut, ArrowRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Download, CheckCircle2, Upload, Database, Lock, User, Settings2, Save, RotateCcw, Grid3X3, Search, Move, FolderOpen, Key, Eye, EyeOff, LogOut, ArrowRight, ChevronsRight } from 'lucide-react';
 import { cn } from './lib/utils';
 
 import jsPDF from 'jspdf';
@@ -197,12 +197,7 @@ export default function BikeConfigurator() {
   const [isFinished, setIsFinished] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // States for scroll indicators
-  const [showTopIndicator, setShowTopIndicator] = useState(true);
-  const [showBottomIndicator, setShowBottomIndicator] = useState(true);
-
   const stepsNavRef = useRef<HTMLDivElement>(null);
-  const optionsScrollRef = useRef<HTMLDivElement>(null);
   const currentStep = steps[currentStepIndex] || steps[0];
 
   useEffect(() => {
@@ -240,7 +235,7 @@ export default function BikeConfigurator() {
     }
   }, [currentStepIndex]);
 
-  // LOGIC COMPATIBILITY
+  // LOGIC FILTERING
   const activeLogic = useMemo(() => {
     if (currentStepIndex === 0) return null;
     const prevStepId = steps[currentStepIndex - 1]?.id;
@@ -272,18 +267,12 @@ export default function BikeConfigurator() {
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-red-600 pb-28 lg:pb-24 overflow-x-hidden">
       <style>{`
-        .custom-scroll-container::-webkit-scrollbar, .steps-scroll-container::-webkit-scrollbar {
-          width: 4px; height: 4px;
-        }
-        .custom-scroll-container::-webkit-scrollbar-track, .steps-scroll-container::-webkit-scrollbar-track {
-          background: rgba(255, 255, 255, 0.05); border-radius: 10px;
-        }
-        .custom-scroll-container::-webkit-scrollbar-thumb, .steps-scroll-container::-webkit-scrollbar-thumb {
-          background: #ef4444; border-radius: 10px;
-        }
-        .custom-scroll-container, .steps-scroll-container {
-          scrollbar-width: thin; scrollbar-color: #ef4444 rgba(255, 255, 255, 0.05);
-        }
+        .custom-scroll-container::-webkit-scrollbar, .steps-scroll-container::-webkit-scrollbar { width: 4px; height: 4px; }
+        .custom-scroll-container::-webkit-scrollbar-track, .steps-scroll-container::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); border-radius: 10px; }
+        .custom-scroll-container::-webkit-scrollbar-thumb, .steps-scroll-container::-webkit-scrollbar-thumb { background: #ef4444; border-radius: 10px; }
+        .custom-scroll-container, .steps-scroll-container { scrollbar-width: thin; scrollbar-color: #ef4444 rgba(255, 255, 255, 0.05); }
+        @keyframes slideHint { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(5px); } }
+        .animate-slide-hint { animation: slideHint 1.5s infinite; }
       `}</style>
 
       {isLoggedIn ? (
@@ -295,33 +284,15 @@ export default function BikeConfigurator() {
       <main className="max-w-[1500px] mx-auto px-4 lg:px-6 pt-2 lg:pt-3">
         <div className="flex flex-col lg:grid lg:grid-cols-12 gap-6 lg:gap-10 lg:h-[550px] items-stretch">
           <div className="lg:col-span-9 flex flex-col gap-2 order-1">
-            
-            {/* TOP NAVIGATION INDICATOR */}
-            <div className="relative group">
-              <div 
-                ref={stepsNavRef} 
-                onScroll={() => setShowTopIndicator(false)}
-                className="flex overflow-x-auto no-scrollbar steps-scroll-container gap-x-6 gap-y-2 pb-2"
-              >
-                {steps.map((step, idx) => (
-                  <button key={step.id} onClick={() => setCurrentStepIndex(idx)} className={cn("transition-all duration-300 text-[10px] font-black italic uppercase tracking-widest pb-1 border-b-2 whitespace-nowrap", idx === currentStepIndex ? "text-red-600 border-red-600 drop-shadow-[0_0_9px_rgba(255,0,0,0.3)]" : "text-white opacity-20 border-transparent hover:opacity-100")}>{step.title}</button>
-                ))}
-              </div>
-              <AnimatePresence>
-                {showTopIndicator && (
-                  <motion.div exit={{ opacity: 0 }} className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-1 text-[8px] font-black italic text-red-600 bg-gradient-to-l from-black via-black/80 to-transparent pl-8 pr-2 pointer-events-none lg:hidden">
-                    SCROLL <ArrowRight size={10} className="animate-bounce-x" />
-                  </motion.div>
-                )}
-              </AnimatePresence>
+            <div ref={stepsNavRef} className="flex overflow-x-auto no-scrollbar steps-scroll-container gap-x-6 gap-y-2 pb-2">
+              {steps.map((step, idx) => (
+                <button key={step.id} onClick={() => setCurrentStepIndex(idx)} className={cn("transition-all duration-300 text-[10px] font-black italic uppercase tracking-widest pb-1 border-b-2 whitespace-nowrap", idx === currentStepIndex ? "text-red-600 border-red-600 drop-shadow-[0_0_9px_rgba(255,0,0,0.3)]" : "text-white opacity-20 border-transparent hover:opacity-100")}>{step.title}</button>
+              ))}
             </div>
-
             <div className="h-[280px] md:h-[400px] lg:flex-1 relative"><Visualizer selectedComponents={selectedComponents} offsets={offsets} showGrid={showGrid} gridSize={gridSize} isZoomed={isZoomed} zoomScale={zoomScale} /></div>
           </div>
-
           <div className="lg:col-span-3 flex flex-col bg-zinc-900/40 rounded-[2.5rem] border border-white/5 p-4 lg:p-6 relative overflow-hidden order-2 shadow-2xl">
-            {/* BOTTOM CARDS INDICATOR */}
-            <div className="flex-1 overflow-x-auto lg:overflow-y-auto lg:overflow-x-hidden custom-scroll-container pb-6 lg:pb-0 relative" onScroll={() => setShowBottomIndicator(false)}>
+            <div className="flex-1 overflow-x-auto lg:overflow-y-auto lg:overflow-x-hidden custom-scroll-container pb-2 lg:pb-0" style={{ display: 'flex', flexDirection: 'column' }}>
                 <div className="flex flex-row lg:flex-col gap-3 min-w-full">
                   <AnimatePresence mode="popLayout">
                     {filteredOptions.map((option) => (
@@ -331,14 +302,15 @@ export default function BikeConfigurator() {
                     ))}
                   </AnimatePresence>
                 </div>
-                <AnimatePresence>
-                {showBottomIndicator && (
-                  <motion.div exit={{ opacity: 0 }} className="absolute right-0 bottom-10 flex items-center gap-1 text-[8px] font-black italic text-red-600 bg-gradient-to-l from-zinc-900 via-zinc-900/80 to-transparent pl-8 pr-2 pointer-events-none lg:hidden z-20">
-                    MORE <ArrowRight size={10} className="animate-bounce-x" />
-                  </motion.div>
-                )}
-              </AnimatePresence>
             </div>
+            
+            {/* ГНУЧКА ПІДКАЗКА ПРО СКРОЛ ДЛЯ МОБІЛЬНИХ */}
+            {filteredOptions.length > 3 && (
+              <div className="lg:hidden mt-3 flex items-center justify-center gap-1.5 text-zinc-500 opacity-60">
+                <span className="text-[8px] font-black uppercase tracking-[0.2em] italic">Scroll for more</span>
+                <ChevronsRight size={10} className="animate-slide-hint" />
+              </div>
+            )}
           </div>
         </div>
       </main>
@@ -374,12 +346,10 @@ function SummaryView({ selections, onReset }: any) {
   const handleExport = async () => {
     const doc = new jsPDF(); const pageWidth = doc.internal.pageSize.getWidth(); const pageHeight = doc.internal.pageSize.getHeight();
     const cleanText = (text: string) => text ? String(text).replace(/[^\x00-\x7F]/g, "").toUpperCase() : "";
-
     try {
       const logoBase64 = await getBase64Image("/design/Logo.png");
       if (logoBase64) doc.addImage(logoBase64, 'PNG', (pageWidth / 2) - 15, 8, 10, 10);
     } catch (e) {}
-
     try {
       const sortedByZ = [...selections].sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
       for (const comp of sortedByZ) {
@@ -389,7 +359,6 @@ function SummaryView({ selections, onReset }: any) {
         }
       }
     } catch (e) {}
-
     autoTable(doc, { 
       startY: 135, head: [['SECTION', 'COMPONENT', 'BRAND', 'WEIGHT', 'PRICE']],
       body: selections.map((c: any) => [cleanText(c.stepTitle || ""), cleanText(c.name), cleanText(c.brand), `${c.weight} g`, `${c.price.toLocaleString()} €`]),
@@ -397,7 +366,6 @@ function SummaryView({ selections, onReset }: any) {
       columnStyles: { 0: { fontStyle: 'bold', cellWidth: 25 } }, foot: [['TOTAL', '', '', `${totalWeight} g`, `${totalPrice.toLocaleString()} €`]],
       footStyles: { fillColor: [220, 38, 38], textColor: [255, 255, 255], fontSize: 8, fontStyle: 'bold' }, theme: 'grid'
     });
-
     const finalY = (doc as any).lastAutoTable.finalY + 10;
     doc.setFontSize(6); doc.setTextColor(100);
     const disclaimer = "NOTICE: THE WEIGHT AND PRICE INDICATED ARE PRELIMINARY AND SUBJECT TO MINOR CHANGES BASED ON COMPONENT AVAILABILITY. ADICTO.BIKE RESERVES THE RIGHT TO MODIFY SPECIFICATIONS WITHOUT PRIOR NOTICE.";
