@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Download, CheckCircle2, Upload, Database, Lock, User, Settings2, Save, RotateCcw, Grid3X3, Search, Move, FolderOpen, Key, Eye, EyeOff, LogOut } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronsRight, Download, CheckCircle2, Upload, Database, Lock, User, Settings2, Save, RotateCcw, Grid3X3, Search, Move, FolderOpen, Key, Eye, EyeOff, LogOut } from 'lucide-react';
 import { cn } from './lib/utils';
 
 import jsPDF from 'jspdf';
@@ -349,7 +349,7 @@ export default function BikeConfigurator() {
 
   /* АНІМАЦІЯ: для напису Scroll >> */
   @keyframes slideHint { 
-    0%, 100% { transform: translateX(0); opacity: 0.5; } 
+    0%, 100% { transform: translateX(0); } 
     50% { transform: translateX(5px); opacity: 1; } 
   }
   .animate-slide-hint { animation: slideHint 1.5s infinite; }
@@ -415,9 +415,9 @@ export default function BikeConfigurator() {
 
       {/* ПІДКАЗКА Scroll >> */}
       {filteredOptions.length > 3 && (
-        <div className="lg:hidden mt-3 flex items-center justify-center gap-1.5 text-zinc-500 opacity-60 animate-slide-hint">
-          <span className="text-[8px] font-black uppercase tracking-[0.2em] italic text-zinc-400">Scroll</span>
-          <ChevronRight size={10} strokeWidth={3} className="text-zinc-400" />
+        <div className="lg:hidden mt-3 flex items-center justify-center gap-1 text-zinc-500 animate-slide-hint">
+          <span className="text-[8px] font-black uppercase tracking-[0.2em] italic">Scroll</span>
+          <ChevronsRight size={10} strokeWidth={3} />
         </div>
       )}
     </div> {/* КІНЕЦЬ ПРАВОЇ ПАНЕЛІ */}
