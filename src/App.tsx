@@ -438,20 +438,24 @@ export default function BikeConfigurator() {
   </div> {/* КІНЕЦЬ FLEX/GRID КОНТЕЙНЕРА */}
 </main> {/* КІНЕЦЬ MAIN */}
 
-      <div className="fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur-2xl border-t border-white/5 z-40">
-        <div className="max-w-[1500px] mx-auto px-4 lg:px-6 py-6 grid grid-cols-12 gap-2 items-center">
-          <button onClick={() => currentStepIndex > 0 && setCurrentStepIndex(currentStepIndex - 1)} className="col-span-3 lg:col-span-2 flex items-center gap-1 text-zinc-500 hover:text-white transition-all font-black uppercase text-[10px] italic"><ChevronLeft size={20} /> Back</button>
-          <div className="col-span-6 lg:col-span-7 flex justify-center lg:justify-end items-center gap-4 lg:gap-10">
-            <div className="text-center lg:text-right text-zinc-300"><p className="text-[7px] text-zinc-600 uppercase font-black mb-0.5 italic">Weight</p><p className="font-mono text-xs">{selectedComponents.reduce((acc, c) => acc + c.weight, 0)}g</p></div>
-            <div className="h-8 w-px bg-white/10" />
-            <div className="text-center lg:text-right text-zinc-300"><p className="text-[7px] text-zinc-600 uppercase font-black mb-0.5 italic">Price</p><p className="font-mono text-xs text-red-600">€{selectedComponents.reduce((acc, c) => acc + c.price, 0).toLocaleString()}</p></div>
-          </div>
-          <div className="col-span-3 flex justify-end">
-            <button onClick={() => {
-                if (filteredOptions.length > 0 && !selections[currentStep.id]) { setError("Select!"); return; }
-                currentStepIndex < steps.length - 1 ? setCurrentStepIndex(currentStepIndex + 1) : setIsFinished(true);
-              }} className="bg-red-600 hover:bg-red-700 text-white h-[32px] px-6 rounded-lg font-black uppercase text-[10px] italic flex items-center gap-2 active:scale-95 shadow-lg shadow-red-600/20">{currentStepIndex === steps.length - 1 ? 'Finish' : 'Next'} <ChevronRight size={14} /></button>
-          </div>
+      <div className="col-span-3 flex justify-end">
+  <button 
+    onClick={() => {
+      if (filteredOptions.length > 0 && !selections[currentStep.id]) { setError("Select!"); return; }
+      currentStepIndex < steps.length - 1 ? setCurrentStepIndex(currentStepIndex + 1) : setIsFinished(true);
+    }} 
+    className={cn(
+      "font-black uppercase text-[10px] italic flex items-center gap-2 transition-all active:scale-95",
+      // Мобільна версія: без фону, червоний текст
+      "text-red-600 bg-transparent px-0",
+      // Десктопна версія (lg): повертаємо червону кнопку
+      "lg:bg-red-600 lg:hover:bg-red-700 lg:text-white lg:h-[32px] lg:px-6 lg:rounded-lg lg:shadow-lg lg:shadow-red-600/20"
+    )}
+  >
+    {currentStepIndex === steps.length - 1 ? 'Finish' : 'Next'} 
+    <ChevronRight size={14} strokeWidth={3} />
+  </button>
+</div>
         </div>
       </div>
     </div>
