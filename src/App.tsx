@@ -258,6 +258,8 @@ export default function BikeConfigurator() {
   const [isFinished, setIsFinished] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const stepsNavRef = useRef<HTMLDivElement>(null);
+  const [user, setUser] = useState<any>(JSON.parse(localStorage.getItem('adicto_user') || 'null'));
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   const currentStep = steps[currentStepIndex] || steps[0];
 
@@ -335,7 +337,16 @@ export default function BikeConfigurator() {
 
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-red-600 pb-28 lg:pb-24 overflow-x-hidden">
-      <style>{`
+     <AuthModal 
+      isOpen={isAuthModalOpen} 
+      onClose={() => setIsAuthModalOpen(false)} 
+      onLogin={(u: any) => { 
+        setUser(u); 
+        localStorage.setItem('adicto_user', JSON.stringify(u)); 
+        setIsAuthModalOpen(false); 
+      }} 
+    />
+      <style>{`
   /* Тонкий червоний скролбар */
   .custom-scroll-container::-webkit-scrollbar { 
     width: 3px; 
@@ -380,10 +391,22 @@ export default function BikeConfigurator() {
     </div>
   </div>
 
-  {/* ПРАВА ЧАСТИНА (ПОКИ ПУСТА АБО ДЛЯ КНОПКИ LOGIN У МАЙБУТНЬОМУ) */}
-  <div className="flex items-center gap-4">
-    {/* Тут ми пізніше додамо кнопку входу для клієнтів */}
-  </div>
+  {/* ПРАВА ЧАСТИНА: КНОПКА LOGIN */}
+<div className="flex items-center gap-4">
+  {user ? (
+    <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full border border-white/5">
+      <User size={12} className="text-red-600"/> 
+      <span className="text-[9px] font-black uppercase italic text-white">{user.name}</span>
+    </div>
+  ) : (
+    <button 
+      onClick={() => setIsAuthModalOpen(true)} 
+      className="flex items-center gap-2 bg-red-600 px-4 py-1.5 rounded-full text-[9px] font-black uppercase italic tracking-widest text-white shadow-lg shadow-red-600/20 active:scale-95 transition-all"
+    >
+      <LogIn size={12}/> Login
+    </button>
+  )}
+</div>
 </nav>
       )}
 
@@ -493,6 +516,75 @@ export default function BikeConfigurator() {
     </div>
   );
 }
+// --- CLIENT AUTH MODAL ---
+const AuthModal = ({ isOpen, onClose, onLogin }: any) => {
+  const [step, setStep] = useState('email'); 
+  const [email, setEmail] = useState('');
+  const [otp, setOtp] = useState(['', '', '', '']);
+
+  if (!isOpen) return null;
+
+  const handleNext = () => {
+    if (step === 'email' && email.includes('@')) {
+      setStep('otp');
+    } else if (step === 'otp') {
+      // Імітація входу
+      onLogin({ email, name: email.split('@')[0] });
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xl">
+      <motion.div 
+        initial={{ scale: 0.95, opacity: 0 }} 
+        animate={{ scale: 1, opacity: 1 }} 
+        className="bg-zinc-900 border border-white/5 p-8 rounded-[2.5rem] max-w-sm w-full relative shadow-2xl"
+      >
+        <button onClick={onClose} className="absolute top-6 right-6 text-zinc-600 hover:text-white"><LogOut size={16}/></button>
+        
+        <div className="text-center mb-8">
+          <h2 className="text-lg font-black uppercase italic tracking-widest text-white mb-1">Garage Access</h2>
+          <p className="text-zinc-500 text-[8px] uppercase font-bold tracking-[0.2em] italic">
+            {step === 'email' ? 'Enter your email' : `Code sent to ${email}`}
+          </p>
+        </div>
+
+        {step === 'email' ? (
+          <input 
+            type="email" 
+            placeholder="EMAIL ADDRESS" 
+            value={email} 
+            onChange={e => setEmail(e.target.value)} 
+            className="w-full bg-black/50 border border-white/5 p-4 rounded-2xl text-white outline-none focus:border-red-600 transition-all font-mono text-[11px] mb-4" 
+          />
+        ) : (
+          <div className="flex justify-center gap-3 mb-6">
+            {otp.map((digit, i) => (
+              <input 
+                key={i} 
+                type="text" 
+                maxLength={1} 
+                value={digit} 
+                onChange={e => {
+                  const newOtp = [...otp]; newOtp[i] = e.target.value; setOtp(newOtp);
+                  if (e.target.nextSibling && e.target.value) (e.target.nextSibling as HTMLElement).focus();
+                }} 
+                className="w-10 h-14 bg-black border border-white/5 rounded-xl text-center text-red-600 font-bold outline-none focus:border-red-600 shadow-inner" 
+              />
+            ))}
+          </div>
+        )}
+
+        <button 
+          onClick={handleNext} 
+          className="w-full bg-red-600 py-4 rounded-2xl font-black uppercase text-white text-[10px] tracking-[0.2em] italic hover:bg-red-700 transition-all shadow-lg shadow-red-600/20"
+        >
+          {step === 'email' ? 'Continue' : 'Verify'}
+        </button>
+      </motion.div>
+    </div>
+  );
+};
 
 function SummaryView({ selections, onReset }: any) {
   const [isExporting, setIsExporting] = useState(false);
