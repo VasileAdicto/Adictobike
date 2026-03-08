@@ -332,7 +332,20 @@ export default function BikeConfigurator() {
       {isLoggedIn ? (
         <AdminPanel categories={INITIAL_STEPS.map(s => s.title)} offsets={offsets} setOffsets={setOffsets} activeComponent={activeComponentForTuning} showGrid={showGrid} setShowGrid={setShowGrid} gridSize={gridSize} setGridSize={setGridSize} isZoomed={isZoomed} setIsZoomed={setIsZoomed} zoomScale={zoomScale} setZoomScale={setZoomScale} onLogout={handleLogout} />
       ) : (
-        <nav className="border-b border-white/5 px-4 lg:px-8 py-2 flex justify-between items-center bg-black/80 backdrop-blur-2xl sticky top-0 z-50"><div className="flex items-center gap-4 pl-2"><img src="/design/Logo.png" alt="Logo" className="h-4 lg:h-6 w-auto object-contain" /></div><div className="text-zinc-400 font-mono text-[7px] pr-2 opacity-70 uppercase tracking-widest italic">Build by Vasile & AI</div></nav>
+        <nav className="border-b border-white/5 px-4 lg:px-8 py-3 flex justify-between items-center bg-black/80 backdrop-blur-2xl sticky top-0 z-50">
+  {/* ГРУПА ЗЛІВА: ЛОГО + НАПИС */}
+  <div className="flex items-center gap-3">
+    <img src="/design/Logo.png" alt="Logo" className="h-5 lg:h-6 w-auto object-contain" />
+    <div className="text-zinc-600 font-mono text-[6px] lg:text-[9px] uppercase tracking-widest italic border-l border-white/10 pl-3 mt-0.5">
+      Build by Vasile & AI
+    </div>
+  </div>
+
+  {/* ПРАВА ЧАСТИНА (ПОКИ ПУСТА АБО ДЛЯ КНОПКИ LOGIN У МАЙБУТНЬОМУ) */}
+  <div className="flex items-center gap-4">
+    {/* Тут ми пізніше додамо кнопку входу для клієнтів */}
+  </div>
+</nav>
       )}
 
       <main className="max-w-[1500px] mx-auto px-4 lg:px-6 pt-2 lg:pt-3">
