@@ -257,6 +257,7 @@ export default function BikeConfigurator() {
   const [selections, setSelections] = useState<Record<string, string>>({});
   const [isFinished, setIsFinished] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const stepsNavRef = useRef<HTMLDivElement>(null);
 
   const currentStep = steps[currentStepIndex] || steps[0];
 
@@ -266,6 +267,18 @@ export default function BikeConfigurator() {
     setIsLoggedIn(false);
     window.location.reload();
   };
+
+  useEffect(() => {
+    if (stepsNavRef.current) {
+      const activeBtn = stepsNavRef.current.children[currentStepIndex] as HTMLElement;
+      if (activeBtn) {
+        stepsNavRef.current.scrollTo({
+          left: activeBtn.offsetLeft - 20, 
+          behavior: 'smooth',
+        });
+      }
+    }
+  },
 
   useEffect(() => {
     const path = window.location.pathname; 
@@ -379,7 +392,7 @@ export default function BikeConfigurator() {
     
     {/* ЛІВА ЧАСТИНА: ВІЗУАЛІЗАТОР */}
     <div className="lg:col-span-9 flex flex-col gap-2 order-1">
-      <div className="flex overflow-x-auto no-scrollbar gap-x-6 gap-y-2 pb-2">
+      <div ref={stepsNavRef} className="flex overflow-x-auto no-scrollbar steps-scroll-container gap-x-6 gap-y-2 pb-2 scroll-smooth">
         {steps.map((step, idx) => (
           <button 
             key={step.id} 
