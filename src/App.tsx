@@ -375,7 +375,7 @@ export default function BikeConfigurator() {
   {/* ГРУПА ЗЛІВА: ЛОГО + НАПИС */}
   <div className="flex items-center gap-3">
     <img src="/design/Logo.png" alt="Logo" className="h-5 lg:h-6 w-auto object-contain" />
-    <div className="text-zinc-600 font-mono text-[6px] lg:text-[9px] uppercase tracking-widest italic border-l border-white/10 pl-3 mt-0.5">
+    <div className="text-zinc-600 font-mono text-[6px] lg:text-[11px] uppercase tracking-widest italic border-l border-white/10 pl-3 mt-0.5">
       Build by Vasile & AI
     </div>
   </div>
@@ -495,69 +495,134 @@ export default function BikeConfigurator() {
 }
 
 function SummaryView({ selections, onReset }: any) {
-  const totalPrice = selections.reduce((acc: number, c: any) => acc + c.price, 0);
-  const totalWeight = selections.reduce((acc: number, c: any) => acc + c.weight, 0);
-  const getBase64Image = async (url: string): Promise<string> => {
-    try { const res = await fetch(url); const blob = await res.blob();
-      return new Promise((resolve, reject) => { const reader = new FileReader(); reader.onloadend = () => resolve(reader.result as string); reader.onerror = reject; reader.readAsDataURL(blob); });
-    } catch (e) { return ""; }
-  };
-  const handleExport = async () => {
-    const doc = new jsPDF(); const pageWidth = doc.internal.pageSize.getWidth(); const pageHeight = doc.internal.pageSize.getHeight();
-    const cleanText = (text: string) => text ? String(text).replace(/[^\x00-\x7F]/g, "").toUpperCase() : "";
+  const [isExporting, setIsExporting] = useState(false);
+  const [progress, setProgress] = useState(0);
 
-    try {
-      const logoBase64 = await getBase64Image("/design/Logo.png");
-      if (logoBase64) doc.addImage(logoBase64, 'PNG', (pageWidth / 2) - 15, 8, 10, 10);
-    } catch (e) {}
+  const totalPrice = selections.reduce((acc: number, c: any) => acc + c.price, 0);
+  const totalWeight = selections.reduce((acc: number, c: any) => acc + c.weight, 0);
 
-    try {
-      const sortedByZ = [...selections].sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
-      for (const comp of sortedByZ) {
-        if (comp.imageUrl) {
-          const imgBase64 = await getBase64Image(comp.imageUrl);
-          if (imgBase64) doc.addImage(imgBase64, 'PNG', 15, 20, 180, 110, undefined, 'FAST');
-        }
-      }
-    } catch (e) {}
+  const getBase64Image = async (url: string): Promise<string> => {
+    try { 
+      const res = await fetch(url); 
+      const blob = await res.blob();
+      return new Promise((resolve, reject) => { 
+        const reader = new FileReader(); 
+        reader.onloadend = () => resolve(reader.result as string); 
+        reader.onerror = reject; 
+        reader.readAsDataURL(blob); 
+      });
+    } catch (e) { return ""; }
+  };
 
-    autoTable(doc, { 
-      startY: 135, head: [['SECTION', 'COMPONENT', 'BRAND', 'WEIGHT', 'PRICE']],
-      body: selections.map((c: any) => [cleanText(c.stepTitle || ""), cleanText(c.name), cleanText(c.brand), `${c.weight} g`, `${c.price.toLocaleString()} €`]),
-      styles: { font: "helvetica", fontSize: 6, cellPadding: 2 }, headStyles: { fillColor: [20, 20, 20], textColor: [255, 255, 255] },
-      columnStyles: { 0: { fontStyle: 'bold', cellWidth: 25 } }, foot: [['TOTAL', '', '', `${totalWeight} g`, `${totalPrice.toLocaleString()} €`]],
-      footStyles: { fillColor: [220, 38, 38], textColor: [255, 255, 255], fontSize: 8, fontStyle: 'bold' }, theme: 'grid'
-    });
+  const handleExport = async () => {
+    setIsExporting(true);
+    setProgress(0);
+    
+    // Імітація прогресу для люксового ефекту завантаження
+    const interval = setInterval(() => {
+      setProgress(prev => {
+        if (prev >= 95) { clearInterval(interval); return 95; }
+        return prev + 5;
+      });
+    }, 100);
 
-    const finalY = (doc as any).lastAutoTable.finalY + 10;
-    doc.setFontSize(6); doc.setTextColor(100);
-    const disclaimer = "NOTICE: THE WEIGHT AND PRICE INDICATED ARE PRELIMINARY AND SUBJECT TO MINOR CHANGES BASED ON COMPONENT AVAILABILITY. ADICTO.BIKE RESERVES THE RIGHT TO MODIFY SPECIFICATIONS WITHOUT PRIOR NOTICE.";
-    doc.text(doc.splitTextToSize(disclaimer, pageWidth - 30), 15, finalY);
+    const doc = new jsPDF(); 
+    const pageWidth = doc.internal.pageSize.getWidth(); 
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const cleanText = (text: string) => text ? String(text).replace(/[^\x00-\x7F]/g, "").toUpperCase() : "";
 
-    doc.setFontSize(7); doc.setTextColor(20);
-    doc.text("WWW.ADICTO.BIKE  |  @ADICTO.BIKE", pageWidth / 2, pageHeight - 15, { align: 'center' });
-    
-    try {
-      const qrBase64 = await getBase64Image("/design/qr-code.png");
-      if (qrBase64) doc.addImage(qrBase64, 'PNG', pageWidth - 50, pageHeight - 50, 35, 35);
-    } catch (e) {}
+    try {
+      const logoBase64 = await getBase64Image("/design/Logo.png");
+      if (logoBase64) doc.addImage(logoBase64, 'PNG', (pageWidth / 2) - 5, 8, 10, 10);
+    } catch (e) {}
 
-    doc.save(`ADICTO_BUILD.pdf`);
-  };
+    try {
+      const sortedByZ = [...selections].sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
+      for (const comp of sortedByZ) {
+        if (comp.imageUrl) {
+          const imgBase64 = await getBase64Image(comp.imageUrl);
+          if (imgBase64) doc.addImage(imgBase64, 'PNG', 15, 20, 180, 110, undefined, 'FAST');
+        }
+      }
+    } catch (e) {}
 
-  return (
-    <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-8 text-center font-sans">
-      <CheckCircle2 size={32} className="text-red-600 mb-4" />
-      <h2 className="text-[27px] font-black italic uppercase tracking-tighter mb-4 leading-none text-white">Configuration <br/> <span className="text-red-600">Complete</span></h2>
-      <div className="flex justify-center gap-10 my-8 bg-zinc-900/50 p-6 rounded-3xl border border-white/5">
-        <div><p className="text-zinc-500 text-[9px] uppercase font-bold italic">Price</p><p className="text-[18px] font-mono text-red-600">€{totalPrice.toLocaleString()}</p></div>
-        <div className="w-px bg-white/10" />
-        <div><p className="text-zinc-500 text-[9px] uppercase font-bold italic">Weight</p><p className="text-[18px] font-mono text-white">{totalWeight}g</p></div>
-      </div>
-      <div className="flex gap-4 justify-center">
-        <button onClick={handleExport} className="px-8 py-4 bg-red-600 text-white rounded-xl font-black uppercase text-[10px] italic shadow-lg shadow-red-600/20 flex items-center gap-2"><Download size={16} /> Export PDF</button>
-        <button onClick={onReset} className="px-8 py-4 border border-white/10 rounded-xl font-black uppercase text-[10px] italic hover:bg-white/5 transition-all text-white">Start Over</button>
-      </div>
-    </div>
-  );
+    autoTable(doc, { 
+      startY: 135, head: [['SECTION', 'COMPONENT', 'BRAND', 'WEIGHT', 'PRICE']],
+      body: selections.map((c: any) => [cleanText(c.stepTitle || ""), cleanText(c.name), cleanText(c.brand), `${c.weight} g`, `${c.price.toLocaleString()} €`]),
+      styles: { font: "helvetica", fontSize: 6, cellPadding: 2 }, headStyles: { fillColor: [20, 20, 20], textColor: [255, 255, 255] },
+      columnStyles: { 0: { fontStyle: 'bold', cellWidth: 25 } }, foot: [['TOTAL', '', '', `${totalWeight} g`, `${totalPrice.toLocaleString()} €`]],
+      footStyles: { fillColor: [220, 38, 38], textColor: [255, 255, 255], fontSize: 8, fontStyle: 'bold' }, theme: 'grid'
+    });
+
+    const finalY = (doc as any).lastAutoTable.finalY + 10;
+    doc.setFontSize(6); doc.setTextColor(100);
+    doc.text("WWW.ADICTO.BIKE  |  @ADICTO.BIKE", pageWidth / 2, pageHeight - 15, { align: 'center' });
+
+    setTimeout(() => {
+      clearInterval(interval);
+      setProgress(100);
+      setTimeout(() => {
+        doc.save(`ADICTO_BUILD.pdf`);
+        setIsExporting(false);
+        setProgress(0);
+      }, 400);
+    }, 1000);
+  };
+
+  return (
+    <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-8 text-center font-sans">
+      {/* ЛОГОТИП ЗАМІСТЬ ЧЕКБОКСА */}
+      <motion.img 
+        initial={{ y: 10, opacity: 0 }} 
+        animate={{ y: 0, opacity: 1 }} 
+        src="/design/Logo.png" 
+        className="h-8 mb-10 object-contain opacity-90" 
+      />
+
+      {/* ЗМЕНШЕНИЙ ШРИФТ ЗАГОЛОВКА (на 25%) */}
+      <h2 className="text-[20px] lg:text-[22px] font-black italic uppercase tracking-tighter mb-4 leading-none text-white">
+        Your bike is <br/> <span className="text-red-600">Ready</span>
+      </h2>
+
+      {/* ЗМЕНШЕНІ ЦИФРИ ЦІНИ ТА ВАГИ */}
+      <div className="flex justify-center gap-10 my-8 bg-zinc-900/40 p-6 rounded-[2rem] border border-white/5 shadow-2xl backdrop-blur-md">
+        <div>
+          <p className="text-zinc-600 text-[7px] uppercase font-black mb-1 italic tracking-widest">Price</p>
+          <p className="text-[14px] font-mono text-red-600 font-black tracking-tighter italic">€{totalPrice.toLocaleString()}</p>
+        </div>
+        <div className="w-px bg-white/10 h-8 mt-1" />
+        <div>
+          <p className="text-zinc-600 text-[7px] uppercase font-black mb-1 italic tracking-widest">Weight</p>
+          <p className="text-[14px] font-mono text-white/80 font-black tracking-tighter italic">{totalWeight}g</p>
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-4 w-full max-w-[280px]">
+        {/* КНОПКА ЕКСПОРТУ З ЧЕРВОНИМ ПРОГРЕСОМ */}
+        <button 
+          onClick={handleExport} 
+          disabled={isExporting}
+          className="relative h-14 bg-zinc-900 border border-white/10 rounded-2xl font-black uppercase text-[10px] italic overflow-hidden transition-all active:scale-95 group shadow-xl"
+        >
+          {/* Динамічна заливка червоним */}
+          <motion.div 
+            className="absolute left-0 top-0 bottom-0 bg-red-600/80 z-0"
+            animate={{ width: `${progress}%` }}
+            transition={{ ease: "linear" }}
+          />
+          
+          <span className="relative z-10 flex items-center justify-center gap-2 text-white">
+            {isExporting ? `EXPORTING ${progress}%` : <><Download size={14} /> EXPORT PDF</>}
+          </span>
+        </button>
+
+        <button 
+          onClick={onReset} 
+          className="text-zinc-600 hover:text-white transition-colors text-[9px] font-black uppercase tracking-[0.3em] py-2 italic"
+        >
+          Build another one
+        </button>
+      </div>
+    </div>
+  );
 }
