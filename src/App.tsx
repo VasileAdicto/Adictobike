@@ -323,11 +323,33 @@ export default function BikeConfigurator() {
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-red-600 pb-28 lg:pb-24 overflow-x-hidden">
       <style>{`
-        .custom-scroll-container::-webkit-scrollbar { width: 3px; height: 3px; }
-        .custom-scroll-container::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.02); border-radius: 10px; }
-        .custom-scroll-container::-webkit-scrollbar-thumb { background: #ef4444; border-radius: 10px; }
-        .custom-scroll-container { scrollbar-width: thin; scrollbar-color: #dc2626 rgba(255, 255, 255, 0.02); }
-      `}</style>
+  /* Тонкий червоний скролбар для Chrome, Safari та Edge */
+  .custom-scroll-container::-webkit-scrollbar { 
+    width: 3px; 
+    height: 3px; 
+  }
+  .custom-scroll-container::-webkit-scrollbar-track { 
+    background: rgba(255, 255, 255, 0.02); 
+    border-radius: 10px; 
+  }
+  .custom-scroll-container::-webkit-scrollbar-thumb { 
+    background: #ef4444; 
+    border-radius: 10px; 
+  }
+  .custom-scroll-container::-webkit-scrollbar-thumb:hover { 
+    background: #dc2626; 
+  }
+
+  /* Для Firefox */
+  .custom-scroll-container { 
+    scrollbar-width: thin; 
+    scrollbar-color: #ef4444 transparent; 
+  }
+
+  /* Приховуємо стандартний скролбар для розділів, щоб не заважав */
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+`}</style>
 
       {isLoggedIn ? (
         <AdminPanel categories={INITIAL_STEPS.map(s => s.title)} offsets={offsets} setOffsets={setOffsets} activeComponent={activeComponentForTuning} showGrid={showGrid} setShowGrid={setShowGrid} gridSize={gridSize} setGridSize={setGridSize} isZoomed={isZoomed} setIsZoomed={setIsZoomed} zoomScale={zoomScale} setZoomScale={setZoomScale} onLogout={handleLogout} />
