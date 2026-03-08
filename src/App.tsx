@@ -1,8 +1,12 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Download, CheckCircle2, Upload, Database, Lock, User, Settings2, Save, RotateCcw, Grid3X3, Search, Move, FolderOpen, Key, Eye, EyeOff, LogOut, ArrowRight, ChevronsRight } from 'lucide-react';
+import { 
+  ChevronLeft, ChevronRight, Download, CheckCircle2, Upload, Database, 
+  Lock, User as UserIcon, Settings2, Save, RotateCcw, Grid3X3, Search, 
+  Move, FolderOpen, Key, Eye, EyeOff, LogOut, ArrowRight, ChevronsRight,
+  LogIn, Trash2, Edit3, Scale, X, Smartphone, Mail
+} from 'lucide-react';
 import { cn } from './lib/utils';
-
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
@@ -27,53 +31,152 @@ interface Step {
   options: Component[];
 }
 
-interface OffsetData {
-  s: number; 
-  x: number; 
-  y: number; 
+interface OffsetData { s: number; x: number; y: number; }
+
+interface SavedBuild {
+  id: string;
+  name: string;
+  date: string;
+  components: Component[];
+  totalPrice: number;
+  totalWeight: number;
 }
 
-// --- ADMIN LOGIN ---
-const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
+// --- LOGIN MODAL COMPONENT ---
+const AuthModal = ({ isOpen, onClose, onLogin }: any) => {
+  const [step, setStep] = useState('email'); // email, otp
   const [email, setEmail] = useState('');
-  const [pass, setPass] = useState('');
-  const [showPass, setShowPass] = useState(false);
-  const [rememberMe, setRememberMe] = useState(true);
-  const [error, setError] = useState('');
+  const [otp, setOtp] = useState(['', '', '', '']);
 
-  useEffect(() => {
-    if (localStorage.getItem('adicto_auth') === 'true') onLogin();
-  }, [onLogin]);
+  if (!isOpen) return null;
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (email === "hello@adicto.bike" && pass === "Scalpel2012!") {
-      if (rememberMe) localStorage.setItem('adicto_auth', 'true');
-      onLogin();
-    } else { setError("Invalid credentials"); }
+  const handleNext = () => {
+    if (step === 'email' && email.includes('@')) setStep('otp');
+    else if (step === 'otp') onLogin({ email, name: email.split('@')[0] });
   };
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center p-6 selection:bg-red-600 font-sans">
-      <motion.form initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} onSubmit={handleLogin} className="bg-zinc-900/50 p-10 rounded-[2.5rem] border border-white/5 w-full max-w-md backdrop-blur-xl shadow-2xl">
-        <div className="flex flex-col items-center mb-8">
-          <div className="w-12 h-12 bg-red-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-red-600/20"><Lock size={24} className="text-white"/></div>
-          <h2 className="text-xl font-black uppercase tracking-widest italic text-center text-white">Adicto Admin</h2>
-        </div>
-        <div className="space-y-4 text-black">
-          <input type="email" placeholder="Email" className="w-full bg-black border border-white/10 p-4 rounded-2xl text-white outline-none focus:border-red-600 transition-all text-sm font-mono" value={email} onChange={(e) => setEmail(e.target.value)} />
-          <div className="relative">
-            <input type={showPass ? "text" : "password"} placeholder="Password" className="w-full bg-black border border-white/10 p-4 rounded-2xl text-white outline-none focus:border-red-600 transition-all text-sm font-mono" value={pass} onChange={(e) => setPass(e.target.value)} />
-            <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white transition-colors text-[10px] font-bold uppercase">{showPass ? "Hide" : "Show"}</button>
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+      <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-zinc-900 border border-white/10 p-8 rounded-[2.5rem] max-w-md w-full relative">
+        <button onClick={onClose} className="absolute top-6 right-6 text-zinc-500 hover:text-white"><X size={20}/></button>
+        
+        <h2 className="text-2xl font-black uppercase italic text-white mb-2">{step === 'email' ? 'Join Adicto' : 'Verify Email'}</h2>
+        <p className="text-zinc-500 text-xs uppercase font-bold mb-8 tracking-widest">
+          {step === 'email' ? 'Access your private garage' : `Enter code sent to ${email}`}
+        </p>
+
+        {step === 'email' ? (
+          <div className="space-y-4">
+            <input type="email" placeholder="EMAIL ADDRESS" value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-black border border-white/10 p-4 rounded-2xl text-white outline-none focus:border-red-600 transition-all font-mono text-sm" />
+            <div className="grid grid-cols-2 gap-3">
+              <button className="flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 py-3 rounded-xl transition-all text-[10px] font-bold text-white uppercase"><Smartphone size={14}/> Apple</button>
+              <button className="flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 py-3 rounded-xl transition-all text-[10px] font-bold text-white uppercase"><Mail size={14}/> Google</button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex justify-between gap-2 mb-8">
+            {otp.map((digit, i) => (
+              <input key={i} type="text" maxLength={1} value={digit} onChange={e => {
+                const newOtp = [...otp]; newOtp[i] = e.target.value; setOtp(newOtp);
+                if (e.target.nextSibling && e.target.value) (e.target.nextSibling as HTMLElement).focus();
+              }} className="w-16 h-20 bg-black border border-white/10 rounded-2xl text-center text-2xl font-black text-red-600 outline-none focus:border-red-600" />
+            ))}
+          </div>
+        )}
+
+        <button onClick={handleNext} className="w-full bg-red-600 py-4 rounded-2xl font-black uppercase text-white mt-8 hover:bg-red-700 transition-all italic tracking-widest shadow-lg shadow-red-600/20">
+          {step === 'email' ? 'Continue' : 'Verify & Access'}
+        </button>
+      </motion.div>
+    </div>
+  );
+};
+
+// --- USER DASHBOARD ---
+const UserDashboard = ({ builds, onEdit, onDelete, onClose }: any) => {
+  const [selectedForCompare, setSelectedForCompare] = useState<string[]>([]);
+  const [view, setView] = useState('list'); // list, compare
+
+  const toggleCompare = (id: string) => {
+    setSelectedForCompare(prev => 
+      prev.includes(id) ? prev.filter(x => x !== id) : prev.length < 5 ? [...prev, id] : prev
+    );
+  };
+
+  const compareBuilds = builds.filter((b: any) => selectedForCompare.includes(b.id));
+
+  return (
+    <div className="min-h-screen bg-black text-white p-6 lg:p-12 font-sans overflow-y-auto">
+      <div className="max-w-7xl mx-auto">
+        <div className="flex justify-between items-end mb-12">
+          <div>
+            <h1 className="text-4xl font-black italic uppercase tracking-tighter">My Garage</h1>
+            <p className="text-zinc-500 font-bold uppercase text-[10px] tracking-[0.3em]">Stored Configurations</p>
+          </div>
+          <div className="flex gap-4">
+            {selectedForCompare.length > 1 && (
+              <button onClick={() => setView(view === 'compare' ? 'list' : 'compare')} className="bg-white text-black px-6 py-2 rounded-full font-black uppercase text-[10px] italic flex items-center gap-2">
+                <Scale size={14}/> {view === 'compare' ? 'Back to List' : `Compare (${selectedForCompare.length})`}
+              </button>
+            )}
+            <button onClick={onClose} className="bg-zinc-800 p-2 rounded-full hover:bg-zinc-700"><X size={20}/></button>
           </div>
         </div>
-        <div className="flex items-center gap-2 mt-4 px-2">
-          <input type="checkbox" id="remember" checked={rememberMe} onChange={() => setRememberMe(!rememberMe)} className="accent-red-600 h-4 w-4 rounded border-white/10 bg-black" />
-          <label htmlFor="remember" className="text-zinc-500 text-[10px] uppercase font-bold cursor-pointer select-none text-white">Remember Me</label>
-        </div>
-        {error && <p className="text-red-600 text-[10px] text-center mt-4 uppercase font-black italic tracking-widest">{error}</p>}
-        <button className="w-full bg-red-600 py-4 rounded-2xl font-black uppercase tracking-widest text-white mt-8 hover:bg-red-700 active:scale-95 transition-all shadow-lg shadow-red-600/20 text-sm italic">Access Dashboard</button>
-      </motion.form>
+
+        {view === 'list' ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {builds.map((build: SavedBuild) => (
+              <div key={build.id} className="bg-zinc-900/50 border border-white/5 rounded-[2rem] p-6 hover:border-red-600/30 transition-all group">
+                <div className="flex justify-between items-start mb-4">
+                  <div onClick={() => toggleCompare(build.id)} className={cn("w-6 h-6 rounded-full border-2 flex items-center justify-center cursor-pointer transition-all", selectedForCompare.includes(build.id) ? "bg-red-600 border-red-600" : "border-white/10")}>
+                    {selectedForCompare.includes(build.id) && <CheckCircle2 size={14}/>}
+                  </div>
+                  <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                    <button onClick={() => onEdit(build)} className="p-2 bg-zinc-800 rounded-lg hover:text-red-600"><Edit3 size={14}/></button>
+                    <button onClick={() => onDelete(build.id)} className="p-2 bg-zinc-800 rounded-lg hover:text-red-600"><Trash2 size={14}/></button>
+                  </div>
+                </div>
+                <h3 className="text-xl font-black uppercase italic mb-1">{build.name}</h3>
+                <p className="text-[10px] text-zinc-500 mb-6 uppercase font-bold">{build.date}</p>
+                <div className="flex justify-between items-end border-t border-white/5 pt-4">
+                  <div><p className="text-[8px] text-zinc-600 uppercase font-black">Price</p><p className="font-mono text-red-600">€{build.totalPrice.toLocaleString()}</p></div>
+                  <div className="text-right"><p className="text-[8px] text-zinc-600 uppercase font-black">Weight</p><p className="font-mono">{build.totalWeight}g</p></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="overflow-x-auto bg-zinc-900/30 rounded-[2rem] border border-white/5">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-white/5">
+                  <th className="p-6 text-[10px] font-black text-zinc-600 uppercase">Feature</th>
+                  {compareBuilds.map((b: any) => <th key={b.id} className="p-6 text-xl font-black italic uppercase text-red-600">{b.name}</th>)}
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="border-b border-white/5">
+                  <td className="p-6 text-[10px] font-black uppercase text-zinc-400">Total Price</td>
+                  {compareBuilds.map((b: any) => <td key={b.id} className="p-6 font-mono">€{b.totalPrice.toLocaleString()}</td>)}
+                </tr>
+                <tr className="border-b border-white/5">
+                  <td className="p-6 text-[10px] font-black uppercase text-zinc-400">Total Weight</td>
+                  {compareBuilds.map((b: any) => <td key={b.id} className="p-6 font-mono text-red-500">{b.totalWeight}g</td>)}
+                </tr>
+                {INITIAL_STEPS.map(step => (
+                  <tr key={step.id} className="border-b border-white/5">
+                    <td className="p-6 text-[10px] font-black uppercase text-zinc-400">{step.title}</td>
+                    {compareBuilds.map((b: any) => {
+                      const comp = b.components.find((c: any) => c.stepTitle === step.title);
+                      return <td key={b.id} className="p-6 text-[10px] uppercase font-bold text-zinc-300">{comp?.name || '-'}</td>
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
@@ -197,6 +300,12 @@ export default function BikeConfigurator() {
   const [isFinished, setIsFinished] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // AUTH & DASHBOARD STATES
+  const [user, setUser] = useState<any>(JSON.parse(localStorage.getItem('adicto_user') || 'null'));
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isDashboardOpen, setIsDashboardOpen] = useState(false);
+  const [savedBuilds, setSavedBuilds] = useState<SavedBuild[]>(JSON.parse(localStorage.getItem('adicto_saved_builds') || '[]'));
+
   const stepsNavRef = useRef<HTMLDivElement>(null);
   const currentStep = steps[currentStepIndex] || steps[0];
 
@@ -225,7 +334,6 @@ export default function BikeConfigurator() {
     }; autoLoadExcel();
   }, []);
 
-  // AUTO-SCROLL TO ACTIVE STEP
   useEffect(() => {
     if (stepsNavRef.current) {
       const activeBtn = stepsNavRef.current.children[currentStepIndex] as HTMLElement;
@@ -235,7 +343,6 @@ export default function BikeConfigurator() {
     }
   }, [currentStepIndex]);
 
-  // LOGIC FILTERING
   const activeLogic = useMemo(() => {
     if (currentStepIndex === 0) return null;
     const prevStepId = steps[currentStepIndex - 1]?.id;
@@ -259,41 +366,88 @@ export default function BikeConfigurator() {
     return opt ? { ...opt, stepTitle: s.title } : null;
   }).filter((c): c is Component => !!c), [selections, steps]);
 
+  const totalPrice = selectedComponents.reduce((acc, c) => acc + c.price, 0);
+  const totalWeight = selectedComponents.reduce((acc, c) => acc + c.weight, 0);
+
+  const handleSaveBuild = () => {
+    if (!user) { setIsAuthModalOpen(true); return; }
+    const newBuild: SavedBuild = {
+      id: Math.random().toString(36).substr(2, 9),
+      name: `ADICTO ${selectedComponents[0]?.brand || 'BUILD'}`,
+      date: new Date().toLocaleDateString(),
+      components: selectedComponents,
+      totalPrice,
+      totalWeight
+    };
+    const updated = [...savedBuilds, newBuild];
+    setSavedBuilds(updated);
+    localStorage.setItem('adicto_saved_builds', JSON.stringify(updated));
+    alert("Build Saved to Garage!");
+  };
+
   const activeComponentForTuning = useMemo(() => currentStep?.options.find(o => o.id === selections[currentStep?.id]), [currentStep, selections]);
 
   if (isAdminMode && !isLoggedIn) return <AdminLogin onLogin={() => setIsLoggedIn(true)} />;
-  if (isFinished) return <SummaryView selections={selectedComponents} onReset={() => window.location.reload()} />;
+  if (isDashboardOpen) return <UserDashboard builds={savedBuilds} onClose={() => setIsDashboardOpen(false)} onDelete={(id: string) => {
+    const updated = savedBuilds.filter(b => b.id !== id);
+    setSavedBuilds(updated); localStorage.setItem('adicto_saved_builds', JSON.stringify(updated));
+  }} onEdit={(build: SavedBuild) => {
+    const newSelections: any = {};
+    build.components.forEach(c => {
+      const step = steps.find(s => s.title === c.stepTitle);
+      if (step) newSelections[step.id] = c.id;
+    });
+    setSelections(newSelections);
+    setIsDashboardOpen(false);
+    setIsFinished(false);
+  }} />;
+
+  if (isFinished) return <SummaryView selections={selectedComponents} onReset={() => window.location.reload()} user={user} onSaveBuild={handleSaveBuild} />;
 
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-red-600 pb-28 lg:pb-24 overflow-x-hidden">
       <style>{`
-        .custom-scroll-container::-webkit-scrollbar, .steps-scroll-container::-webkit-scrollbar { width: 4px; height: 4px; }
-        .custom-scroll-container::-webkit-scrollbar-track, .steps-scroll-container::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); border-radius: 10px; }
-        .custom-scroll-container::-webkit-scrollbar-thumb, .steps-scroll-container::-webkit-scrollbar-thumb { background: #ef4444; border-radius: 10px; }
-        .custom-scroll-container, .steps-scroll-container { scrollbar-width: thin; scrollbar-color: #ef4444 rgba(255, 255, 255, 0.05); }
-        @keyframes slideHint { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(5px); } }
-        .animate-slide-hint { animation: slideHint 1.5s infinite; }
+        .custom-scroll-container::-webkit-scrollbar { width: 4px; height: 4px; }
+        .custom-scroll-container::-webkit-scrollbar-thumb { background: #ef4444; border-radius: 10px; }
+        @keyframes bounce-x { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(5px); } }
+        .animate-bounce-x { animation: bounce-x 1s infinite; }
       `}</style>
 
-      {isLoggedIn ? (
-        <AdminPanel categories={INITIAL_STEPS.map(s => s.title)} offsets={offsets} setOffsets={setOffsets} activeComponent={activeComponentForTuning} showGrid={showGrid} setShowGrid={setShowGrid} gridSize={gridSize} setGridSize={setGridSize} isZoomed={isZoomed} setIsZoomed={setIsZoomed} zoomScale={zoomScale} setZoomScale={setZoomScale} onLogout={() => setIsLoggedIn(false)} />
-      ) : (
-        <nav className="border-b border-white/5 px-4 lg:px-8 py-2 flex justify-between items-center bg-black/80 backdrop-blur-2xl sticky top-0 z-50"><div className="flex items-center gap-4 pl-2"><img src="/design/Logo.png" alt="Logo" className="h-4 lg:h-6 w-auto object-contain" /></div><div className="text-zinc-400 font-mono text-[7px] pr-2 opacity-70 uppercase tracking-widest italic">Build by Vasile & AI</div></nav>
-      )}
+      <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} onLogin={(u: any) => { setUser(u); localStorage.setItem('adicto_user', JSON.stringify(u)); setIsAuthModalOpen(false); }} />
 
-      <main className="max-w-[1500px] mx-auto px-4 lg:px-6 pt-2 lg:pt-3">
-        <div className="flex flex-col lg:grid lg:grid-cols-12 gap-6 lg:gap-10 lg:h-[550px] items-stretch">
-          <div className="lg:col-span-9 flex flex-col gap-2 order-1">
-            <div ref={stepsNavRef} className="flex overflow-x-auto no-scrollbar steps-scroll-container gap-x-6 gap-y-2 pb-2">
+      <nav className="border-b border-white/5 px-4 lg:px-8 py-4 flex justify-between items-center bg-black/80 backdrop-blur-2xl sticky top-0 z-50">
+        <div className="flex items-center gap-6">
+          <img src="/design/Logo.png" alt="Logo" className="h-6 w-auto" />
+          <div className="text-zinc-500 font-mono text-[7px] uppercase tracking-[0.2em] italic mt-1 border-l border-white/10 pl-6 hidden md:block">Build by Vasile & AI</div>
+        </div>
+        <div className="flex items-center gap-4">
+          {user ? (
+            <button onClick={() => setIsDashboardOpen(true)} className="flex items-center gap-2 bg-white/5 hover:bg-white/10 px-4 py-2 rounded-full transition-all border border-white/5">
+              <UserIcon size={16} className="text-red-600"/>
+              <span className="text-[10px] font-black uppercase italic">{user.name}</span>
+            </button>
+          ) : (
+            <button onClick={() => setIsAuthModalOpen(true)} className="flex items-center gap-2 bg-red-600 px-5 py-2 rounded-full hover:bg-red-700 transition-all shadow-lg shadow-red-600/20">
+              <LogIn size={16}/>
+              <span className="text-[10px] font-black uppercase italic">Login</span>
+            </button>
+          )}
+        </div>
+      </nav>
+
+      <main className="max-w-[1500px] mx-auto px-4 lg:px-6 pt-6">
+        <div className="flex flex-col lg:grid lg:grid-cols-12 gap-8 lg:h-[600px] items-stretch">
+          <div className="lg:col-span-9 flex flex-col gap-6 order-1">
+            <div ref={stepsNavRef} className="flex overflow-x-auto no-scrollbar gap-x-8 gap-y-2 pb-4 border-b border-white/5">
               {steps.map((step, idx) => (
-                <button key={step.id} onClick={() => setCurrentStepIndex(idx)} className={cn("transition-all duration-300 text-[10px] font-black italic uppercase tracking-widest pb-1 border-b-2 whitespace-nowrap", idx === currentStepIndex ? "text-red-600 border-red-600 drop-shadow-[0_0_9px_rgba(255,0,0,0.3)]" : "text-white opacity-20 border-transparent hover:opacity-100")}>{step.title}</button>
+                <button key={step.id} onClick={() => setCurrentStepIndex(idx)} className={cn("transition-all duration-300 text-[10px] font-black italic uppercase tracking-widest pb-2 border-b-2 whitespace-nowrap", idx === currentStepIndex ? "text-red-600 border-red-600" : "text-white opacity-20 border-transparent hover:opacity-100")}>{step.title}</button>
               ))}
             </div>
-            <div className="h-[280px] md:h-[400px] lg:flex-1 relative"><Visualizer selectedComponents={selectedComponents} offsets={offsets} showGrid={showGrid} gridSize={gridSize} isZoomed={isZoomed} zoomScale={zoomScale} /></div>
+            <div className="h-[300px] md:h-[450px] lg:flex-1 relative"><Visualizer selectedComponents={selectedComponents} offsets={offsets} showGrid={showGrid} gridSize={gridSize} isZoomed={isZoomed} zoomScale={zoomScale} /></div>
           </div>
-          <div className="lg:col-span-3 flex flex-col bg-zinc-900/40 rounded-[2.5rem] border border-white/5 p-4 lg:p-6 relative overflow-hidden order-2 shadow-2xl">
-            <div className="flex-1 overflow-x-auto lg:overflow-y-auto lg:overflow-x-hidden custom-scroll-container pb-2 lg:pb-0" style={{ display: 'flex', flexDirection: 'column' }}>
-                <div className="flex flex-row lg:flex-col gap-3 min-w-full">
+          <div className="lg:col-span-3 flex flex-col bg-zinc-900/40 rounded-[2.5rem] border border-white/5 p-6 relative overflow-hidden order-2 shadow-2xl">
+            <div className="flex-1 overflow-x-auto lg:overflow-y-auto lg:overflow-x-hidden custom-scroll-container">
+                <div className="flex flex-row lg:flex-col gap-4 min-w-full">
                   <AnimatePresence mode="popLayout">
                     {filteredOptions.map((option) => (
                       <div key={option.id} className="w-[31%] min-w-[31%] lg:w-full lg:min-w-0 shrink-0">
@@ -303,31 +457,25 @@ export default function BikeConfigurator() {
                   </AnimatePresence>
                 </div>
             </div>
-            
-            {/* ГНУЧКА ПІДКАЗКА ПРО СКРОЛ ДЛЯ МОБІЛЬНИХ */}
-            {filteredOptions.length > 3 && (
-              <div className="lg:hidden mt-3 flex items-center justify-center gap-1.5 text-zinc-500 opacity-60">
-                <span className="text-[8px] font-black uppercase tracking-[0.2em] italic">Scroll for more</span>
-                <ChevronsRight size={10} className="animate-slide-hint" />
-              </div>
-            )}
           </div>
         </div>
       </main>
 
-      <div className="fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur-2xl border-t border-white/5 z-40">
-        <div className="max-w-[1500px] mx-auto px-4 lg:px-6 py-6 grid grid-cols-12 gap-2 items-center">
-          <button onClick={() => currentStepIndex > 0 && setCurrentStepIndex(currentStepIndex - 1)} className="col-span-3 lg:col-span-2 flex items-center gap-1 text-zinc-500 hover:text-white transition-all font-black uppercase text-[10px] italic"><ChevronLeft size={20} /> Back</button>
-          <div className="col-span-6 lg:col-span-7 flex justify-center lg:justify-end items-center gap-4 lg:gap-10">
-            <div className="text-center lg:text-right text-zinc-300"><p className="text-[7px] text-zinc-600 uppercase font-black mb-0.5 italic">Weight</p><p className="font-mono text-xs">{selectedComponents.reduce((acc, c) => acc + c.weight, 0)}g</p></div>
+      <div className="fixed bottom-0 left-0 right-0 bg-black/90 backdrop-blur-3xl border-t border-white/5 z-50 py-6">
+        <div className="max-w-[1500px] mx-auto px-6 flex flex-row items-center justify-between lg:grid lg:grid-cols-12">
+          <button onClick={() => currentStepIndex > 0 && setCurrentStepIndex(currentStepIndex - 1)} className="lg:col-span-2 flex items-center gap-2 text-zinc-500 hover:text-white transition-all font-black uppercase text-[10px] italic"><ChevronLeft size={20} /> Back</button>
+          
+          <div className="flex flex-row gap-6 lg:col-span-8 justify-center items-center">
+            <div className="text-center"><p className="text-[8px] text-zinc-600 uppercase font-black italic">Weight</p><p className="font-mono text-sm">{totalWeight}g</p></div>
             <div className="h-8 w-px bg-white/10" />
-            <div className="text-center lg:text-right text-zinc-300"><p className="text-[7px] text-zinc-600 uppercase font-black mb-0.5 italic">Price</p><p className="font-mono text-xs text-red-600">€{selectedComponents.reduce((acc, c) => acc + c.price, 0).toLocaleString()}</p></div>
+            <div className="text-center"><p className="text-[8px] text-zinc-600 uppercase font-black italic">Price</p><p className="font-mono text-sm text-red-600">€{totalPrice.toLocaleString()}</p></div>
           </div>
-          <div className="col-span-3 flex justify-end">
+
+          <div className="lg:col-span-2 flex justify-end">
             <button onClick={() => {
-                if (filteredOptions.length > 0 && !selections[currentStep.id]) { setError("Select!"); return; }
+                if (filteredOptions.length > 0 && !selections[currentStep.id]) return;
                 currentStepIndex < steps.length - 1 ? setCurrentStepIndex(currentStepIndex + 1) : setIsFinished(true);
-              }} className="bg-red-600 hover:bg-red-700 text-white h-[32px] px-6 rounded-lg font-black uppercase text-[10px] italic flex items-center gap-2 active:scale-95 shadow-lg shadow-red-600/20">{currentStepIndex === steps.length - 1 ? 'Finish' : 'Next'} <ChevronRight size={14} /></button>
+              }} className="bg-red-600 hover:bg-red-700 text-white h-[44px] px-8 rounded-2xl font-black uppercase text-[10px] italic flex items-center gap-2 active:scale-95 shadow-lg shadow-red-600/20">{currentStepIndex === steps.length - 1 ? 'Finish' : 'Next'} <ChevronRight size={14} /></button>
           </div>
         </div>
       </div>
@@ -335,62 +483,68 @@ export default function BikeConfigurator() {
   );
 }
 
-function SummaryView({ selections, onReset }: any) {
+function SummaryView({ selections, onReset, user, onSaveBuild }: any) {
+  const [exportProgress, setExportProgress] = useState(0);
+  const [isExporting, setIsExporting] = useState(false);
   const totalPrice = selections.reduce((acc: number, c: any) => acc + c.price, 0);
   const totalWeight = selections.reduce((acc: number, c: any) => acc + c.weight, 0);
-  const getBase64Image = async (url: string): Promise<string> => {
-    try { const res = await fetch(url); const blob = await res.blob();
-      return new Promise((resolve, reject) => { const reader = new FileReader(); reader.onloadend = () => resolve(reader.result as string); reader.onerror = reject; reader.readAsDataURL(blob); });
-    } catch (e) { return ""; }
-  };
+  
   const handleExport = async () => {
-    const doc = new jsPDF(); const pageWidth = doc.internal.pageSize.getWidth(); const pageHeight = doc.internal.pageSize.getHeight();
-    const cleanText = (text: string) => text ? String(text).replace(/[^\x00-\x7F]/g, "").toUpperCase() : "";
-    try {
-      const logoBase64 = await getBase64Image("/design/Logo.png");
-      if (logoBase64) doc.addImage(logoBase64, 'PNG', (pageWidth / 2) - 15, 8, 10, 10);
-    } catch (e) {}
-    try {
-      const sortedByZ = [...selections].sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
-      for (const comp of sortedByZ) {
-        if (comp.imageUrl) {
-          const imgBase64 = await getBase64Image(comp.imageUrl);
-          if (imgBase64) doc.addImage(imgBase64, 'PNG', 15, 20, 180, 110, undefined, 'FAST');
-        }
-      }
-    } catch (e) {}
+    setIsExporting(true); setExportProgress(10);
+    const doc = new jsPDF(); 
+    const pageWidth = doc.internal.pageSize.getWidth();
+    setExportProgress(40);
+    
     autoTable(doc, { 
       startY: 135, head: [['SECTION', 'COMPONENT', 'BRAND', 'WEIGHT', 'PRICE']],
-      body: selections.map((c: any) => [cleanText(c.stepTitle || ""), cleanText(c.name), cleanText(c.brand), `${c.weight} g`, `${c.price.toLocaleString()} €`]),
-      styles: { font: "helvetica", fontSize: 6, cellPadding: 2 }, headStyles: { fillColor: [20, 20, 20], textColor: [255, 255, 255] },
-      columnStyles: { 0: { fontStyle: 'bold', cellWidth: 25 } }, foot: [['TOTAL', '', '', `${totalWeight} g`, `${totalPrice.toLocaleString()} €`]],
-      footStyles: { fillColor: [220, 38, 38], textColor: [255, 255, 255], fontSize: 8, fontStyle: 'bold' }, theme: 'grid'
+      body: selections.map((c: any) => [c.stepTitle, c.name, c.brand, `${c.weight} g`, `${c.price} €`]),
+      theme: 'grid'
     });
-    const finalY = (doc as any).lastAutoTable.finalY + 10;
-    doc.setFontSize(6); doc.setTextColor(100);
-    const disclaimer = "NOTICE: THE WEIGHT AND PRICE INDICATED ARE PRELIMINARY AND SUBJECT TO MINOR CHANGES BASED ON COMPONENT AVAILABILITY. ADICTO.BIKE RESERVES THE RIGHT TO MODIFY SPECIFICATIONS WITHOUT PRIOR NOTICE.";
-    doc.text(doc.splitTextToSize(disclaimer, pageWidth - 30), 15, finalY);
-    doc.setFontSize(7); doc.setTextColor(20);
-    doc.text("WWW.ADICTO.BIKE  |  @ADICTO.BIKE", pageWidth / 2, pageHeight - 15, { align: 'center' });
-    try {
-      const qrBase64 = await getBase64Image("/design/qr-code.png");
-      if (qrBase64) doc.addImage(qrBase64, 'PNG', pageWidth - 50, pageHeight - 50, 35, 35);
-    } catch (e) {}
-    doc.save(`ADICTO_BUILD.pdf`);
+    setExportProgress(80);
+    
+    setTimeout(() => {
+      doc.save(`ADICTO_BUILD.pdf`);
+      setExportProgress(100);
+      setTimeout(() => { setIsExporting(false); setExportProgress(0); }, 500);
+    }, 1000);
   };
+
   return (
     <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-8 text-center font-sans">
-      <CheckCircle2 size={32} className="text-red-600 mb-4" />
-      <h2 className="text-[27px] font-black italic uppercase tracking-tighter mb-4 leading-none text-white">Configuration <br/> <span className="text-red-600">Complete</span></h2>
-      <div className="flex justify-center gap-10 my-8 bg-zinc-900/50 p-6 rounded-3xl border border-white/5">
-        <div><p className="text-zinc-500 text-[9px] uppercase font-bold italic">Price</p><p className="text-[18px] font-mono text-red-600">€{totalPrice.toLocaleString()}</p></div>
-        <div className="w-px bg-white/10" />
-        <div><p className="text-zinc-500 text-[9px] uppercase font-bold italic">Weight</p><p className="text-[18px] font-mono text-white">{totalWeight}g</p></div>
-      </div>
-      <div className="flex gap-4 justify-center">
-        <button onClick={handleExport} className="px-8 py-4 bg-red-600 text-white rounded-xl font-black uppercase text-[10px] italic shadow-lg shadow-red-600/20 flex items-center gap-2"><Download size={16} /> Export PDF</button>
-        <button onClick={onReset} className="px-8 py-4 border border-white/10 rounded-xl font-black uppercase text-[10px] italic hover:bg-white/5 transition-all text-white">Start Over</button>
-      </div>
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-2xl w-full">
+        <img src="/design/Logo.png" alt="Logo" className="w-12 h-12 mx-auto mb-8 object-contain" />
+        <h2 className="text-4xl font-black italic uppercase tracking-tighter mb-4 leading-none">Your Machine is <br/> <span className="text-red-600">Ready</span></h2>
+        
+        <div className="flex justify-center gap-12 my-12 bg-zinc-900/50 p-8 rounded-[3rem] border border-white/5">
+          <div><p className="text-zinc-600 text-[10px] uppercase font-bold italic mb-2">Build Price</p><p className="text-2xl font-mono text-red-600">€{totalPrice.toLocaleString()}</p></div>
+          <div className="w-px bg-white/10" />
+          <div><p className="text-zinc-600 text-[10px] uppercase font-bold italic mb-2">Build Weight</p><p className="text-2xl font-mono">{totalWeight}g</p></div>
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <button 
+            onClick={handleExport} 
+            disabled={isExporting}
+            style={{
+              background: isExporting 
+                ? `linear-gradient(to right, #ef4444 ${exportProgress}%, #18181b ${exportProgress}%)` 
+                : ''
+            }}
+            className={cn(
+              "px-10 py-5 rounded-[1.5rem] font-black uppercase text-[11px] italic transition-all flex items-center justify-center gap-3 relative overflow-hidden",
+              isExporting ? "border border-white/10" : "bg-red-600 hover:bg-red-700"
+            )}
+          >
+            <Download size={18} /> {isExporting ? `Exporting ${exportProgress}%` : 'Export PDF'}
+          </button>
+
+          <button onClick={onSaveBuild} className="px-10 py-5 bg-white text-black rounded-[1.5rem] font-black uppercase text-[11px] italic hover:bg-zinc-200 transition-all flex items-center justify-center gap-3">
+            <Save size={18} /> Save Build
+          </button>
+          
+          <button onClick={onReset} className="px-10 py-5 border border-white/10 rounded-[1.5rem] font-black uppercase text-[11px] italic hover:bg-white/5 transition-all">Start Over</button>
+        </div>
+      </motion.div>
     </div>
   );
 }
