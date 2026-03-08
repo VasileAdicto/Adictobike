@@ -10,13 +10,12 @@ import { cn } from './lib/utils';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
-// --- 1. TYPES & CONSTANTS ---
+// --- TYPES ---
 interface Component {
   id: string; name: string; brand: string; price: number; weight: number;
   description: string; imageUrl: string; cardImageUrl: string;
   zIndex: number; stepTitle?: string; logic: string;
 }
-
 interface Step { id: string; title: string; options: Component[]; }
 interface OffsetData { s: number; x: number; y: number; }
 interface SavedBuild {
@@ -24,21 +23,7 @@ interface SavedBuild {
   totalPrice: number; totalWeight: number;
 }
 
-const INITIAL_STEPS: Step[] = [ 
-  { id: 'frame', title: 'Frame', options: [] }, 
-  { id: 'wheelset', title: 'Wheelset', options: [] }, 
-  { id: 'tyres', title: 'Tyres', options: [] }, 
-  { id: 'cockpit', title: 'Cockpit', options: [] }, 
-  { id: 'tape', title: 'Tape', options: [] }, 
-  { id: 'saddle', title: 'Saddle', options: [] }, 
-  { id: 'shifters', title: 'Shifters', options: [] }, 
-  { id: 'crankset', title: 'Crankset', options: [] }, 
-  { id: 'derailleurs', title: 'Derailleurs', options: [] }, 
-  { id: 'cassette', title: 'Cassette', options: [] }, 
-  { id: 'discs', title: 'Discs', options: [] } 
-];
-
-// --- 2. SUB-COMPONENTS (MUST BE DEFINED BEFORE MAIN COMPONENT) ---
+// --- HELPER COMPONENTS (DEFINED FIRST) ---
 
 const OptionCard = ({ component, isSelected, onClick }: { component: Component, isSelected: boolean, onClick: () => void }) => (
   <motion.button layout onClick={(e) => { e.preventDefault(); onClick(); }} className={cn("relative flex flex-col p-2 lg:p-3 rounded-xl lg:rounded-2xl border text-left transition-all group w-full shrink-0", isSelected ? "border-red-600 bg-red-600/5 ring-1 ring-red-600/20 shadow-[0_0_20px_rgba(255,0,0,0.1)]" : "border-white/5 bg-zinc-900/50 hover:border-white/20 hover:bg-zinc-900")}>
@@ -59,14 +44,18 @@ const OptionCard = ({ component, isSelected, onClick }: { component: Component, 
   </motion.button>
 );
 
-const Visualizer = ({ selectedComponents, offsets }: any) => (
-  <div className="relative w-full h-full flex items-center justify-center overflow-hidden bg-zinc-950 rounded-[2.5rem]">
-    <AnimatePresence mode="popLayout">
-      {selectedComponents.map((comp: any) => {
-        const tune = offsets[comp.id] || { s: 1, x: 0, y: 0 };
-        return <motion.img key={comp.id} src={comp.imageUrl} initial={{ opacity: 0 }} animate={{ opacity: 1, scale: tune.s, x: tune.x, y: tune.y }} exit={{ opacity: 0 }} className="absolute inset-0 w-full h-full object-contain pointer-events-none" style={{ zIndex: comp.zIndex }} />;
-      })}
-    </AnimatePresence>
+const Visualizer = ({ selectedComponents, offsets, showGrid, gridSize, isZoomed, zoomScale }: any) => (
+  <div id="bike-visualizer" className="relative w-full h-full bg-zinc-950 rounded-[1.5rem] lg:rounded-[2.5rem] overflow-hidden border border-white/5 shadow-[0_0_100px_rgba(0,0,0,0.5)] flex items-center justify-center cursor-crosshair">
+    {showGrid && <div className="absolute inset-0 z-[60] pointer-events-none opacity-[0.2]" style={{ backgroundImage: `linear-gradient(to right, rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.5) 1px, transparent 1px)`, backgroundSize: `${gridSize}px ${gridSize}px` }} />}
+    <motion.div drag={isZoomed} dragMomentum={false} dragConstraints={{ left: -2500, right: 2500, top: -2500, bottom: 2500 }} animate={{ scale: isZoomed ? (zoomScale || 5) : 1, x: isZoomed ? undefined : 0, y: isZoomed ? undefined : 0 }} transition={{ type: 'spring', damping: 25, stiffness: 120 }} className="relative w-full h-full flex items-center justify-center">
+      <AnimatePresence mode="popLayout">
+        {selectedComponents?.map((comp: any) => {
+          const tune = (offsets && offsets[comp.id]) || { s: 1, x: 0, y: 0 };
+          return <motion.img key={comp.id} src={comp.imageUrl} crossOrigin="anonymous" loading="eager" alt={comp.name} initial={{ opacity: 0 }} animate={{ opacity: 1, scale: tune.s, x: tune.x, y: tune.y }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }} className="absolute inset-0 w-full h-full object-contain pointer-events-none" style={{ zIndex: Number(comp.zIndex) }} />;
+        })}
+      </AnimatePresence>
+    </motion.div>
+    {isZoomed && <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-red-600 text-white px-4 py-1 rounded-full text-[8px] font-black uppercase flex items-center gap-2 z-[70] shadow-2xl"><Move size={10}/> {zoomScale.toFixed(1)}X - Drag to Move</div>}
   </div>
 );
 
@@ -81,10 +70,10 @@ const AuthModal = ({ isOpen, onClose, onLogin }: any) => {
   };
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xl">
-      <motion.div initial={{ scale: 0.98, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-zinc-900 border border-white/5 p-10 rounded-[2.5rem] max-w-sm w-full relative shadow-2xl text-white">
-        <button onClick={onClose} className="absolute top-8 right-8 text-zinc-600 hover:text-white"><X size={16}/></button>
-        <div className="text-center mb-10">
-          <h2 className="text-lg font-black uppercase italic tracking-widest mb-1">Identification</h2>
+      <motion.div initial={{ scale: 0.98, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-zinc-900 border border-white/5 p-10 rounded-[2.5rem] max-w-sm w-full relative shadow-2xl">
+        <button onClick={onClose} className="absolute top-8 right-8 text-zinc-600 hover:text-white transition-colors"><X size={16}/></button>
+        <div className="text-center mb-10 text-white">
+          <h2 className="text-lg font-black uppercase italic tracking-widest mb-1">{step === 'email' ? 'Identification' : 'Verification'}</h2>
           <p className="text-zinc-500 text-[9px] uppercase font-bold tracking-[0.3em]">{step === 'email' ? 'Access your adicto garage' : `Sent to ${email}`}</p>
         </div>
         {step === 'email' ? (
@@ -111,72 +100,6 @@ const AuthModal = ({ isOpen, onClose, onLogin }: any) => {
   );
 };
 
-const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
-  const [email, setEmail] = useState('');
-  const [pass, setPass] = useState('');
-  const [error, setError] = useState('');
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (email === "hello@adicto.bike" && pass === "Scalpel2012!") onLogin();
-    else setError("Invalid credentials");
-  };
-  return (
-    <div className="min-h-screen bg-black flex items-center justify-center p-6 selection:bg-red-600 font-sans">
-      <form onSubmit={handleLogin} className="bg-zinc-900 border border-white/5 p-10 rounded-[2.5rem] w-full max-w-md shadow-2xl">
-        <div className="flex flex-col items-center mb-8">
-          <div className="w-12 h-12 bg-red-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-red-600/20"><Lock size={24} className="text-white"/></div>
-          <h2 className="text-xl font-black uppercase italic text-center text-white">Adicto Admin</h2>
-        </div>
-        <div className="space-y-4">
-          <input type="email" placeholder="Email" className="w-full bg-black border border-white/10 p-4 rounded-2xl text-white outline-none focus:border-red-600 transition-all text-sm font-mono" value={email} onChange={(e) => setEmail(e.target.value)} />
-          <input type="password" placeholder="Password" className="w-full bg-black border border-white/10 p-4 rounded-2xl text-white outline-none focus:border-red-600 transition-all text-sm font-mono" value={pass} onChange={(e) => setPass(e.target.value)} />
-        </div>
-        {error && <p className="text-red-600 text-[10px] text-center mt-4 uppercase font-black italic">{error}</p>}
-        <button className="w-full bg-red-600 py-4 rounded-2xl font-black uppercase text-white mt-8 hover:bg-red-700 transition-all italic tracking-widest">Access Dashboard</button>
-      </form>
-    </div>
-  );
-};
-
-const AdminPanel = ({ categories, offsets, setOffsets, onLogout }: any) => {
-  const [selectedCat, setSelectedCat] = useState('excel');
-  const [status, setStatus] = useState('');
-  const [token, setToken] = useState(localStorage.getItem('adicto_github_token') || ''); 
-  const REPO = "VasileAdicto/Adictobike";
-
-  const saveToGithub = async (path: string, content: string, isJson = false) => {
-    if (!token) { setStatus("❌ Token Required"); return false; }
-    try {
-      let sha = "";
-      const getRes = await fetch(`https://api.github.com/repos/${REPO}/contents/${path}`, { headers: { Authorization: `token ${token}` } });
-      if (getRes.ok) { const data = await getRes.json(); sha = data.sha; }
-      const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${path}`, {
-        method: "PUT",
-        headers: { Authorization: `token ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ message: `Admin update: ${path}`, content: isJson ? btoa(unescape(encodeURIComponent(content))) : content, sha: sha || undefined, branch: "main" }),
-      });
-      if (res.ok) { setStatus("✅ Success!"); localStorage.setItem('adicto_github_token', token); setTimeout(() => setStatus(''), 3000); return true; }
-      return false;
-    } catch (err) { return false; }
-  };
-
-  return (
-    <div className="z-[100] sticky top-0 bg-zinc-900 border-b border-white/5 p-2 flex gap-3 items-center justify-center backdrop-blur-md font-sans text-white">
-      <div className="flex items-center gap-2 bg-black/40 px-2 py-1 rounded-lg border border-white/10">
-        <Key size={10} className="text-red-600" />
-        <input type="password" placeholder="TOKEN" value={token} onChange={(e) => setToken(e.target.value)} className="bg-transparent text-[9px] w-20 outline-none font-mono" />
-      </div>
-      <select value={selectedCat} onChange={(e) => setSelectedCat(e.target.value)} className="bg-black text-[9px] px-2 py-1 rounded uppercase font-bold text-white outline-none">
-        <option value="excel">📁 EXCEL</option>
-        {categories?.map((cat: string) => <option key={cat} value={cat}>🖼️ {cat.toUpperCase()}</option>)}
-      </select>
-      <button onClick={() => saveToGithub("public/offsets.json", JSON.stringify(offsets), true)} className="bg-red-600 px-3 py-1 rounded text-[9px] font-bold uppercase italic"><Save size={10}/> Offsets</button>
-      <button onClick={onLogout} className="text-zinc-500 hover:text-red-600 transition-colors"><LogOut size={14}/></button>
-      {status && <span className="text-[8px] font-mono uppercase text-red-600 ml-1">{status}</span>}
-    </div>
-  );
-};
-
 const UserDashboard = ({ builds, onEdit, onDelete, onClose, onLogout, onPDF }: any) => {
   const [selected, setSelected] = useState<string[]>([]);
   return (
@@ -186,7 +109,7 @@ const UserDashboard = ({ builds, onEdit, onDelete, onClose, onLogout, onPDF }: a
           <div className="flex justify-between items-start mb-16">
             <div className="leading-tight">
               <h2 className="text-xs font-black uppercase tracking-widest text-white">My Adicto</h2>
-              <h1 className="text-xs font-black uppercase tracking-widest text-red-600 mt-1">Garage</h1>
+              <h1 className="text-xs font-black uppercase tracking-widest text-red-600 mt-1 leading-none">Garage</h1>
             </div>
             <div className="flex gap-4 items-center">
               <button onClick={onLogout} className="text-zinc-500 hover:text-red-600 transition-colors uppercase text-[9px] font-black flex items-center gap-2">Logout <LogOut size={14}/></button>
@@ -207,7 +130,7 @@ const UserDashboard = ({ builds, onEdit, onDelete, onClose, onLogout, onPDF }: a
                   {b.name.replace(/adicto_/gi, '')}
                 </button>
                 <div className="mb-6">
-                  <p className="text-[7px] text-zinc-600 uppercase font-black mb-1 italic tracking-widest text-white">Configuration:</p>
+                  <p className="text-[7px] text-zinc-600 uppercase font-black mb-1 italic tracking-widest">Configuration:</p>
                   <p className="text-[8px] text-zinc-500 uppercase leading-tight line-clamp-3 italic font-medium">{b.components.map(c => c.brand).join(' • ')}</p>
                 </div>
                 <div className="flex justify-between items-end border-t border-white/5 pt-4 mt-auto">
@@ -230,12 +153,17 @@ const UserDashboard = ({ builds, onEdit, onDelete, onClose, onLogout, onPDF }: a
   );
 };
 
-// --- 3. MAIN BIKE CONFIGURATOR COMPONENT ---
+// --- MAIN CONFIGURATOR ---
 
 export default function BikeConfigurator() {
   const [isAdminMode, setIsAdminMode] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
   const [offsets, setOffsets] = useState<Record<string, OffsetData>>({});
+  const [showGrid, setShowGrid] = useState(false);
+  const [gridSize, setGridSize] = useState(20);
+  const [zoomScale, setZoomScale] = useState(5);
+  const [isZoomed, setIsZoomed] = useState(false);
   const [steps, setSteps] = useState<Step[]>(INITIAL_STEPS);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [selections, setSelections] = useState<Record<string, string>>({});
@@ -251,25 +179,27 @@ export default function BikeConfigurator() {
 
   useEffect(() => {
     const path = window.location.pathname; 
-    if (path === '/admin') setIsAdminMode(true);
+    const urlParams = new URLSearchParams(window.location.search);
+    if (path === '/admin' || urlParams.get('admin') === 'true') setIsAdminMode(true);
     fetch('/offsets.json').then(r => r.ok ? r.json() : {}).then(data => setOffsets(data)).catch(() => {});
-    const loadData = async () => {
-        try {
-          const res = await fetch('/data.xlsx'); if (!res.ok) return;
-          const XLSX = await import('xlsx');
-          const buffer = await res.arrayBuffer();
-          const wb = XLSX.read(buffer);
-          const newSteps = INITIAL_STEPS.map(step => {
-            const sheet = wb.Sheets[Object.keys(wb.Sheets).find(n => n.toUpperCase().trim() === step.title.toUpperCase().trim()) || ""];
-            if (sheet) {
-              const data = XLSX.utils.sheet_to_json(sheet);
-              return { ...step, options: data.map((row: any, idx: number) => ({
-                id: `${step.id}-${idx}`, name: row.Name || 'Unknown', brand: row.Brand || '', price: Number(row.Price) || 0, weight: Number(row.Weight) || 0, imageUrl: row.imageurl || row.Image || "", cardImageUrl: row.cardimg || row.CardImage || row.imageurl || "", zIndex: Number(row.zindex) || 10, logic: String(row.logic || "").trim()
-              }))};
-            } return step;
-          }); setSteps(newSteps);
-        } catch (e) {}
-    }; loadData();
+    
+    const autoLoadExcel = async () => {
+      try {
+        const response = await fetch('/data.xlsx'); if (!response.ok) return;
+        const arrayBuffer = await response.arrayBuffer(); const XLSX = await import('xlsx'); const workbook = XLSX.read(arrayBuffer);
+        const newSteps = INITIAL_STEPS.map(step => {
+          const sheetName = Object.keys(workbook.Sheets).find(name => name.toUpperCase().trim() === step.title.toUpperCase().trim());
+          const sheet = sheetName ? workbook.Sheets[sheetName] : null;
+          if (sheet) {
+            const data = XLSX.utils.sheet_to_json(sheet);
+            return { ...step, options: data.map((row: any, idx: number) => {
+              const findKey = (name: string) => Object.keys(row).find(k => k.toLowerCase().trim() === name.toLowerCase());
+              return { id: `${step.id}-${idx}`, name: row.Name || 'Unknown', brand: row.Brand || '', price: Number(row.Price || row.PRICE) || 0, weight: Number(row.Weight || row.WEIGHT) || 0, imageUrl: row[findKey('imageurl') || 'image'] || "", cardImageUrl: row[findKey('cardimg') || 'cardimage'] || row[findKey('imageurl') || 'image'] || "", zIndex: Number(row[findKey('zindex')]) || 10, logic: String(row[findKey('logic')] || "").trim() };
+            })};
+          } return step;
+        }); setSteps(newSteps);
+      } catch (err) {}
+    }; autoLoadExcel();
   }, []);
 
   useEffect(() => {
@@ -306,8 +236,16 @@ export default function BikeConfigurator() {
     setSelections(newS); setIsDashboardOpen(false); setIsFinished(false); setCurrentStepIndex(0);
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem('adicto_user');
+    localStorage.removeItem('adicto_auth');
+    setUser(null);
+    window.location.reload();
+  };
+
   if (isAdminMode && !isAdminLoggedIn) return <AdminLogin onLogin={() => setIsAdminLoggedIn(true)} />;
-  if (isDashboardOpen) return <UserDashboard builds={savedBuilds} onClose={() => setIsDashboardOpen(false)} onLogout={() => { setUser(null); localStorage.removeItem('adicto_user'); setIsDashboardOpen(false); }} onDelete={(id: string) => { const upd = savedBuilds.filter(x => x.id !== id); setSavedBuilds(upd); localStorage.setItem('adicto_saved_builds', JSON.stringify(upd)); }} onEdit={handleEditFromGarage} onPDF={(b: any) => {
+  
+  if (isDashboardOpen) return <UserDashboard builds={savedBuilds} onClose={() => setIsDashboardOpen(false)} onLogout={handleLogout} onDelete={(id: string) => { const upd = savedBuilds.filter(x => x.id !== id); setSavedBuilds(upd); localStorage.setItem('adicto_saved_builds', JSON.stringify(upd)); }} onEdit={handleEditFromGarage} onPDF={(b: any) => {
     const doc = new jsPDF(); autoTable(doc, { head: [['Section', 'Brand', 'Weight', 'Price']], body: b.components.map((c:any) => [c.stepTitle, c.brand, `${c.weight}g`, `€${c.price}`]) });
     doc.save(`${b.name}.pdf`);
   }} />;
@@ -319,7 +257,7 @@ export default function BikeConfigurator() {
   }} />;
 
   return (
-    <div className="min-h-screen bg-black text-white font-sans selection:bg-red-600 pb-24 overflow-x-hidden">
+    <div className="min-h-screen bg-black text-white font-sans selection:bg-red-600 pb-24 overflow-x-hidden text-white">
       <style>{`
         .custom-scroll-container::-webkit-scrollbar, .steps-scroll-container::-webkit-scrollbar { height: 4px; display: block !important; }
         .custom-scroll-container::-webkit-scrollbar-thumb { background: #ef4444; border-radius: 10px; }
@@ -327,10 +265,10 @@ export default function BikeConfigurator() {
         .animate-bounce-x { animation: bounce-x 1s infinite; }
       `}</style>
       
-      {isAdminLoggedIn && <AdminPanel categories={INITIAL_STEPS.map(s => s.title)} offsets={offsets} setOffsets={setOffsets} onLogout={() => setIsAdminLoggedIn(false)} />}
+      {isAdminLoggedIn && <AdminPanel categories={INITIAL_STEPS.map(s => s.title)} offsets={offsets} setOffsets={setOffsets} activeComponent={currentStep.options.find(o => o.id === selections[currentStep.id])} showGrid={showGrid} setShowGrid={setShowGrid} gridSize={gridSize} setGridSize={setGridSize} isZoomed={isZoomed} setIsZoomed={setIsZoomed} zoomScale={zoomScale} setZoomScale={setZoomScale} onLogout={() => setIsAdminLoggedIn(false)} />}
       <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} onLogin={(u: any) => { setUser(u); localStorage.setItem('adicto_user', JSON.stringify(u)); setIsAuthModalOpen(false); }} />
 
-      <nav className="border-b border-white/5 px-4 lg:px-8 py-3 flex justify-between items-center bg-black/80 backdrop-blur-2xl sticky top-0 z-50 text-white">
+      <nav className="border-b border-white/5 px-4 lg:px-8 py-3 flex justify-between items-center bg-black/80 backdrop-blur-2xl sticky top-0 z-50">
         <div className="flex items-center gap-3">
           <img src="/design/Logo.png" alt="Logo" className="h-4 lg:h-5 w-auto" />
           <div className="text-zinc-600 font-mono text-[6px] uppercase tracking-widest italic border-l border-white/10 pl-3">Build by Vasile & AI</div>
@@ -339,20 +277,18 @@ export default function BikeConfigurator() {
           <button onClick={() => setIsDashboardOpen(true)} className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full border border-white/5 transition-all hover:bg-white/10">
             <UserIcon size={12} className="text-red-600"/> <span className="text-[9px] font-black uppercase italic">{user.name}</span>
           </button>
-        ) : (
-          <button onClick={() => setIsAuthModalOpen(true)} className="flex items-center gap-2 bg-red-600 px-4 py-1.5 rounded-full text-[9px] font-black uppercase italic tracking-widest"><LogIn size={12}/> Login</button>
-        )}
+        ) : <button onClick={() => setIsAuthModalOpen(true)} className="flex items-center gap-2 bg-red-600 px-4 py-1.5 rounded-full text-[9px] font-black uppercase italic tracking-widest"><LogIn size={12}/> Login</button>}
       </nav>
 
       <main className="max-w-[1500px] mx-auto px-4 lg:px-6 pt-2">
         <div className="flex flex-col lg:grid lg:grid-cols-12 gap-1 lg:h-[550px]">
-          <div className="lg:col-span-9 flex flex-col gap-1">
-            <div ref={stepsNavRef} className="flex overflow-x-auto no-scrollbar gap-x-6 pb-1 border-b border-white/5">
+          <div className="lg:col-span-9 flex flex-col gap-1 order-1">
+            <div ref={stepsNavRef} className="flex overflow-x-auto no-scrollbar steps-scroll-container gap-x-6 pb-1 border-b border-white/5">
               {steps.map((step, idx) => (
-                <button key={step.id} onClick={() => setCurrentStepIndex(idx)} className={cn("transition-all text-[9px] font-black italic uppercase tracking-widest pb-1 border-b-2 whitespace-nowrap", idx === currentStepIndex ? "text-red-600 border-red-600" : "text-white opacity-20 border-transparent hover:opacity-100")}>{step.title}</button>
+                <button key={step.id} onClick={() => setCurrentStepIndex(idx)} className={cn("transition-all text-[9px] font-black italic uppercase tracking-widest pb-1 border-b-2 whitespace-nowrap", idx === currentStepIndex ? "text-red-600 border-red-600" : "text-white opacity-20 border-transparent")}>{step.title}</button>
               ))}
             </div>
-            <div className="h-[250px] md:h-[400px] lg:flex-1 relative"><Visualizer selectedComponents={selectedComponents} offsets={offsets} /></div>
+            <div className="h-[250px] md:h-[400px] lg:flex-1 relative"><Visualizer selectedComponents={selectedComponents} offsets={offsets} showGrid={showGrid} gridSize={gridSize} isZoomed={isZoomed} zoomScale={zoomScale} /></div>
           </div>
 
           <div className="lg:col-span-3 flex flex-col bg-zinc-900/40 rounded-[2rem] border border-white/5 p-4 relative order-2 overflow-hidden shadow-2xl">
@@ -377,9 +313,7 @@ export default function BikeConfigurator() {
 
       <div className="fixed bottom-0 left-0 right-0 bg-black/90 backdrop-blur-3xl border-t border-white/5 z-50 py-4 px-6 text-white shadow-2xl">
         <div className="max-w-[1500px] mx-auto flex items-center justify-between">
-          <button onClick={() => currentStepIndex > 0 && setCurrentStepIndex(currentStepIndex - 1)} className="text-zinc-500 hover:text-white transition-all font-black uppercase text-[10px] italic flex items-center gap-1 w-20 text-left">
-            <ChevronLeft size={18} /> <span className="hidden sm:inline">Back</span>
-          </button>
+          <button onClick={() => currentStepIndex > 0 && setCurrentStepIndex(currentStepIndex - 1)} className="text-zinc-500 hover:text-white transition-all font-black uppercase text-[10px] italic flex items-center gap-1 w-20 text-left"><ChevronLeft size={18} /> <span className="hidden sm:inline">Back</span></button>
           
           <div className="flex gap-6 items-center justify-center flex-1">
             <div className="text-center"><p className="text-[6px] text-zinc-600 uppercase font-black italic tracking-tighter">Weight</p><p className="font-mono text-xs">{selectedComponents.reduce((acc, c) => acc + c.weight, 0)}g</p></div>
@@ -401,7 +335,7 @@ export default function BikeConfigurator() {
   );
 }
 
-// --- SUMMARY VIEW ---
+// --- FINAL SUMMARY VIEW ---
 function SummaryView({ selections, onReset, user, onSaveBuild, onLogin, onDashboard }: any) {
   const [isExp, setIsExp] = useState(false);
   const [prog, setProg] = useState(0);
@@ -413,16 +347,12 @@ function SummaryView({ selections, onReset, user, onSaveBuild, onLogin, onDashbo
     const itv = setInterval(() => {
       setProg(p => {
         if (p >= 100) { 
-          clearInterval(itv); 
-          const doc = new jsPDF();
-          autoTable(doc, { 
-            startY: 135, head: [['SECTION', 'BRAND', 'WEIGHT', 'PRICE']],
-            body: selections.map((c: any) => [c.stepTitle, c.brand, `${c.weight}g`, `€${c.price}`]),
-            theme: 'grid'
-          });
-          doc.save('ADICTO_BIKE.pdf');
-          setTimeout(() => { setIsExp(false); setProg(0); }, 500);
-          return 100;
+            clearInterval(itv); 
+            const doc = new jsPDF();
+            autoTable(doc, { head: [['SECTION', 'BRAND', 'WEIGHT', 'PRICE']], body: selections.map((c: any) => [c.stepTitle, c.brand, `${c.weight}g`, `€${c.price}`]) });
+            doc.save('ADICTO_BIKE.pdf');
+            setTimeout(() => { setIsExp(false); setProg(0); }, 500);
+            return 100;
         } return p + 10;
       });
     }, 100);
@@ -442,14 +372,14 @@ function SummaryView({ selections, onReset, user, onSaveBuild, onLogin, onDashbo
         <img src="/design/Logo.png" alt="Logo" className="w-10 h-10 mx-auto mb-10 object-contain" />
         <h2 className="text-[26px] font-black uppercase italic tracking-tighter mb-4 leading-none">your bike is <br/> <span className="text-red-600 uppercase">Ready</span></h2>
         
-        <div className="flex justify-center gap-10 my-10 bg-zinc-900/40 p-6 rounded-[2.5rem] border border-white/5 shadow-2xl">
+        <div className="flex justify-center gap-10 my-10 bg-zinc-900/40 p-6 rounded-[2.5rem] border border-white/5 shadow-2xl text-white">
           <div><p className="text-zinc-600 text-[8px] uppercase font-black italic mb-1 text-zinc-500 tracking-widest">Price</p><p className="text-lg font-mono text-red-600 tracking-tighter font-black italic">€{totalP.toLocaleString()}</p></div>
           <div className="w-px bg-white/5" />
           <div><p className="text-zinc-600 text-[8px] uppercase font-black italic mb-1 text-zinc-500 tracking-widest">Weight</p><p className="text-lg font-mono text-white/80 tracking-tighter font-black italic">{totalW}g</p></div>
         </div>
 
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <button onClick={doPDF} disabled={isExp} style={{ background: isExp ? `linear-gradient(to right, #ef4444 ${prog}%, #18181b ${prog}%)` : '' }} className={cn("px-8 py-4 rounded-xl font-black uppercase text-[10px] italic transition-all flex items-center justify-center gap-2 relative overflow-hidden shadow-lg shadow-red-600/10", isExp ? "border border-red-600/30" : "bg-red-600 hover:bg-red-700 active:scale-95")}>
+          <button onClick={doPDF} disabled={isExp} style={{ background: isExp ? `linear-gradient(to right, #ef4444 ${prog}%, #18181b ${prog}%)` : '' }} className={cn("px-8 py-4 rounded-xl font-black uppercase text-[10px] italic transition-all flex items-center justify-center gap-2 relative overflow-hidden shadow-lg shadow-red-600/10", isExp ? "border border-red-600/30 text-white" : "bg-red-600 hover:bg-red-700 active:scale-95")}>
             <Download size={14} /> {isExp ? `Exporting ${prog}%` : 'Export PDF'}
           </button>
           <button onClick={onSaveBuild} className="px-8 py-4 bg-white text-black rounded-xl font-black uppercase text-[10px] italic flex items-center justify-center gap-2 hover:bg-zinc-200 transition-all active:scale-95 shadow-lg shadow-white/5"><Save size={14} /> Save Build</button>
