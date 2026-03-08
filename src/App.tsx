@@ -80,8 +80,8 @@ const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
   );
 };
 
-// --- ADMIN PANEL COMPONENT ---
-const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid, setShowGrid, gridSize, setGridSize, isZoomed, setIsZoomed }: any) => {
+// --- Оновлений AdminPanel ---
+const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid, setShowGrid, gridSize, setGridSize, isZoomed, setIsZoomed, zoomScale, setZoomScale }: any) => {
   const [selectedCat, setSelectedCat] = useState('excel');
   const [status, setStatus] = useState('');
 
@@ -98,12 +98,7 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
       const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${path}`, {
         method: "PUT",
         headers: { Authorization: `token ${GITHUB_TOKEN}`, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: `Admin update: ${path}`,
-          content: isJson ? btoa(unescape(encodeURIComponent(content))) : content,
-          sha: sha || undefined,
-          branch: BRANCH
-        }),
+        body: JSON.stringify({ message: `Admin update: ${path}`, content: isJson ? btoa(unescape(encodeURIComponent(content))) : content, sha: sha || undefined, branch: BRANCH }),
       });
       if (res.ok) setStatus("✅ Success!"); else setStatus("❌ Error");
     } catch (err) { setStatus("❌ Failed"); }
@@ -116,13 +111,13 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
 
   return (
     <div className="z-[100] sticky top-0 shadow-2xl font-sans">
-      <motion.div initial={{ y: -50 }} animate={{ y: 0 }} className="bg-zinc-900 border-b border-white/5 p-2 flex gap-4 items-center justify-center backdrop-blur-md">
+      <motion.div initial={{ y: -50 }} animate={{ y: 0 }} className="bg-zinc-900 border-b border-white/5 p-2 flex gap-3 items-center justify-center backdrop-blur-md">
         <select value={selectedCat} onChange={(e) => setSelectedCat(e.target.value)} className="bg-black border border-white/10 text-[9px] px-2 py-1 rounded uppercase font-bold text-zinc-400 outline-none focus:border-red-600">
           <option value="excel">📁 EXCEL</option>
           {categories.map((cat: string) => <option key={cat} value={cat}>🖼️ {cat.toUpperCase()}</option>)}
         </select>
         
-        <label className="cursor-pointer bg-zinc-800 text-zinc-300 px-3 py-1 rounded text-[9px] font-bold uppercase hover:bg-zinc-700 transition-all flex items-center gap-2">
+        <label className="cursor-pointer bg-zinc-800 text-zinc-300 px-3 py-1 rounded text-[9px] font-bold uppercase hover:bg-zinc-700 transition-all flex items-center gap-2 italic">
           <Upload size={10}/> UPLOAD <input type="file" className="hidden" onChange={(e) => {
              const file = e.target.files?.[0];
              if (file) {
@@ -135,23 +130,33 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
 
         <div className="h-4 w-px bg-white/10 mx-1" />
 
+        {/* Grid Control */}
         <div className="flex items-center gap-2 bg-black/40 p-1 rounded-lg border border-white/5">
-          <button onClick={() => setShowGrid(!showGrid)} className={cn("px-3 py-1 rounded text-[9px] font-bold uppercase transition-all flex items-center gap-2", showGrid ? "bg-red-600 text-white" : "bg-zinc-800 text-zinc-400")}>
-            <Grid3X3 size={10}/> Grid
+          <button onClick={() => setShowGrid(!showGrid)} className={cn("px-2 py-1 rounded text-[9px] font-bold uppercase transition-all", showGrid ? "bg-red-600 text-white" : "bg-zinc-800 text-zinc-400")}>
+            <Grid3X3 size={10}/>
           </button>
           {showGrid && (
-            <div className="flex items-center gap-2 px-2 animate-in fade-in slide-in-from-left-2">
-              <span className="text-[8px] text-zinc-500 font-bold uppercase whitespace-nowrap">Step: {gridSize}px</span>
-              <input type="range" min="1" max="20" step="1" value={gridSize} onChange={(e) => setGridSize(parseInt(e.target.value))} className="w-20 h-1 bg-zinc-700 appearance-none accent-red-600" />
+            <div className="flex items-center gap-2 px-1 border-r border-white/5 mr-1">
+              <span className="text-[7px] text-zinc-500 font-bold">GRID: {gridSize}px</span>
+              <input type="range" min="1" max="20" step="1" value={gridSize} onChange={(e) => setGridSize(parseInt(e.target.value))} className="w-16 h-1 bg-zinc-700 appearance-none accent-red-600" />
             </div>
           )}
         </div>
 
-        <button onClick={() => setIsZoomed(!isZoomed)} className={cn("px-3 py-1 rounded text-[9px] font-bold uppercase transition-all flex items-center gap-2", isZoomed ? "bg-red-600 text-white" : "bg-zinc-800 text-zinc-400")}>
-          <Search size={10}/> Magnify 5X
-        </button>
+        {/* Zoom Control */}
+        <div className="flex items-center gap-2 bg-black/40 p-1 rounded-lg border border-white/5">
+          <button onClick={() => setIsZoomed(!isZoomed)} className={cn("px-2 py-1 rounded text-[9px] font-bold uppercase transition-all flex items-center gap-2", isZoomed ? "bg-red-600 text-white" : "bg-zinc-800 text-zinc-400")}>
+            <Search size={10}/> {isZoomed ? `${zoomScale}X` : 'Magnify'}
+          </button>
+          {isZoomed && (
+            <div className="flex items-center gap-2 px-1">
+              <span className="text-[7px] text-zinc-500 font-bold">ZOOM</span>
+              <input type="range" min="2" max="10" step="0.1" value={zoomScale} onChange={(e) => setZoomScale(parseFloat(e.target.value))} className="w-20 h-1 bg-zinc-700 appearance-none accent-red-600" />
+            </div>
+          )}
+        </div>
 
-        {status && <span className="text-[8px] font-mono uppercase text-red-600 animate-pulse ml-2">{status}</span>}
+        {status && <span className="text-[8px] font-mono uppercase text-red-600 animate-pulse ml-1">{status}</span>}
       </motion.div>
 
       {activeComponent && (
@@ -172,7 +177,7 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
                 <input type="number" step={item.step} 
                   value={offsets[activeComponent.id]?.[item.key as keyof OffsetData] ?? item.reset}
                   onChange={e => updateTune(item.key as keyof OffsetData, parseFloat(e.target.value))}
-                  className="bg-transparent text-white text-[9px] w-10 text-right font-mono border-b border-white/5 focus:border-red-600" 
+                  className="bg-transparent text-white text-[9px] w-10 text-right font-mono border-b border-white/5 outline-none focus:border-red-600" 
                 />
                 <button onClick={() => updateTune(item.key as keyof OffsetData, item.reset)} className="text-zinc-600 hover:text-red-600 transition-colors"><RotateCcw size={10}/></button>
               </div>
@@ -190,8 +195,8 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
   );
 };
 
-// --- VISUALIZER ---
-const Visualizer = ({ selectedComponents, offsets, showGrid, gridSize, isZoomed }: any) => {
+// --- Оновлений Visualizer ---
+const Visualizer = ({ selectedComponents, offsets, showGrid, gridSize, isZoomed, zoomScale }: any) => {
   return (
     <div id="bike-visualizer" className="relative w-full h-full bg-zinc-950 rounded-[1.5rem] lg:rounded-[2.5rem] overflow-hidden border border-white/5 shadow-[0_0_100px_rgba(0,0,0,0.5)] flex items-center justify-center cursor-crosshair">
       
@@ -206,13 +211,13 @@ const Visualizer = ({ selectedComponents, offsets, showGrid, gridSize, isZoomed 
       <motion.div 
         drag={isZoomed}
         dragMomentum={false}
-        dragConstraints={{ left: -1500, right: 1500, top: -1500, bottom: 1500 }}
+        dragConstraints={{ left: -2000, right: 2000, top: -2000, bottom: 2000 }}
         animate={{ 
-          scale: isZoomed ? 5 : 1,
-          x: isZoomed ? undefined : 0, // Авто-центрування при виході
+          scale: isZoomed ? zoomScale : 1, // Використовуємо динамічний масштаб
+          x: isZoomed ? undefined : 0,
           y: isZoomed ? undefined : 0
         }}
-        transition={{ type: 'spring', damping: 25, stiffness: 120 }}
+        transition={{ type: 'spring', damping: 30, stiffness: 200 }}
         className="relative w-full h-full flex items-center justify-center"
       >
         <AnimatePresence mode="popLayout">
@@ -234,7 +239,7 @@ const Visualizer = ({ selectedComponents, offsets, showGrid, gridSize, isZoomed 
 
       {isZoomed && (
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-red-600 text-white px-4 py-1 rounded-full text-[8px] font-black uppercase flex items-center gap-2 z-[70] shadow-2xl">
-          <Move size={10}/> Drag to Move
+          <Move size={10}/> {zoomScale.toFixed(1)}X - Drag to Move
         </div>
       )}
     </div>
@@ -281,7 +286,7 @@ export default function BikeConfigurator() {
   const [offsets, setOffsets] = useState<Record<string, OffsetData>>({});
   const [showGrid, setShowGrid] = useState(false);
   const [gridSize, setGridSize] = useState(5);
-  const [isZoomed, setIsZoomed] = useState(false);
+  const [zoomScale, setZoomScale] = useState(5);
   
   useEffect(() => {
     const path = window.location.pathname; 
