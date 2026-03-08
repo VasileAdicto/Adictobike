@@ -58,9 +58,9 @@ const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
   return (
     <div className="min-h-screen bg-black flex items-center justify-center p-6 selection:bg-red-600 font-sans">
       <motion.form initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} onSubmit={handleLogin} className="bg-zinc-900/50 p-10 rounded-[2.5rem] border border-white/5 w-full max-w-md backdrop-blur-xl shadow-2xl">
-        <div className="flex flex-col items-center mb-8">
-          <div className="w-12 h-12 bg-red-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-red-600/20"><Lock className="text-white" size={24} /></div>
-          <h2 className="text-xl font-black uppercase tracking-widest text-white italic text-center">Adicto Admin</h2>
+        <div className="flex flex-col items-center mb-8 text-white">
+          <div className="w-12 h-12 bg-red-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-red-600/20"><Lock size={24} /></div>
+          <h2 className="text-xl font-black uppercase tracking-widest italic text-center">Adicto Admin</h2>
         </div>
         <div className="space-y-4">
           <input type="email" placeholder="Email" className="w-full bg-black border border-white/10 p-4 rounded-2xl text-white outline-none focus:border-red-600 transition-all text-sm font-mono" value={email} onChange={(e) => setEmail(e.target.value)} />
@@ -116,26 +116,22 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
         </select>
         
         <div className="flex gap-1">
-          {/* Кнопка для окремих файлів */}
-          <label className="cursor-pointer bg-zinc-800 text-zinc-300 px-2 py-1 rounded text-[9px] font-bold uppercase hover:bg-zinc-700 transition-all flex items-center gap-1 italic">
-            <Upload size={10}/> Files
+          <label className="cursor-pointer bg-zinc-800 text-zinc-300 px-2 py-1 rounded text-[9px] font-bold uppercase hover:bg-zinc-700 flex items-center gap-1 italic"><Upload size={10}/> Files
             <input type="file" className="hidden" multiple onChange={(e) => {
-               const files = e.target.files;
-               if (files) Array.from(files).forEach(file => {
-                  const reader = new FileReader(); reader.readAsDataURL(file);
-                  reader.onload = () => saveToGithub(selectedCat === 'excel' ? "public/data.xlsx" : `public/parts/${selectedCat}/${file.name}`, (reader.result as string).split(',')[1]);
-               });
+              const files = e.target.files;
+              if (files) Array.from(files).forEach(file => {
+                const reader = new FileReader(); reader.readAsDataURL(file);
+                reader.onload = () => saveToGithub(selectedCat === 'excel' ? "public/data.xlsx" : `public/parts/${selectedCat}/${file.name}`, (reader.result as string).split(',')[1]);
+              });
             }} />
           </label>
-          {/* Кнопка для цілих папок */}
-          <label className="cursor-pointer bg-zinc-800 text-zinc-300 px-2 py-1 rounded text-[9px] font-bold uppercase hover:bg-zinc-700 transition-all flex items-center gap-1 italic">
-            <FolderOpen size={10}/> Folder
+          <label className="cursor-pointer bg-zinc-800 text-zinc-300 px-2 py-1 rounded text-[9px] font-bold uppercase hover:bg-zinc-700 flex items-center gap-1 italic"><FolderOpen size={10}/> Folder
             <input type="file" className="hidden" webkitdirectory="" onChange={(e: any) => {
-               const files = e.target.files;
-               if (files) Array.from(files).forEach((file: any) => {
-                  const reader = new FileReader(); reader.readAsDataURL(file);
-                  reader.onload = () => saveToGithub(`public/parts/${selectedCat}/${file.webkitRelativePath}`, (reader.result as string).split(',')[1]);
-               });
+              const files = e.target.files;
+              if (files) Array.from(files).forEach((file: any) => {
+                const reader = new FileReader(); reader.readAsDataURL(file);
+                reader.onload = () => saveToGithub(`public/parts/${selectedCat}/${file.webkitRelativePath}`, (reader.result as string).split(',')[1]);
+              });
             }} />
           </label>
         </div>
@@ -153,7 +149,7 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
         </div>
 
         <div className="flex items-center gap-2 bg-black/40 p-1 rounded-lg border border-white/5">
-          <button onClick={() => setIsZoomed(!isZoomed)} className={cn("px-2 py-1 rounded text-[9px] font-bold uppercase transition-all flex items-center gap-2", isZoomed ? "bg-red-600 text-white" : "bg-zinc-800 text-zinc-400")}><Search size={10}/> {isZoomed ? `${zoomScale}X` : 'Magnify'}</button>
+          <button onClick={() => setIsZoomed(!isZoomed)} className={cn("px-2 py-1 rounded text-[9px] font-bold uppercase transition-all flex items-center gap-2", isZoomed ? "bg-red-600 text-white" : "bg-zinc-800 text-zinc-400")}><Search size={10}/> {isZoomed ? `${zoomScale.toFixed(1)}X` : 'Magnify'}</button>
           {isZoomed && (
             <div className="flex items-center gap-2 px-1 animate-in fade-in slide-in-from-left-2">
               <span className="text-[7px] text-zinc-500 font-bold uppercase">Zoom</span>
@@ -204,7 +200,7 @@ const Visualizer = ({ selectedComponents, offsets, showGrid, gridSize, isZoomed,
           })}
         </AnimatePresence>
       </motion.div>
-      {isZoomed && <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-red-600 text-white px-4 py-1 rounded-full text-[8px] font-black uppercase flex items-center gap-2 z-[70] shadow-2xl"><Move size={10}/> {zoomScale}X - Drag to Move</div>}
+      {isZoomed && <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-red-600 text-white px-4 py-1 rounded-full text-[8px] font-black uppercase flex items-center gap-2 z-[70] shadow-2xl"><Move size={10}/> {zoomScale.toFixed(1)}X - Drag to Move</div>}
     </div>
   );
 };
@@ -223,8 +219,6 @@ export default function BikeConfigurator() {
   const [isAdminMode, setIsAdminMode] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [offsets, setOffsets] = useState<Record<string, OffsetData>>({});
-  
-  // КЛЮЧОВІ СТЕЙТИ ДЛЯ ТЕБЕ
   const [showGrid, setShowGrid] = useState(false);
   const [gridSize, setGridSize] = useState(20);
   const [zoomScale, setZoomScale] = useState(5);
@@ -261,6 +255,25 @@ export default function BikeConfigurator() {
     }; autoLoadExcel();
   }, []);
 
+  // --- ЛІНІЙНА ЛОГІКА СУМІСНОСТІ ---
+  const activeLogic = useMemo(() => {
+    if (currentStepIndex === 0) return null;
+    const prevStepId = steps[currentStepIndex - 1]?.id;
+    const selectedIdInPrevStep = selections[prevStepId];
+    if (!selectedIdInPrevStep) return null;
+    const prevComponent = steps[currentStepIndex - 1].options.find(o => o.id === selectedIdInPrevStep);
+    return prevComponent?.logic?.trim() || null;
+  }, [selections, currentStepIndex, steps]);
+
+  const filteredOptions = useMemo(() => {
+    const currentStep = steps[currentStepIndex] || steps[0];
+    return currentStep.options.filter(option => {
+      if (!activeLogic) return true;
+      if (!option.logic || option.logic.trim() === "") return true;
+      return option.logic.trim() === activeLogic;
+    });
+  }, [steps, currentStepIndex, activeLogic]);
+
   const selectedComponents = useMemo(() => steps.map(s => s.options.find(o => o.id === selections[s.id]) || null).filter((c): c is Component => !!c), [selections, steps]);
   const activeComponentForTuning = useMemo(() => steps[currentStepIndex]?.options.find(o => o.id === selections[steps[currentStepIndex]?.id]), [steps, currentStepIndex, selections]);
 
@@ -280,7 +293,7 @@ export default function BikeConfigurator() {
           <div className="lg:col-span-9 flex flex-col gap-2 order-1">
             <div className="flex overflow-x-auto no-scrollbar gap-x-6 gap-y-2 pb-2">
               {steps.map((step, idx) => (
-                <button key={step.id} onClick={() => { setCurrentStepIndex(idx); setError(null); }} className={cn("transition-all duration-300 text-[10px] font-black italic uppercase tracking-widest pb-1 border-b-2 whitespace-nowrap", idx === currentStepIndex ? "text-red-600 border-red-600 drop-shadow-[0_0_9px_rgba(255,0,0,0.3)]" : "text-white opacity-20 border-transparent hover:opacity-100")}>{step.title}</button>
+                <button key={step.id} onClick={() => setCurrentStepIndex(idx)} className={cn("transition-all duration-300 text-[10px] font-black italic uppercase tracking-widest pb-1 border-b-2 whitespace-nowrap", idx === currentStepIndex ? "text-red-600 border-red-600 drop-shadow-[0_0_9px_rgba(255,0,0,0.3)]" : "text-white opacity-20 border-transparent hover:opacity-100")}>{step.title}</button>
               ))}
             </div>
             <div className="h-[280px] md:h-[400px] lg:flex-1 relative"><Visualizer selectedComponents={selectedComponents} offsets={offsets} showGrid={showGrid} gridSize={gridSize} isZoomed={isZoomed} zoomScale={zoomScale} /></div>
@@ -290,7 +303,7 @@ export default function BikeConfigurator() {
             <div className="flex-1 overflow-x-auto lg:overflow-y-auto lg:overflow-x-hidden custom-scroll-container pb-2 lg:pb-0" style={{ display: 'flex', flexDirection: 'column' }}>
                 <div className="flex flex-row lg:flex-col gap-3 min-w-full">
                   <AnimatePresence mode="popLayout">
-                    {steps[currentStepIndex]?.options.map((option) => (
+                    {filteredOptions.map((option) => (
                       <div key={option.id} className="w-[31%] min-w-[31%] lg:w-full lg:min-w-0 shrink-0">
                         <OptionCard component={option} isSelected={selections[steps[currentStepIndex].id] === option.id} onClick={() => setSelections(prev => ({...prev, [steps[currentStepIndex].id]: option.id}))} />
                       </div>
@@ -304,7 +317,7 @@ export default function BikeConfigurator() {
 
       <div className="fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur-2xl border-t border-white/5 z-40">
         <div className="max-w-[1500px] mx-auto px-4 lg:px-6 py-6 grid grid-cols-12 gap-2 items-center">
-          <button onClick={() => currentStepIndex > 0 && setCurrentStepIndex(currentStepIndex - 1)} className="col-span-3 lg:col-span-2 flex items-center gap-1 text-zinc-500 hover:text-white transition-all font-black uppercase text-[10px] tracking-widest italic"><ChevronLeft size={20} /> Back</button>
+          <button onClick={() => currentStepIndex > 0 && setCurrentStepIndex(currentStepIndex - 1)} className="col-span-3 lg:col-span-2 flex items-center gap-1 text-zinc-500 hover:text-white transition-all font-black uppercase text-[10px] italic"><ChevronLeft size={20} /> Back</button>
           <div className="col-span-6 lg:col-span-7 flex justify-center lg:justify-end items-center gap-4 lg:gap-10">
             <div className="text-center lg:text-right"><p className="text-[7px] text-zinc-600 uppercase font-black mb-0.5 italic">Weight</p><p className="font-mono text-xs">{selectedComponents.reduce((acc, c) => acc + c.weight, 0)}g</p></div>
             <div className="h-8 w-px bg-white/10" />
@@ -312,7 +325,7 @@ export default function BikeConfigurator() {
           </div>
           <div className="col-span-3 flex justify-end">
             <button onClick={() => {
-                if (steps[currentStepIndex]?.options.length > 0 && !selections[steps[currentStepIndex].id]) { setError("Select!"); return; }
+                if (filteredOptions.length > 0 && !selections[steps[currentStepIndex].id]) { setError("Select!"); return; }
                 currentStepIndex < steps.length - 1 ? setCurrentStepIndex(currentStepIndex + 1) : setIsFinished(true);
               }} className="bg-red-600 hover:bg-red-700 text-white h-[32px] px-3 lg:px-[22px] rounded-lg font-black uppercase text-[10px] tracking-widest flex items-center gap-1 lg:gap-3 transition-all active:scale-95 shadow-lg shadow-red-600/20 italic"
             >{currentStepIndex === steps.length - 1 ? 'Finish' : 'Next'} <ChevronRight size={14} /></button>
@@ -337,8 +350,14 @@ function SummaryView({ selections, onReset }: any) {
     try { const logoBase64 = await getBase64Image("/design/Logo.png");
       if (logoBase64) { doc.saveGraphicsState(); (doc as any).setGState(new (doc as any).GState({ opacity: 0.8 })); doc.addImage(logoBase64, 'PNG', (pageWidth / 2) - 15, 8, 10, 10); doc.restoreGraphicsState(); }
     } catch (e) {}
-    try { const sortedByZ = [...selections].sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
-      for (const comp of sortedByZ) { if (comp.imageUrl) { const imgBase64 = await getBase64Image(comp.imageUrl); if (imgBase64) doc.addImage(imgBase64, 'PNG', 15, 22, 180, 115, undefined, 'FAST'); } }
+    try {
+      const sortedByZ = [...selections].sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
+      for (const comp of sortedByZ) {
+        if (comp.imageUrl) {
+          const imgBase64 = await getBase64Image(comp.imageUrl);
+          if (imgBase64) doc.addImage(imgBase64, 'PNG', 15, 22, 180, 115, undefined, 'FAST');
+        }
+      }
     } catch (e) {}
     autoTable(doc, { startY: 140, head: [['SECTION', 'COMPONENT', 'BRAND', 'WEIGHT', 'PRICE']],
       body: selections.map((c: any) => [cleanText(c.stepTitle || ""), cleanText(c.name), cleanText(c.brand), `${c.weight} g`, `${c.price.toLocaleString()} €`]),
