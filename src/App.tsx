@@ -33,7 +33,7 @@ interface OffsetData {
   y: number; 
 }
 
-// --- ADMIN LOGIN COMPONENT ---
+// --- ADMIN LOGIN ---
 const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
   const [email, setEmail] = useState('');
   const [pass, setPass] = useState('');
@@ -50,44 +50,40 @@ const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
     if (email === "hello@adicto.bike" && pass === "Scalpel2012!") {
       if (rememberMe) localStorage.setItem('adicto_auth', 'true');
       onLogin();
-    } else {
-      setError("Invalid credentials");
-    }
+    } else { setError("Invalid credentials"); }
   };
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center p-6 selection:bg-red-600 font-sans">
+    <div className="min-h-screen bg-black flex items-center justify-center p-6 selection:bg-red-600 font-sans text-white">
       <motion.form initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} onSubmit={handleLogin} className="bg-zinc-900/50 p-10 rounded-[2.5rem] border border-white/5 w-full max-w-md backdrop-blur-xl shadow-2xl">
-        <div className="flex flex-col items-center mb-8">
+        <div className="flex flex-col items-center mb-8 text-center">
           <div className="w-12 h-12 bg-red-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-red-600/20"><Lock className="text-white" size={24} /></div>
-          <h2 className="text-xl font-black uppercase tracking-widest text-white italic">Adicto Admin</h2>
+          <h2 className="text-xl font-black uppercase tracking-widest italic">Adicto Admin</h2>
         </div>
-        <div className="space-y-4">
-          <input type="email" placeholder="Email" className="w-full bg-black border border-white/10 p-4 rounded-2xl text-white outline-none focus:border-red-600 transition-all text-sm font-mono" value={email} onChange={(e) => setEmail(e.target.value)} />
+        <div className="space-y-4 text-black">
+          <input type="email" placeholder="Email" className="w-full bg-black border border-white/10 p-4 rounded-2xl text-white outline-none focus:border-red-600 transition-all text-sm" value={email} onChange={(e) => setEmail(e.target.value)} />
           <div className="relative">
-            <input type={showPass ? "text" : "password"} placeholder="Password" className="w-full bg-black border border-white/10 p-4 rounded-2xl text-white outline-none focus:border-red-600 transition-all text-sm font-mono" value={pass} onChange={(e) => setPass(e.target.value)} />
-            <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white transition-colors text-[10px] font-bold uppercase">{showPass ? "Hide" : "Show"}</button>
+            <input type={showPass ? "text" : "password"} placeholder="Password" className="w-full bg-black border border-white/10 p-4 rounded-2xl text-white outline-none focus:border-red-600 transition-all text-sm" value={pass} onChange={(e) => setPass(e.target.value)} />
+            <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white text-[10px] font-bold uppercase">{showPass ? "Hide" : "Show"}</button>
           </div>
         </div>
         <div className="flex items-center gap-2 mt-4 px-2">
-          <input type="checkbox" id="remember" checked={rememberMe} onChange={() => setRememberMe(!rememberMe)} className="accent-red-600 h-4 w-4 rounded border-white/10 bg-black" />
-          <label htmlFor="remember" className="text-zinc-500 text-[10px] uppercase font-bold cursor-pointer select-none">Remember Me</label>
+          <input type="checkbox" id="remember" checked={rememberMe} onChange={() => setRememberMe(!rememberMe)} className="accent-red-600 h-4 w-4" />
+          <label htmlFor="remember" className="text-zinc-500 text-[10px] uppercase font-bold cursor-pointer">Remember Me</label>
         </div>
-        {error && <p className="text-red-600 text-[10px] text-center mt-4 uppercase font-black italic tracking-widest">{error}</p>}
-        <button className="w-full bg-red-600 py-4 rounded-2xl font-black uppercase tracking-widest text-white mt-8 hover:bg-red-700 active:scale-95 transition-all shadow-lg shadow-red-600/20 text-sm italic">Access Dashboard</button>
+        {error && <p className="text-red-600 text-[10px] text-center mt-4 uppercase font-black">{error}</p>}
+        <button className="w-full bg-red-600 py-4 rounded-2xl font-black uppercase text-white mt-8 hover:bg-red-700 transition-all text-sm italic">Access Dashboard</button>
       </motion.form>
     </div>
   );
 };
 
-// --- ADMIN PANEL COMPONENT ---
+// --- ADMIN PANEL ---
 const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid, setShowGrid, gridSize, setGridSize, isZoomed, setIsZoomed, zoomScale, setZoomScale }: any) => {
-  const [selectedCat, setSelectedCat] = useState('excel');
   const [status, setStatus] = useState('');
-
+  const [selectedCat, setSelectedCat] = useState('excel');
   const GITHUB_TOKEN = "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"; 
   const REPO = "VasileAdicto/Adictobike";
-  const BRANCH = "main";
 
   const saveToGithub = async (path: string, content: string, isJson = false) => {
     setStatus("Saving...");
@@ -98,12 +94,7 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
       const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${path}`, {
         method: "PUT",
         headers: { Authorization: `token ${GITHUB_TOKEN}`, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: `Admin update: ${path}`,
-          content: isJson ? btoa(unescape(encodeURIComponent(content))) : content,
-          sha: sha || undefined,
-          branch: BRANCH
-        }),
+        body: JSON.stringify({ message: `Admin update: ${path}`, content: isJson ? btoa(unescape(encodeURIComponent(content))) : content, sha: sha || undefined, branch: "main" }),
       });
       if (res.ok) setStatus("✅ Success!"); else setStatus("❌ Error");
     } catch (err) { setStatus("❌ Failed"); }
@@ -114,173 +105,75 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
     setOffsets((prev: any) => ({ ...prev, [activeComponent.id]: { ...(prev[activeComponent.id] || { s: 1, x: 0, y: 0 }), [key]: val } }));
   };
 
+  const currentTune = activeComponent ? (offsets[activeComponent.id] || { s: 1, x: 0, y: 0 }) : { s: 1, x: 0, y: 0 };
+
   return (
-    <div className="z-[100] sticky top-0 shadow-2xl font-sans">
-      <motion.div initial={{ y: -50 }} animate={{ y: 0 }} className="bg-zinc-900 border-b border-white/5 p-2 flex gap-3 items-center justify-center backdrop-blur-md">
-        <select value={selectedCat} onChange={(e) => setSelectedCat(e.target.value)} className="bg-black border border-white/10 text-[9px] px-2 py-1 rounded uppercase font-bold text-zinc-400 outline-none focus:border-red-600">
+    <div className="z-[100] sticky top-0 shadow-2xl font-sans text-white">
+      <div className="bg-zinc-900 border-b border-white/5 p-2 flex gap-3 items-center justify-center backdrop-blur-md">
+        <select value={selectedCat} onChange={(e) => setSelectedCat(e.target.value)} className="bg-black border border-white/10 text-[9px] px-2 py-1 rounded uppercase font-bold outline-none focus:border-red-600">
           <option value="excel">📁 EXCEL</option>
-          {categories.map((cat: string) => <option key={cat} value={cat}>🖼️ {cat.toUpperCase()}</option>)}
+          {categories?.map((cat: string) => <option key={cat} value={cat}>🖼️ {cat.toUpperCase()}</option>)}
         </select>
-        
-        <label className="cursor-pointer bg-zinc-800 text-zinc-300 px-3 py-1 rounded text-[9px] font-bold uppercase hover:bg-zinc-700 transition-all flex items-center gap-2 italic">
-          <Upload size={10}/> UPLOAD <input type="file" className="hidden" onChange={(e) => {
+        <label className="cursor-pointer bg-zinc-800 text-zinc-300 px-3 py-1 rounded text-[9px] font-bold hover:bg-zinc-700 flex items-center gap-2 italic"><Upload size={10}/> UPLOAD <input type="file" className="hidden" onChange={(e) => {
              const file = e.target.files?.[0];
              if (file) {
                 const reader = new FileReader();
                 reader.readAsDataURL(file);
                 reader.onload = () => saveToGithub(selectedCat === 'excel' ? "public/data.xlsx" : `public/parts/${selectedCat}/${file.name}`, (reader.result as string).split(',')[1]);
              }
-          }} />
-        </label>
-
+          }} /></label>
         <div className="h-4 w-px bg-white/10 mx-1" />
-
         <div className="flex items-center gap-2 bg-black/40 p-1 rounded-lg border border-white/5">
-          <button onClick={() => setShowGrid(!showGrid)} className={cn("px-2 py-1 rounded text-[9px] font-bold uppercase transition-all", showGrid ? "bg-red-600 text-white" : "bg-zinc-800 text-zinc-400")}>
-            <Grid3X3 size={10}/>
-          </button>
-          {showGrid && (
-            <div className="flex items-center gap-2 px-1 border-r border-white/5 mr-1">
-              <span className="text-[7px] text-zinc-500 font-bold uppercase whitespace-nowrap">Step: {gridSize}px</span>
-              <input type="range" min="1" max="20" step="1" value={gridSize} onChange={(e) => setGridSize(parseInt(e.target.value))} className="w-16 h-1 bg-zinc-700 appearance-none accent-red-600" />
-            </div>
-          )}
+          <button onClick={() => setShowGrid(!showGrid)} className={cn("px-2 py-1 rounded text-[9px] font-bold uppercase transition-all", showGrid ? "bg-red-600 text-white" : "bg-zinc-800 text-zinc-400")}><Grid3X3 size={10}/></button>
+          {showGrid && <div className="flex items-center gap-2 px-1 border-r border-white/5 mr-1"><span className="text-[7px] text-zinc-500 font-bold uppercase">Grid: {gridSize}px</span><input type="range" min="1" max="20" step="1" value={gridSize} onChange={(e) => setGridSize(parseInt(e.target.value))} className="w-16 h-1 bg-zinc-700 appearance-none accent-red-600" /></div>}
         </div>
-
         <div className="flex items-center gap-2 bg-black/40 p-1 rounded-lg border border-white/5">
-          <button onClick={() => setIsZoomed(!isZoomed)} className={cn("px-2 py-1 rounded text-[9px] font-bold uppercase transition-all flex items-center gap-2", isZoomed ? "bg-red-600 text-white" : "bg-zinc-800 text-zinc-400")}>
-            <Search size={10}/> {isZoomed ? `${zoomScale.toFixed(1)}X` : 'Magnify'}
-          </button>
-          {isZoomed && (
-            <div className="flex items-center gap-2 px-1 animate-in fade-in slide-in-from-left-2">
-              <span className="text-[7px] text-zinc-500 font-bold uppercase">Zoom</span>
-              <input type="range" min="2" max="10" step="0.1" value={zoomScale} onChange={(e) => setZoomScale(parseFloat(e.target.value))} className="w-20 h-1 bg-zinc-700 appearance-none accent-red-600" />
-            </div>
-          )}
+          <button onClick={() => setIsZoomed(!isZoomed)} className={cn("px-2 py-1 rounded text-[9px] font-bold uppercase transition-all flex items-center gap-2", isZoomed ? "bg-red-600 text-white" : "bg-zinc-800 text-zinc-400")}><Search size={10}/> {isZoomed ? `${(zoomScale || 5).toFixed(1)}X` : 'Magnify'}</button>
+          {isZoomed && <div className="flex items-center gap-2 px-1"><span className="text-[7px] text-zinc-500 font-bold uppercase">Zoom</span><input type="range" min="2" max="10" step="0.1" value={zoomScale || 5} onChange={(e) => setZoomScale(parseFloat(e.target.value))} className="w-20 h-1 bg-zinc-700 appearance-none accent-red-600" /></div>}
         </div>
-
         {status && <span className="text-[8px] font-mono uppercase text-red-600 animate-pulse ml-1">{status}</span>}
-      </motion.div>
+      </div>
 
       {activeComponent && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-black/80 border-b border-white/5 p-2 flex justify-between items-center px-6 backdrop-blur-xl gap-10">
+        <div className="bg-black/80 border-b border-white/5 p-2 flex justify-between items-center px-6 backdrop-blur-xl gap-10">
           <div className="flex flex-col gap-1 flex-1">
-            {[
-              { key: 's', label: 'Size', min: 0.8, max: 1.2, step: 0.001, reset: 1 },
-              { key: 'x', label: 'Pos X', min: -40, max: 40, step: 1, reset: 0 },
-              { key: 'y', label: 'Pos Y', min: -40, max: 40, step: 1, reset: 0 }
-            ].map((item) => (
+            {[ { key: 's', label: 'Size', min: 0.8, max: 1.2, step: 0.001, reset: 1 }, { key: 'x', label: 'Pos X', min: -40, max: 40, step: 1, reset: 0 }, { key: 'y', label: 'Pos Y', min: -40, max: 40, step: 1, reset: 0 } ].map((item) => (
               <div key={item.key} className="flex items-center gap-3">
                 <span className="text-[8px] text-zinc-500 font-black w-8 uppercase">{item.label}</span>
-                <input type="range" min={item.min} max={item.max} step={item.step} 
-                  value={offsets[activeComponent.id]?.[item.key as keyof OffsetData] ?? item.reset} 
-                  onChange={e => updateTune(item.key as keyof OffsetData, parseFloat(e.target.value))} 
-                  className="flex-1 h-1 bg-zinc-800 rounded-lg appearance-none accent-red-600 cursor-pointer" 
-                />
-                <input type="number" step={item.step} 
-                  value={offsets[activeComponent.id]?.[item.key as keyof OffsetData] ?? item.reset}
-                  onChange={e => updateTune(item.key as keyof OffsetData, parseFloat(e.target.value))}
-                  className="bg-transparent text-white text-[9px] w-10 text-right font-mono border-b border-white/5 focus:border-red-600 outline-none" 
-                />
+                <input type="range" min={item.min} max={item.max} step={item.step} value={currentTune[item.key as keyof OffsetData]} onChange={e => updateTune(item.key as keyof OffsetData, parseFloat(e.target.value))} className="flex-1 h-1 bg-zinc-800 rounded-lg appearance-none accent-red-600 cursor-pointer" />
+                <input type="number" step={item.step} value={currentTune[item.key as keyof OffsetData]} onChange={e => updateTune(item.key as keyof OffsetData, parseFloat(e.target.value))} className="bg-transparent text-white text-[9px] w-10 text-right font-mono outline-none border-b border-white/5 focus:border-red-600" />
                 <button onClick={() => updateTune(item.key as keyof OffsetData, item.reset)} className="text-zinc-600 hover:text-red-600 transition-colors"><RotateCcw size={10}/></button>
               </div>
             ))}
           </div>
           <div className="flex flex-col items-end gap-1 shrink-0">
             <div className="text-[9px] font-black text-red-600 italic uppercase tracking-widest leading-none mb-1">{activeComponent.name}</div>
-            <button onClick={() => saveToGithub("public/offsets.json", JSON.stringify(offsets), true)} className="bg-red-600 text-white px-5 py-2 rounded-lg text-[10px] font-black uppercase hover:bg-red-700 transition-all flex items-center gap-2 italic shadow-lg shadow-red-600/20">
-              <Save size={12}/> Save Offsets
-            </button>
+            <button onClick={() => saveToGithub("public/offsets.json", JSON.stringify(offsets), true)} className="bg-red-600 text-white px-5 py-2 rounded-lg text-[10px] font-black uppercase hover:bg-red-700 transition-all flex items-center gap-2 italic shadow-lg shadow-red-600/20"><Save size={12}/> Save Offsets</button>
           </div>
-        </motion.div>
-      )}
-    </div>
-  );
-};
-
-// --- VISUALIZER ---
-const Visualizer = ({ selectedComponents, offsets, showGrid, gridSize, isZoomed, zoomScale }: any) => {
-  return (
-    <div id="bike-visualizer" className="relative w-full h-full bg-zinc-950 rounded-[1.5rem] lg:rounded-[2.5rem] overflow-hidden border border-white/5 shadow-[0_0_100px_rgba(0,0,0,0.5)] flex items-center justify-center cursor-crosshair">
-      
-      {showGrid && (
-        <div className="absolute inset-0 z-[60] pointer-events-none opacity-[0.15]" 
-             style={{ 
-               backgroundImage: `linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)`, 
-               backgroundSize: `${gridSize}px ${gridSize}px` 
-             }} />
-      )}
-
-      <motion.div 
-        drag={isZoomed}
-        dragMomentum={false}
-        dragConstraints={{ left: -2500, right: 2500, top: -2500, bottom: 2500 }}
-        animate={{ 
-          scale: isZoomed ? zoomScale : 1,
-          x: isZoomed ? undefined : 0,
-          y: isZoomed ? undefined : 0
-        }}
-        transition={{ type: 'spring', damping: 25, stiffness: 120 }}
-        className="relative w-full h-full flex items-center justify-center"
-      >
-        <AnimatePresence mode="popLayout">
-          {selectedComponents.map((comp: any) => {
-            const tune = offsets[comp.id] || { s: 1, x: 0, y: 0 };
-            return (
-              <motion.img
-                key={comp.id} src={comp.imageUrl} crossOrigin="anonymous" loading="eager" alt={comp.name}
-                initial={{ opacity: 0 }} 
-                animate={{ opacity: 1, scale: tune.s, x: tune.x, y: tune.y }} 
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.4 }} className="absolute inset-0 w-full h-full object-contain pointer-events-none"
-                style={{ zIndex: Number(comp.zIndex) }}
-              />
-            );
-          })}
-        </AnimatePresence>
-      </motion.div>
-
-      {isZoomed && (
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-red-600 text-white px-4 py-1 rounded-full text-[8px] font-black uppercase flex items-center gap-2 z-[70] shadow-2xl">
-          <Move size={10}/> Drag to Move
         </div>
       )}
     </div>
   );
 };
 
-// --- OPTION CARD & MAIN CONFIGURATOR ---
-const OptionCard = ({ component, isSelected, onClick }: { component: Component, isSelected: boolean, onClick: () => void }) => (
-  <motion.button
-    layout onClick={(e) => { e.preventDefault(); onClick(); }}
-    className={cn("relative flex flex-col p-2 lg:p-3 rounded-xl lg:rounded-2xl border text-left transition-all group w-full shrink-0", 
-    isSelected ? "border-red-600 bg-red-600/5 ring-1 ring-red-600/20 shadow-[0_0_20px_rgba(255,0,0,0.1)]" : "border-white/5 bg-zinc-900/50 hover:border-white/20 hover:bg-zinc-900")}
-  >
-    <div className="aspect-square w-full rounded-lg lg:rounded-xl bg-black/40 mb-2 lg:mb-3 overflow-hidden relative">
-      <img src={component.cardImageUrl} alt={component.name} className="w-full h-full object-contain p-1 lg:p-2 group-hover:scale-110 transition duration-500" />
-      {isSelected && <div className="absolute top-1 lg:top-2 right-1 lg:right-2 bg-red-600 p-1 lg:p-1.5 rounded-full shadow-lg z-10"><CheckCircle2 size={10} className="text-white" /></div>}
-    </div>
-    <div className="flex-1 flex flex-col justify-between overflow-hidden">
-      <div>
-        <h3 className="text-[6.5px] lg:text-[11px] font-bold leading-tight tracking-tighter line-clamp-2 text-zinc-300 uppercase">{component.name}</h3>
-        <p className="text-[6px] lg:text-[9px] text-zinc-500 uppercase font-black">{component.brand}</p>
-      </div>
-      <div className="flex justify-between items-end mt-1 lg:mt-2">
-        <p className="font-mono text-[10px] lg:text-sm text-red-600 tracking-tighter">€{component.price.toLocaleString()}</p>
-        <p className="text-[9px] lg:text-sm text-zinc-600 font-mono italic">{component.weight}g</p>
-      </div>
-    </div>
-  </motion.button>
+// --- VISUALIZER ---
+const Visualizer = ({ selectedComponents, offsets, showGrid, gridSize, isZoomed, zoomScale }: any) => (
+  <div id="bike-visualizer" className="relative w-full h-full bg-zinc-950 rounded-[1.5rem] lg:rounded-[2.5rem] overflow-hidden border border-white/5 shadow-[0_0_100px_rgba(0,0,0,0.5)] flex items-center justify-center cursor-crosshair">
+    {showGrid && <div className="absolute inset-0 z-[60] pointer-events-none opacity-[0.15]" style={{ backgroundImage: `linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)`, backgroundSize: `${gridSize || 5}px ${gridSize || 5}px` }} />}
+    <motion.div drag={isZoomed} dragMomentum={false} dragConstraints={{ left: -3000, right: 3000, top: -3000, bottom: 3000 }} animate={{ scale: isZoomed ? (zoomScale || 5) : 1, x: isZoomed ? undefined : 0, y: isZoomed ? undefined : 0 }} transition={{ type: 'spring', damping: 25, stiffness: 150 }} className="relative w-full h-full flex items-center justify-center">
+      <AnimatePresence mode="popLayout">
+        {selectedComponents?.map((comp: any) => {
+          const tune = (offsets && offsets[comp.id]) || { s: 1, x: 0, y: 0 };
+          return <motion.img key={comp.id} src={comp.imageUrl} crossOrigin="anonymous" loading="eager" alt={comp.name} initial={{ opacity: 0 }} animate={{ opacity: 1, scale: tune.s, x: tune.x, y: tune.y }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }} className="absolute inset-0 w-full h-full object-contain pointer-events-none" style={{ zIndex: Number(comp.zIndex) }} />;
+        })}
+      </AnimatePresence>
+    </motion.div>
+    {isZoomed && <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-red-600 text-white px-4 py-1 rounded-full text-[8px] font-black uppercase flex items-center gap-2 z-[70] shadow-2xl"><Move size={10}/> Drag to Explore</div>}
+  </div>
 );
 
-const INITIAL_STEPS: Step[] = [
-  { id: 'frame', title: 'Frame', options: [] }, { id: 'wheelset', title: 'Wheelset', options: [] },
-  { id: 'tyres', title: 'Tyres', options: [] }, { id: 'cockpit', title: 'Cockpit', options: [] },
-  { id: 'tape', title: 'Tape', options: [] }, { id: 'saddle', title: 'Saddle', options: [] },
-  { id: 'shifters', title: 'Shifters', options: [] }, { id: 'crankset', title: 'Crankset', options: [] },
-  { id: 'derailleurs', title: 'Derailleurs', options: [] }, { id: 'cassette', title: 'Cassette', options: [] },
-  { id: 'discs', title: 'Discs', options: [] }
-];
+// --- MAIN CONFIGURATOR ---
+const INITIAL_STEPS: Step[] = [ { id: 'frame', title: 'Frame', options: [] }, { id: 'wheelset', title: 'Wheelset', options: [] }, { id: 'tyres', title: 'Tyres', options: [] }, { id: 'cockpit', title: 'Cockpit', options: [] }, { id: 'tape', title: 'Tape', options: [] }, { id: 'saddle', title: 'Saddle', options: [] }, { id: 'shifters', title: 'Shifters', options: [] }, { id: 'crankset', title: 'Crankset', options: [] }, { id: 'derailleurs', title: 'Derailleurs', options: [] }, { id: 'cassette', title: 'Cassette', options: [] }, { id: 'discs', title: 'Discs', options: [] } ];
 
 export default function BikeConfigurator() {
   const [isAdminMode, setIsAdminMode] = useState(false);
@@ -289,19 +182,17 @@ export default function BikeConfigurator() {
   const [showGrid, setShowGrid] = useState(false);
   const [gridSize, setGridSize] = useState(5);
   const [zoomScale, setZoomScale] = useState(5);
-  
-  useEffect(() => {
-    const path = window.location.pathname; 
-    const urlParams = new URLSearchParams(window.location.search);
-    if (path === '/admin' || urlParams.get('admin') === 'true') setIsAdminMode(true);
-    fetch('/offsets.json').then(r => r.ok ? r.json() : {}).then(data => setOffsets(data)).catch(() => {});
-  }, []);
-
   const [steps, setSteps] = useState<Step[]>(INITIAL_STEPS);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [selections, setSelections] = useState<Record<string, string>>({});
   const [isFinished, setIsFinished] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const path = window.location.pathname; 
+    const urlParams = new URLSearchParams(window.location.search);
+    if (path === '/admin' || urlParams.get('admin') === 'true') setIsAdminMode(true);
+    fetch('/offsets.json').then(r => r.ok ? r.json() : {}).then(data => setOffsets(data || {})).catch(() => setOffsets({}));
+  }, []);
 
   useEffect(() => {
     const autoLoadExcel = async () => {
@@ -318,13 +209,7 @@ export default function BikeConfigurator() {
             const data = XLSX.utils.sheet_to_json(sheet);
             return { ...step, options: data.map((row: any, idx: number) => {
               const findKey = (name: string) => Object.keys(row).find(k => k.toLowerCase().trim() === name.toLowerCase());
-              return {
-                id: `${step.id}-${idx}`, name: row.Name || 'Unknown', brand: row.Brand || '',
-                price: Number(row.Price || row.PRICE) || 0, weight: Number(row.Weight || row.WEIGHT) || 0,
-                imageUrl: row[findKey('imageurl') || 'image'] || "",
-                cardImageUrl: row[findKey('cardimg') || 'cardimage'] || row[findKey('imageurl') || 'image'] || "",
-                zIndex: Number(row[findKey('zindex')]) || 10, logic: String(row[findKey('logic')] || "").trim()
-              };
+              return { id: `${step.id}-${idx}`, name: row.Name || 'Unknown', brand: row.Brand || '', price: Number(row.Price || row.PRICE) || 0, weight: Number(row.Weight || row.WEIGHT) || 0, imageUrl: row[findKey('imageurl') || 'image'] || "", cardImageUrl: row[findKey('cardimg') || 'cardimage'] || row[findKey('imageurl') || 'image'] || "", zIndex: Number(row[findKey('zindex')]) || 10, logic: String(row[findKey('logic')] || "").trim() };
             })};
           }
           return step;
@@ -336,7 +221,13 @@ export default function BikeConfigurator() {
   }, []);
 
   const selectedComponents = useMemo(() => steps.map(s => s.options.find(o => o.id === selections[s.id]) || null).filter((c): c is Component => !!c), [selections, steps]);
-  const activeComponentForTuning = steps[currentStepIndex]?.options.find(o => o.id === selections[steps[currentStepIndex].id]);
+  
+  // БЕЗПЕЧНИЙ ВИБІР АКТИВНОГО КОМПОНЕНТА
+  const activeComponentForTuning = useMemo(() => {
+    const step = steps[currentStepIndex];
+    if (!step) return null;
+    return step.options.find(o => o.id === selections[step.id]);
+  }, [steps, currentStepIndex, selections]);
 
   if (isAdminMode && !isLoggedIn) return <AdminLogin onLogin={() => setIsLoggedIn(true)} />;
   if (isFinished) return <SummaryView selections={selectedComponents} onReset={() => window.location.reload()} />;
@@ -355,7 +246,7 @@ export default function BikeConfigurator() {
       <main className="max-w-[1500px] mx-auto px-4 lg:px-6 pt-2 lg:pt-3">
         <div className="flex flex-col lg:grid lg:grid-cols-12 gap-6 lg:gap-10 lg:h-[550px] items-stretch">
           <div className="lg:col-span-9 flex flex-col gap-2 order-1">
-            <div className="flex overflow-x-auto no-scrollbar lg:overflow-visible lg:flex-wrap justify-start items-center px-4 gap-x-6 gap-y-2 pb-2">
+            <div className="flex overflow-x-auto no-scrollbar gap-x-6 gap-y-2 pb-2">
               {steps.map((step, idx) => (
                 <button key={step.id} onClick={() => setCurrentStepIndex(idx)} className={cn("transition-all duration-300 text-[10px] font-black italic uppercase tracking-widest pb-1 border-b-2 whitespace-nowrap", idx === currentStepIndex ? "text-red-600 border-red-600 drop-shadow-[0_0_9px_rgba(255,0,0,0.3)]" : "text-white opacity-20 border-transparent hover:opacity-100")}>{step.title}</button>
               ))}
