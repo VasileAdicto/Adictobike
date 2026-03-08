@@ -210,8 +210,13 @@ export default function BikeConfigurator() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   
   useEffect(() => {
+    const path = window.location.pathname; // Читаємо шлях /admin
     const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('admin') === 'true') setIsAdminMode(true);
+    
+    // Перевіряємо або шлях /admin, або параметр ?admin=true
+    if (path === '/admin' || urlParams.get('admin') === 'true') {
+      setIsAdminMode(true);
+    }
   }, []);
 
   const [steps, setSteps] = useState<Step[]>(INITIAL_STEPS);
