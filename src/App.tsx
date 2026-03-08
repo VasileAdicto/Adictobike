@@ -278,7 +278,7 @@ export default function BikeConfigurator() {
         });
       }
     }
-  },
+  },[currentStepIndex]);
 
   useEffect(() => {
     const path = window.location.pathname; 
