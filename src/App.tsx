@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Download, CheckCircle2, Upload, Database, Lock, User, Settings2, Save, RotateCcw, Grid3X3, Search, Move } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Download, CheckCircle2, Upload, Database, Lock, User, Settings2, Save, RotateCcw, Grid3X3, Search, Move, FolderOpen } from 'lucide-react';
 import { cn } from './lib/utils';
 
 import jsPDF from 'jspdf';
@@ -58,9 +58,9 @@ const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
   return (
     <div className="min-h-screen bg-black flex items-center justify-center p-6 selection:bg-red-600 font-sans">
       <motion.form initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} onSubmit={handleLogin} className="bg-zinc-900/50 p-10 rounded-[2.5rem] border border-white/5 w-full max-w-md backdrop-blur-xl shadow-2xl">
-        <div className="flex flex-col items-center mb-8 text-white">
-          <div className="w-12 h-12 bg-red-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-red-600/20"><Lock size={24} /></div>
-          <h2 className="text-xl font-black uppercase tracking-widest italic">Adicto Admin</h2>
+        <div className="flex flex-col items-center mb-8">
+          <div className="w-12 h-12 bg-red-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-red-600/20"><Lock className="text-white" size={24} /></div>
+          <h2 className="text-xl font-black uppercase tracking-widest text-white italic text-center">Adicto Admin</h2>
         </div>
         <div className="space-y-4">
           <input type="email" placeholder="Email" className="w-full bg-black border border-white/10 p-4 rounded-2xl text-white outline-none focus:border-red-600 transition-all text-sm font-mono" value={email} onChange={(e) => setEmail(e.target.value)} />
@@ -108,31 +108,37 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
   };
 
   return (
-    <div className="z-[100] sticky top-0 shadow-2xl font-sans">
+    <div className="z-[100] sticky top-0 shadow-2xl font-sans text-white">
       <motion.div initial={{ y: -50 }} animate={{ y: 0 }} className="bg-zinc-900 border-b border-white/5 p-2 flex gap-3 items-center justify-center backdrop-blur-md">
-        <select value={selectedCat} onChange={(e) => setSelectedCat(e.target.value)} className="bg-black border border-white/10 text-[9px] px-2 py-1 rounded uppercase font-bold text-zinc-400 outline-none focus:border-red-600 transition-all">
+        <select value={selectedCat} onChange={(e) => setSelectedCat(e.target.value)} className="bg-black border border-white/10 text-[9px] px-2 py-1 rounded uppercase font-bold outline-none focus:border-red-600">
           <option value="excel">📁 EXCEL</option>
-          {categories.map((cat: string) => <option key={cat} value={cat}>🖼️ {cat.toUpperCase()}</option>)}
+          {categories?.map((cat: string) => <option key={cat} value={cat}>🖼️ {cat.toUpperCase()}</option>)}
         </select>
         
-        <label className="cursor-pointer bg-zinc-800 text-zinc-300 px-3 py-1 rounded text-[9px] font-bold uppercase hover:bg-zinc-700 transition-all flex items-center gap-2 italic">
-          <Upload size={10}/> UPLOAD 
-          <input type="file" className="hidden" multiple webkitdirectory="" onChange={(e: any) => {
-             const files = e.target.files;
-             if (files && files.length > 0) {
-                Array.from(files).forEach((file: any) => {
-                  const reader = new FileReader();
-                  reader.readAsDataURL(file);
-                  reader.onload = () => {
-                    const content = (reader.result as string).split(',')[1];
-                    const fileName = file.webkitRelativePath || file.name;
-                    const path = selectedCat === 'excel' ? "public/data.xlsx" : `public/parts/${selectedCat}/${fileName}`;
-                    saveToGithub(path, content);
-                  };
-                });
-             }
-          }} />
-        </label>
+        <div className="flex gap-1">
+          {/* Кнопка для окремих файлів */}
+          <label className="cursor-pointer bg-zinc-800 text-zinc-300 px-2 py-1 rounded text-[9px] font-bold uppercase hover:bg-zinc-700 transition-all flex items-center gap-1 italic">
+            <Upload size={10}/> Files
+            <input type="file" className="hidden" multiple onChange={(e) => {
+               const files = e.target.files;
+               if (files) Array.from(files).forEach(file => {
+                  const reader = new FileReader(); reader.readAsDataURL(file);
+                  reader.onload = () => saveToGithub(selectedCat === 'excel' ? "public/data.xlsx" : `public/parts/${selectedCat}/${file.name}`, (reader.result as string).split(',')[1]);
+               });
+            }} />
+          </label>
+          {/* Кнопка для цілих папок */}
+          <label className="cursor-pointer bg-zinc-800 text-zinc-300 px-2 py-1 rounded text-[9px] font-bold uppercase hover:bg-zinc-700 transition-all flex items-center gap-1 italic">
+            <FolderOpen size={10}/> Folder
+            <input type="file" className="hidden" webkitdirectory="" onChange={(e: any) => {
+               const files = e.target.files;
+               if (files) Array.from(files).forEach((file: any) => {
+                  const reader = new FileReader(); reader.readAsDataURL(file);
+                  reader.onload = () => saveToGithub(`public/parts/${selectedCat}/${file.webkitRelativePath}`, (reader.result as string).split(',')[1]);
+               });
+            }} />
+          </label>
+        </div>
 
         <div className="h-4 w-px bg-white/10 mx-1" />
 
@@ -147,47 +153,32 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
         </div>
 
         <div className="flex items-center gap-2 bg-black/40 p-1 rounded-lg border border-white/5">
-          <button onClick={() => setIsZoomed(!isZoomed)} className={cn("px-2 py-1 rounded text-[9px] font-bold uppercase transition-all flex items-center gap-2", isZoomed ? "bg-red-600 text-white" : "bg-zinc-800 text-zinc-400")}><Search size={10}/> {isZoomed ? `${zoomScale.toFixed(1)}X` : 'Magnify'}</button>
+          <button onClick={() => setIsZoomed(!isZoomed)} className={cn("px-2 py-1 rounded text-[9px] font-bold uppercase transition-all flex items-center gap-2", isZoomed ? "bg-red-600 text-white" : "bg-zinc-800 text-zinc-400")}><Search size={10}/> {isZoomed ? `${zoomScale}X` : 'Magnify'}</button>
           {isZoomed && (
             <div className="flex items-center gap-2 px-1 animate-in fade-in slide-in-from-left-2">
-              <span className="text-[7px] text-zinc-500 font-bold uppercase">Scale</span>
+              <span className="text-[7px] text-zinc-500 font-bold uppercase">Zoom</span>
               <input type="range" min="2" max="10" step="0.1" value={zoomScale} onChange={(e) => setZoomScale(parseFloat(e.target.value))} className="w-20 h-1 bg-zinc-700 appearance-none accent-red-600" />
             </div>
           )}
         </div>
-
         {status && <span className="text-[8px] font-mono uppercase text-red-600 animate-pulse ml-1">{status}</span>}
       </motion.div>
 
       {activeComponent && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-black/80 border-b border-white/5 p-2 flex justify-between items-center px-6 backdrop-blur-xl gap-10 text-white">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-black/80 border-b border-white/5 p-2 flex justify-between items-center px-6 backdrop-blur-xl gap-10">
           <div className="flex flex-col gap-1 flex-1">
-            {[
-              { key: 's', label: 'Size', min: 0.8, max: 1.2, step: 0.001, reset: 1 },
-              { key: 'x', label: 'Pos X', min: -40, max: 40, step: 1, reset: 0 },
-              { key: 'y', label: 'Pos Y', min: -40, max: 40, step: 1, reset: 0 }
-            ].map((item) => (
+            {[ { key: 's', label: 'Size', min: 0.8, max: 1.2, step: 0.001, reset: 1 }, { key: 'x', label: 'Pos X', min: -40, max: 40, step: 1, reset: 0 }, { key: 'y', label: 'Pos Y', min: -40, max: 40, step: 1, reset: 0 } ].map((item) => (
               <div key={item.key} className="flex items-center gap-3">
                 <span className="text-[8px] text-zinc-500 font-black w-8 uppercase">{item.label}</span>
-                <input type="range" min={item.min} max={item.max} step={item.step} 
-                  value={offsets[activeComponent.id]?.[item.key as keyof OffsetData] ?? item.reset} 
-                  onChange={e => updateTune(item.key as keyof OffsetData, parseFloat(e.target.value))} 
-                  className="flex-1 h-1 bg-zinc-800 rounded-lg appearance-none accent-red-600 cursor-pointer" 
-                />
-                <input type="number" step={item.step} 
-                  value={offsets[activeComponent.id]?.[item.key as keyof OffsetData] ?? item.reset}
-                  onChange={e => updateTune(item.key as keyof OffsetData, parseFloat(e.target.value))}
-                  className="bg-transparent text-white text-[9px] w-10 text-right font-mono border-b border-white/5 focus:border-red-600 outline-none" 
-                />
+                <input type="range" min={item.min} max={item.max} step={item.step} value={offsets[activeComponent.id]?.[item.key as keyof OffsetData] ?? item.reset} onChange={e => updateTune(item.key as keyof OffsetData, parseFloat(e.target.value))} className="flex-1 h-1 bg-zinc-800 rounded-lg appearance-none accent-red-600 cursor-pointer" />
+                <input type="number" step={item.step} value={offsets[activeComponent.id]?.[item.key as keyof OffsetData] ?? item.reset} onChange={e => updateTune(item.key as keyof OffsetData, parseFloat(e.target.value))} className="bg-transparent text-white text-[9px] w-10 text-right font-mono border-b border-white/5 focus:border-red-600 outline-none" />
                 <button onClick={() => updateTune(item.key as keyof OffsetData, item.reset)} className="text-zinc-600 hover:text-red-600 transition-colors"><RotateCcw size={10}/></button>
               </div>
             ))}
           </div>
           <div className="flex flex-col items-end gap-1 shrink-0">
             <div className="text-[9px] font-black text-red-600 italic uppercase tracking-widest leading-none mb-1">{activeComponent.name}</div>
-            <button onClick={() => saveToGithub("public/offsets.json", JSON.stringify(offsets), true)} className="bg-red-600 text-white px-5 py-2 rounded-lg text-[10px] font-black uppercase hover:bg-red-700 transition-all flex items-center gap-2 italic shadow-lg shadow-red-600/20">
-              <Save size={12}/> Save Offsets
-            </button>
+            <button onClick={() => saveToGithub("public/offsets.json", JSON.stringify(offsets), true)} className="bg-red-600 text-white px-5 py-2 rounded-lg text-[10px] font-black uppercase hover:bg-red-700 transition-all flex items-center gap-2 italic shadow-lg shadow-red-600/20"><Save size={12}/> Save Offsets</button>
           </div>
         </motion.div>
       )}
@@ -203,12 +194,9 @@ const Visualizer = ({ selectedComponents, offsets, showGrid, gridSize, isZoomed,
         <div className="absolute inset-0 z-[60] pointer-events-none opacity-[0.2]" 
              style={{ backgroundImage: `linear-gradient(to right, rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.5) 1px, transparent 1px)`, backgroundSize: `${gridSize}px ${gridSize}px` }} />
       )}
-      <motion.div 
-        drag={isZoomed} dragMomentum={false} dragConstraints={{ left: -2500, right: 2500, top: -2500, bottom: 2500 }}
+      <motion.div drag={isZoomed} dragMomentum={false} dragConstraints={{ left: -2500, right: 2500, top: -2500, bottom: 2500 }}
         animate={{ scale: isZoomed ? (zoomScale || 5) : 1, x: isZoomed ? undefined : 0, y: isZoomed ? undefined : 0 }}
-        transition={{ type: 'spring', damping: 25, stiffness: 120 }}
-        className="relative w-full h-full flex items-center justify-center"
-      >
+        transition={{ type: 'spring', damping: 25, stiffness: 120 }} className="relative w-full h-full flex items-center justify-center">
         <AnimatePresence mode="popLayout">
           {selectedComponents?.map((comp: any) => {
             const tune = (offsets && offsets[comp.id]) || { s: 1, x: 0, y: 0 };
@@ -216,7 +204,7 @@ const Visualizer = ({ selectedComponents, offsets, showGrid, gridSize, isZoomed,
           })}
         </AnimatePresence>
       </motion.div>
-      {isZoomed && <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-red-600 text-white px-4 py-1 rounded-full text-[8px] font-black uppercase flex items-center gap-2 z-[70] shadow-2xl"><Move size={10}/> {zoomScale.toFixed(1)}X - Drag to Move</div>}
+      {isZoomed && <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-red-600 text-white px-4 py-1 rounded-full text-[8px] font-black uppercase flex items-center gap-2 z-[70] shadow-2xl"><Move size={10}/> {zoomScale}X - Drag to Move</div>}
     </div>
   );
 };
@@ -225,31 +213,22 @@ const Visualizer = ({ selectedComponents, offsets, showGrid, gridSize, isZoomed,
 const OptionCard = ({ component, isSelected, onClick }: { component: Component, isSelected: boolean, onClick: () => void }) => (
   <motion.button layout onClick={(e) => { e.preventDefault(); onClick(); }} className={cn("relative flex flex-col p-2 lg:p-3 rounded-xl lg:rounded-2xl border text-left transition-all group w-full shrink-0", isSelected ? "border-red-600 bg-red-600/5 ring-1 ring-red-600/20 shadow-[0_0_20px_rgba(255,0,0,0.1)]" : "border-white/5 bg-zinc-900/50 hover:border-white/20 hover:bg-zinc-900")}>
     <div className="aspect-square w-full rounded-lg lg:rounded-xl bg-black/40 mb-2 lg:mb-3 overflow-hidden relative"><img src={component.cardImageUrl} alt={component.name} className="w-full h-full object-contain p-1 lg:p-2 group-hover:scale-110 transition duration-500" />{isSelected && <div className="absolute top-1 lg:top-2 right-1 lg:right-2 bg-red-600 p-1 lg:p-1.5 rounded-full shadow-lg z-10"><CheckCircle2 size={10} className="text-white" /></div>}</div>
-    <div className="flex-1 flex flex-col justify-between overflow-hidden">
-      <div><h3 className="text-[6.5px] lg:text-[11px] font-bold leading-tight tracking-tighter line-clamp-2 text-zinc-300 uppercase">{component.name}</h3><p className="text-[6px] lg:text-[9px] text-zinc-500 uppercase font-black">{component.brand}</p></div>
-      <div className="flex justify-between items-end mt-1 lg:mt-2"><p className="font-mono text-[10px] lg:text-sm text-red-600 tracking-tighter">€{component.price.toLocaleString()}</p><p className="text-[9px] lg:text-sm text-zinc-600 font-mono italic">{component.weight}g</p></div>
-    </div>
+    <div className="flex-1 flex flex-col justify-between overflow-hidden"><div><h3 className="text-[6.5px] lg:text-[11px] font-bold leading-tight tracking-tighter line-clamp-2 text-zinc-300 uppercase">{component.name}</h3><p className="text-[6px] lg:text-[9px] text-zinc-500 uppercase font-black">{component.brand}</p></div><div className="flex justify-between items-end mt-1 lg:mt-2"><p className="font-mono text-[10px] lg:text-sm text-red-600 tracking-tighter">€{component.price.toLocaleString()}</p><p className="text-[9px] lg:text-sm text-zinc-600 font-mono italic">{component.weight}g</p></div></div>
   </motion.button>
 );
 
-// --- MAIN CONFIGURATOR ---
 const INITIAL_STEPS: Step[] = [ { id: 'frame', title: 'Frame', options: [] }, { id: 'wheelset', title: 'Wheelset', options: [] }, { id: 'tyres', title: 'Tyres', options: [] }, { id: 'cockpit', title: 'Cockpit', options: [] }, { id: 'tape', title: 'Tape', options: [] }, { id: 'saddle', title: 'Saddle', options: [] }, { id: 'shifters', title: 'Shifters', options: [] }, { id: 'crankset', title: 'Crankset', options: [] }, { id: 'derailleurs', title: 'Derailleurs', options: [] }, { id: 'cassette', title: 'Cassette', options: [] }, { id: 'discs', title: 'Discs', options: [] } ];
 
 export default function BikeConfigurator() {
   const [isAdminMode, setIsAdminMode] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [offsets, setOffsets] = useState<Record<string, OffsetData>>({});
+  
+  // КЛЮЧОВІ СТЕЙТИ ДЛЯ ТЕБЕ
   const [showGrid, setShowGrid] = useState(false);
   const [gridSize, setGridSize] = useState(20);
   const [zoomScale, setZoomScale] = useState(5);
   const [isZoomed, setIsZoomed] = useState(false);
-
-  useEffect(() => {
-    const path = window.location.pathname; 
-    const urlParams = new URLSearchParams(window.location.search);
-    if (path === '/admin' || urlParams.get('admin') === 'true') setIsAdminMode(true);
-    fetch('/offsets.json').then(r => r.ok ? r.json() : {}).then(data => setOffsets(data)).catch(() => {});
-  }, []);
 
   const [steps, setSteps] = useState<Step[]>(INITIAL_STEPS);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
@@ -258,6 +237,11 @@ export default function BikeConfigurator() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    const path = window.location.pathname; 
+    const urlParams = new URLSearchParams(window.location.search);
+    if (path === '/admin' || urlParams.get('admin') === 'true') setIsAdminMode(true);
+    fetch('/offsets.json').then(r => r.ok ? r.json() : {}).then(data => setOffsets(data)).catch(() => {});
+    
     const autoLoadExcel = async () => {
       try {
         const response = await fetch('/data.xlsx'); if (!response.ok) return;
@@ -277,20 +261,6 @@ export default function BikeConfigurator() {
     }; autoLoadExcel();
   }, []);
 
-  const activeLogic = useMemo(() => {
-    if (currentStepIndex === 0) return null;
-    const prevStepId = steps[currentStepIndex - 1].id;
-    const selectedId = selections[prevStepId];
-    if (!selectedId) return null;
-    const prevComp = steps[currentStepIndex - 1].options.find(o => o.id === selectedId);
-    return prevComp?.logic?.trim() || null;
-  }, [selections, currentStepIndex, steps]);
-
-  const filteredOptions = useMemo(() => {
-    const step = steps[currentStepIndex] || steps[0];
-    return step.options.filter(opt => !activeLogic || !opt.logic || opt.logic.trim() === "" || opt.logic.trim() === activeLogic);
-  }, [steps, currentStepIndex, activeLogic]);
-
   const selectedComponents = useMemo(() => steps.map(s => s.options.find(o => o.id === selections[s.id]) || null).filter((c): c is Component => !!c), [selections, steps]);
   const activeComponentForTuning = useMemo(() => steps[currentStepIndex]?.options.find(o => o.id === selections[steps[currentStepIndex]?.id]), [steps, currentStepIndex, selections]);
 
@@ -308,7 +278,7 @@ export default function BikeConfigurator() {
       <main className="max-w-[1500px] mx-auto px-4 lg:px-6 pt-2 lg:pt-3">
         <div className="flex flex-col lg:grid lg:grid-cols-12 gap-6 lg:gap-10 lg:h-[550px] items-stretch">
           <div className="lg:col-span-9 flex flex-col gap-2 order-1">
-            <div className="flex overflow-x-auto no-scrollbar lg:overflow-visible lg:flex-wrap justify-start items-center px-4 gap-x-6 gap-y-2 pb-2">
+            <div className="flex overflow-x-auto no-scrollbar gap-x-6 gap-y-2 pb-2">
               {steps.map((step, idx) => (
                 <button key={step.id} onClick={() => { setCurrentStepIndex(idx); setError(null); }} className={cn("transition-all duration-300 text-[10px] font-black italic uppercase tracking-widest pb-1 border-b-2 whitespace-nowrap", idx === currentStepIndex ? "text-red-600 border-red-600 drop-shadow-[0_0_9px_rgba(255,0,0,0.3)]" : "text-white opacity-20 border-transparent hover:opacity-100")}>{step.title}</button>
               ))}
@@ -320,7 +290,7 @@ export default function BikeConfigurator() {
             <div className="flex-1 overflow-x-auto lg:overflow-y-auto lg:overflow-x-hidden custom-scroll-container pb-2 lg:pb-0" style={{ display: 'flex', flexDirection: 'column' }}>
                 <div className="flex flex-row lg:flex-col gap-3 min-w-full">
                   <AnimatePresence mode="popLayout">
-                    {filteredOptions.map((option) => (
+                    {steps[currentStepIndex]?.options.map((option) => (
                       <div key={option.id} className="w-[31%] min-w-[31%] lg:w-full lg:min-w-0 shrink-0">
                         <OptionCard component={option} isSelected={selections[steps[currentStepIndex].id] === option.id} onClick={() => setSelections(prev => ({...prev, [steps[currentStepIndex].id]: option.id}))} />
                       </div>
@@ -342,9 +312,10 @@ export default function BikeConfigurator() {
           </div>
           <div className="col-span-3 flex justify-end">
             <button onClick={() => {
-                if (filteredOptions.length > 0 && !selections[steps[currentStepIndex].id]) { setError("Select!"); return; }
+                if (steps[currentStepIndex]?.options.length > 0 && !selections[steps[currentStepIndex].id]) { setError("Select!"); return; }
                 currentStepIndex < steps.length - 1 ? setCurrentStepIndex(currentStepIndex + 1) : setIsFinished(true);
-              }} className="bg-red-600 text-white h-[32px] px-6 rounded-lg font-black uppercase text-[10px] italic flex items-center gap-2 active:scale-95 shadow-lg shadow-red-600/20">{currentStepIndex === steps.length - 1 ? 'Finish' : 'Next'} <ChevronRight size={14} /></button>
+              }} className="bg-red-600 hover:bg-red-700 text-white h-[32px] px-3 lg:px-[22px] rounded-lg font-black uppercase text-[10px] tracking-widest flex items-center gap-1 lg:gap-3 transition-all active:scale-95 shadow-lg shadow-red-600/20 italic"
+            >{currentStepIndex === steps.length - 1 ? 'Finish' : 'Next'} <ChevronRight size={14} /></button>
           </div>
         </div>
       </div>
@@ -361,14 +332,19 @@ function SummaryView({ selections, onReset }: any) {
     } catch (e) { return ""; }
   };
   const handleExport = async () => {
-    const doc = new jsPDF(); const pageWidth = doc.internal.pageSize.getWidth();
+    const doc = new jsPDF(); const pageWidth = doc.internal.pageSize.getWidth(); const pageHeight = doc.internal.pageSize.getHeight();
     const cleanText = (text: string) => text ? String(text).replace(/[^\x00-\x7F]/g, "").toUpperCase() : "";
+    try { const logoBase64 = await getBase64Image("/design/Logo.png");
+      if (logoBase64) { doc.saveGraphicsState(); (doc as any).setGState(new (doc as any).GState({ opacity: 0.8 })); doc.addImage(logoBase64, 'PNG', (pageWidth / 2) - 15, 8, 10, 10); doc.restoreGraphicsState(); }
+    } catch (e) {}
     try { const sortedByZ = [...selections].sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
       for (const comp of sortedByZ) { if (comp.imageUrl) { const imgBase64 = await getBase64Image(comp.imageUrl); if (imgBase64) doc.addImage(imgBase64, 'PNG', 15, 22, 180, 115, undefined, 'FAST'); } }
     } catch (e) {}
     autoTable(doc, { startY: 140, head: [['SECTION', 'COMPONENT', 'BRAND', 'WEIGHT', 'PRICE']],
       body: selections.map((c: any) => [cleanText(c.stepTitle || ""), cleanText(c.name), cleanText(c.brand), `${c.weight} g`, `${c.price.toLocaleString()} €`]),
-      theme: 'grid'
+      styles: { font: "helvetica", fontSize: 5.8, cellPadding: 2 }, headStyles: { fillColor: [20, 20, 20], textColor: [255, 255, 255] },
+      columnStyles: { 0: { fontStyle: 'bold', cellWidth: 25 } }, foot: [['TOTAL', '', '', `${totalWeight} g`, `${totalPrice.toLocaleString()} €`]],
+      footStyles: { fillColor: [220, 38, 38], textColor: [255, 255, 255], fontSize: 9, fontStyle: 'bold', cellPadding: 3 }, theme: 'grid'
     });
     doc.save(`ADICTO_BUILD.pdf`);
   };
@@ -379,13 +355,13 @@ function SummaryView({ selections, onReset }: any) {
         <CheckCircle2 size={32} className="text-red-600 mx-auto mb-4" /> 
         <h2 className="text-[27px] font-black italic uppercase tracking-tighter mb-4 leading-none">Configuration <br/> <span className="text-red-600">Complete</span></h2>
         <div className="flex justify-center gap-10 my-8 bg-zinc-900/50 p-6 rounded-3xl border border-white/5">
-          <div><p className="text-zinc-500 text-[9px] uppercase font-bold italic">Price</p><p className="text-[18px] font-mono text-red-600">€{totalPrice.toLocaleString()}</p></div>
+          <div><p className="text-zinc-500 text-[9px] uppercase font-bold tracking-widest italic">Price</p><p className="text-[18px] font-mono text-red-600">€{totalPrice.toLocaleString()}</p></div>
           <div className="w-px bg-white/10" />
-          <div><p className="text-zinc-500 text-[9px] uppercase font-bold italic">Weight</p><p className="text-[18px] font-mono">{totalWeight}g</p></div>
+          <div><p className="text-zinc-500 text-[9px] uppercase font-bold tracking-widest italic">Weight</p><p className="text-[18px] font-mono">{totalWeight}g</p></div>
         </div>
         <div className="flex gap-4 justify-center">
-          <button onClick={handleExport} className="px-8 py-4 bg-red-600 text-white rounded-xl font-black uppercase text-[10px] italic shadow-lg shadow-red-600/20"><Download size={16} /> Export PDF</button>
-          <button onClick={onReset} className="px-8 py-4 border border-white/10 rounded-xl font-black uppercase text-[10px] italic hover:bg-white/5">Start Over</button>
+          <button onClick={handleExport} className="px-8 py-4 bg-red-600 text-white rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-red-700 transition-all flex items-center gap-2 italic shadow-lg shadow-red-600/20"><Download size={16} /> Export PDF</button>
+          <button onClick={onReset} className="px-8 py-4 border border-white/10 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-white/5 transition-all italic">Start Over</button>
         </div>
       </motion.div>
     </div>
