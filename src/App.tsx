@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Download, CheckCircle2, Upload, Database, Lock, User } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Download, CheckCircle2, Upload, Database, Lock, User, Settings2, Save } from 'lucide-react';
 import { cn } from './lib/utils';
 
 import jsPDF from 'jspdf';
@@ -25,6 +25,12 @@ interface Step {
   id: string;
   title: string;
   options: Component[];
+}
+
+interface OffsetData {
+  s: number; // scale
+  x: number; // offsetX
+  y: number; // offsetY
 }
 
 // --- ADMIN LOGIN COMPONENT ---
@@ -86,88 +92,133 @@ const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
 };
 
 // --- ADMIN PANEL COMPONENT ---
-const AdminPanel = ({ categories }: { categories: string[] }) => {
+const AdminPanel = ({ categories, offsets, setOffsets, activeComponent }: any) => {
   const [selectedCat, setSelectedCat] = useState('excel');
   const [status, setStatus] = useState('');
 
-  const uploadToGithub = async (file: File) => {
-    const GITHUB_TOKEN = "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"; 
-    const REPO = "VasileAdicto/Adictobike";
-    const BRANCH = "main";
-    
-    let path = selectedCat === 'excel' ? "public/data.xlsx" : `public/parts/${selectedCat}/${file.name}`;
-    setStatus("Uploading...");
+  const GITHUB_TOKEN = "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"; 
+  const REPO = "VasileAdicto/Adictobike";
+  const BRANCH = "main";
 
+  const saveToGithub = async (path: string, content: string, isJson = false) => {
+    setStatus("Saving...");
     try {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = async () => {
-        const content = (reader.result as string).split(',')[1];
-        let sha = "";
-        
-        try {
-          const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${path}`, {
-            headers: { Authorization: `token ${GITHUB_TOKEN}` }
-          });
-          const data = await res.json();
-          sha = data.sha;
-        } catch (e) {}
+      let sha = "";
+      const getRes = await fetch(`https://api.github.com/repos/${REPO}/contents/${path}`, {
+        headers: { Authorization: `token ${GITHUB_TOKEN}` }
+      });
+      if (getRes.ok) {
+        const data = await res.json();
+        sha = data.sha;
+      }
 
-        const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${path}`, {
-          method: "PUT",
-          headers: {
-            Authorization: `token ${GITHUB_TOKEN}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            message: `Admin upload: ${path}`,
-            content: content,
-            sha: sha || undefined,
-            branch: BRANCH
-          }),
-        });
+      const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${path}`, {
+        method: "PUT",
+        headers: {
+          Authorization: `token ${GITHUB_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          message: `Admin update: ${path}`,
+          content: isJson ? btoa(unescape(encodeURIComponent(content))) : content,
+          sha: sha || undefined,
+          branch: BRANCH
+        }),
+      });
 
-        if (res.ok) setStatus("✅ Success! Update in 2 min.");
-        else setStatus("❌ Error: " + res.status);
-      };
+      if (res.ok) setStatus("✅ Success!");
+      else setStatus("❌ Error");
     } catch (err) { setStatus("❌ Failed"); }
   };
 
+  const updateTune = (key: keyof OffsetData, val: number) => {
+    if (!activeComponent) return;
+    setOffsets((prev: any) => ({
+      ...prev,
+      [activeComponent.id]: { ...(prev[activeComponent.id] || { s: 1, x: 0, y: 0 }), [key]: val }
+    }));
+  };
+
   return (
-    <motion.div initial={{ y: -50 }} animate={{ y: 0 }} className="bg-zinc-900 border-b border-red-600/50 p-3 flex flex-wrap gap-4 items-center justify-center z-[100] sticky top-0 shadow-2xl">
-      <div className="flex items-center gap-2 text-[10px] font-black uppercase text-red-600 tracking-tighter italic">
-        <Database size={12}/> Admin Panel
-      </div>
-      <select 
-        value={selectedCat} 
-        onChange={(e) => setSelectedCat(e.target.value)}
-        className="bg-black border border-white/10 text-[10px] p-1.5 rounded-lg uppercase font-bold text-white outline-none focus:border-red-600 transition-all"
-      >
-        <option value="excel">📁 Database (data.xlsx)</option>
-        {categories.map(cat => <option key={cat} value={cat}>🖼️ Folder: {cat}</option>)}
-      </select>
-      <label className="cursor-pointer bg-white text-black px-4 py-1.5 rounded-lg text-[10px] font-black uppercase hover:bg-red-600 hover:text-white transition-all flex items-center gap-2 italic">
-        <Upload size={12}/> {selectedCat === 'excel' ? 'Update Excel' : 'Upload Image'}
-        <input type="file" className="hidden" onChange={(e) => e.target.files?.[0] && uploadToGithub(e.target.files[0])} />
-      </label>
-      {status && <span className="text-[9px] font-mono uppercase text-zinc-400 animate-pulse">{status}</span>}
-    </motion.div>
+    <div className="z-[100] sticky top-0 shadow-2xl">
+      <motion.div initial={{ y: -50 }} animate={{ y: 0 }} className="bg-zinc-900 border-b border-red-600/50 p-3 flex flex-wrap gap-4 items-center justify-center backdrop-blur-md">
+        <div className="flex items-center gap-2 text-[10px] font-black uppercase text-red-600 tracking-tighter italic">
+          <Database size={12}/> Admin Panel
+        </div>
+        <select 
+          value={selectedCat} 
+          onChange={(e) => setSelectedCat(e.target.value)}
+          className="bg-black border border-white/10 text-[10px] p-1.5 rounded-lg uppercase font-bold text-white outline-none focus:border-red-600 transition-all"
+        >
+          <option value="excel">📁 Database (data.xlsx)</option>
+          {categories.map((cat: string) => <option key={cat} value={cat}>🖼️ Folder: {cat}</option>)}
+        </select>
+        <label className="cursor-pointer bg-white text-black px-4 py-1.5 rounded-lg text-[10px] font-black uppercase hover:bg-red-600 hover:text-white transition-all flex items-center gap-2 italic">
+          <Upload size={12}/> Upload File
+          <input type="file" className="hidden" onChange={(e) => {
+             const file = e.target.files?.[0];
+             if (file) {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => saveToGithub(
+                  selectedCat === 'excel' ? "public/data.xlsx" : `public/parts/${selectedCat}/${file.name}`, 
+                  (reader.result as string).split(',')[1]
+                );
+             }
+          }} />
+        </label>
+        <button 
+          onClick={() => saveToGithub("public/offsets.json", JSON.stringify(offsets), true)}
+          className="bg-zinc-800 text-white px-4 py-1.5 rounded-lg text-[10px] font-black uppercase hover:bg-zinc-700 transition-all flex items-center gap-2 italic border border-white/5"
+        >
+          <Save size={12}/> Save Offsets
+        </button>
+        {status && <span className="text-[9px] font-mono uppercase text-zinc-400 animate-pulse">{status}</span>}
+      </motion.div>
+
+      {activeComponent && (
+        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="bg-black/90 border-b border-white/5 p-4 flex flex-wrap justify-center gap-8 backdrop-blur-md">
+          <div className="flex items-center gap-2 text-[10px] font-bold text-zinc-500 italic uppercase">
+            <Settings2 size={12}/> Tuning: <span className="text-white">{activeComponent.name}</span>
+          </div>
+          <div className="flex gap-6 items-center">
+            <div className="flex flex-col gap-1">
+              <label className="text-[8px] uppercase text-zinc-500 font-bold">Size: {(offsets[activeComponent.id]?.s || 1).toFixed(2)}</label>
+              <input type="range" min="0.5" max="1.5" step="0.01" value={offsets[activeComponent.id]?.s || 1} onChange={e => updateTune('s', parseFloat(e.target.value))} className="w-32 h-1 bg-zinc-800 rounded-lg appearance-none accent-red-600" />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-[8px] uppercase text-zinc-500 font-bold">Pos X: {offsets[activeComponent.id]?.x || 0}px</label>
+              <input type="range" min="-300" max="300" value={offsets[activeComponent.id]?.x || 0} onChange={e => updateTune('x', parseInt(e.target.value))} className="w-32 h-1 bg-zinc-800 rounded-lg appearance-none accent-red-600" />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-[8px] uppercase text-zinc-500 font-bold">Pos Y: {offsets[activeComponent.id]?.y || 0}px</label>
+              <input type="range" min="-300" max="300" value={offsets[activeComponent.id]?.y || 0} onChange={e => updateTune('y', parseInt(e.target.value))} className="w-32 h-1 bg-zinc-800 rounded-lg appearance-none accent-red-600" />
+            </div>
+          </div>
+        </motion.div>
+      )}
+    </div>
   );
 };
 
 // --- VISUALIZER & OPTION CARD ---
-const Visualizer = ({ selectedComponents }: { selectedComponents: Component[] }) => (
+const Visualizer = ({ selectedComponents, offsets }: { selectedComponents: Component[], offsets: Record<string, OffsetData> }) => (
   <div id="bike-visualizer" className="relative w-full h-full bg-zinc-950 rounded-[1.5rem] lg:rounded-[2.5rem] overflow-hidden border border-white/5 shadow-[0_0_100px_rgba(0,0,0,0.5)] flex items-center justify-center">
     <div className="absolute inset-0 opacity-5 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
     <AnimatePresence mode="popLayout">
-      {selectedComponents.map((comp) => (
-        <motion.img
-          key={comp.id} src={comp.imageUrl} crossOrigin="anonymous" loading="eager" alt={comp.name}
-          initial={{ opacity: 0, scale: 1.05 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
-          transition={{ duration: 0.4 }} className="absolute inset-0 w-full h-full object-contain"
-          style={{ zIndex: Number(comp.zIndex) }}
-        />
-      ))}
+      {selectedComponents.map((comp) => {
+        const tune = offsets[comp.id] || { s: 1, x: 0, y: 0 };
+        return (
+          <motion.img
+            key={comp.id} src={comp.imageUrl} crossOrigin="anonymous" loading="eager" alt={comp.name}
+            initial={{ opacity: 0 }} 
+            animate={{ opacity: 1, scale: tune.s, x: tune.x, y: tune.y }} 
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.4 }} className="absolute inset-0 w-full h-full object-contain pointer-events-none"
+            style={{ zIndex: Number(comp.zIndex) }}
+          />
+        );
+      })}
     </AnimatePresence>
   </div>
 );
@@ -208,15 +259,16 @@ const INITIAL_STEPS: Step[] = [
 export default function BikeConfigurator() {
   const [isAdminMode, setIsAdminMode] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [offsets, setOffsets] = useState<Record<string, OffsetData>>({});
   
   useEffect(() => {
-    const path = window.location.pathname; // Читаємо шлях /admin
+    const path = window.location.pathname; 
     const urlParams = new URLSearchParams(window.location.search);
-    
-    // Перевіряємо або шлях /admin, або параметр ?admin=true
     if (path === '/admin' || urlParams.get('admin') === 'true') {
       setIsAdminMode(true);
     }
+    // Load offsets
+    fetch('/offsets.json').then(r => r.json()).then(data => setOffsets(data)).catch(() => {});
   }, []);
 
   const [steps, setSteps] = useState<Step[]>(INITIAL_STEPS);
@@ -295,18 +347,17 @@ export default function BikeConfigurator() {
     }).filter((c): c is Component => !!c);
   }, [selections, steps]);
 
-  const jumpToStep = (index: number) => {
-    if (index === 0 || !!selections[steps[index - 1]?.id] || index < currentStepIndex) {
-      setCurrentStepIndex(index); setError(null);
-    }
-  };
+  const activeComponentForTuning = useMemo(() => {
+    return currentStep.options.find(o => o.id === selections[currentStep.id]);
+  }, [selections, currentStep]);
 
   if (isAdminMode && !isLoggedIn) return <AdminLogin onLogin={() => setIsLoggedIn(true)} />;
   if (isFinished) return <SummaryView selections={selectedComponents} onReset={() => window.location.reload()} />;
 
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-red-600 pb-28 lg:pb-24 overflow-x-hidden">
-      {isLoggedIn && <AdminPanel categories={INITIAL_STEPS.map(s => s.title)} />}
+      {isLoggedIn && <AdminPanel categories={INITIAL_STEPS.map(s => s.title)} offsets={offsets} setOffsets={setOffsets} activeComponent={activeComponentForTuning} />}
+      
       <nav className="border-b border-white/5 px-4 lg:px-8 py-2 flex justify-between items-center bg-black/80 backdrop-blur-2xl sticky top-0 z-50">
         <div className="flex items-center gap-4 pl-2">
           <img src="/design/Logo.png" alt="Logo" className="h-4 lg:h-6 w-auto object-contain" />
@@ -319,13 +370,13 @@ export default function BikeConfigurator() {
           <div className="lg:col-span-9 flex flex-col gap-2 order-1">
             <div className="flex overflow-x-auto no-scrollbar lg:overflow-visible lg:flex-wrap justify-start items-center px-4 gap-x-6 gap-y-2 pb-2">
               {steps.map((step, idx) => (
-                <button key={step.id} ref={el => stepRefs.current[idx] = el} onClick={() => jumpToStep(idx)} 
+                <button key={step.id} ref={el => stepRefs.current[idx] = el} onClick={() => { setCurrentStepIndex(idx); setError(null); }} 
                   className={cn("transition-all duration-300 text-[10px] font-black italic uppercase tracking-widest pb-1 border-b-2 whitespace-nowrap", 
                   idx === currentStepIndex ? "text-red-600 border-red-600 drop-shadow-[0_0_9px_rgba(255,0,0,0.3)]" : "text-white opacity-20 border-transparent hover:opacity-100")}
                 >{step.title}</button>
               ))}
             </div>
-            <div className="h-[280px] md:h-[400px] lg:flex-1"><Visualizer selectedComponents={selectedComponents} /></div>
+            <div className="h-[280px] md:h-[400px] lg:flex-1"><Visualizer selectedComponents={selectedComponents} offsets={offsets} /></div>
           </div>
           <div className="lg:col-span-3 flex flex-col bg-zinc-900/40 rounded-[2.5rem] border border-white/5 p-4 lg:p-6 relative overflow-hidden order-2">
             <style>{`.custom-scroll-container::-webkit-scrollbar {height: 3px;}.custom-scroll-container::-webkit-scrollbar-track {background: rgba(255, 255, 255, 0.05);}.custom-scroll-container::-webkit-scrollbar-thumb {background: #ef4444;border-radius: 10px;}.custom-scroll-container {scrollbar-width: thin;scrollbar-color: #ef4444 rgba(255, 255, 255, 0.05);}`}</style>
@@ -348,7 +399,7 @@ export default function BikeConfigurator() {
       <div className="fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur-2xl border-t border-white/5 z-40">
         <div className="max-w-[1500px] mx-auto px-4 lg:px-6 py-6 grid grid-cols-12 gap-2 items-center">
           <div className="col-span-3 lg:col-span-2">
-            <button onClick={() => currentStepIndex > 0 && setCurrentStepIndex(currentStepIndex - 1)} className="flex items-center gap-1 lg:gap-3 text-zinc-500 hover:text-white transition-all font-black uppercase text-[10px] tracking-widest">
+            <button onClick={() => currentStepIndex > 0 && setCurrentStepIndex(currentStepIndex - 1)} className="flex items-center gap-1 lg:gap-3 text-zinc-500 hover:text-white transition-all font-black uppercase text-[10px] tracking-widest italic">
               <ChevronLeft size={20} /> Back
             </button>
           </div>
