@@ -382,7 +382,7 @@ function SummaryView({ selections, onReset }: any) {
       for (const comp of sortedByZ) {
         if (comp.imageUrl) {
           const imgBase64 = await getBase64Image(comp.imageUrl);
-          if (imgBase64) doc.addImage(imgBase64, 'PNG', 15, 22, 180, 105, undefined, 'FAST');
+          if (imgBase64) doc.addImage(imgBase64, 'PNG', 15, 22, 180, 115, undefined, 'FAST');
         }
       }
     } catch (e) {}
