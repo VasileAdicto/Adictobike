@@ -33,7 +33,7 @@ interface OffsetData {
   y: number; // offsetY
 }
 
-//// --- ADMIN LOGIN COMPONENT ---
+// --- ADMIN LOGIN COMPONENT ---
 const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
   const [email, setEmail] = useState('');
   const [pass, setPass] = useState('');
@@ -41,10 +41,9 @@ const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
   const [rememberMe, setRememberMe] = useState(true);
   const [error, setError] = useState('');
 
-  // Перевірка при завантаженні
   useEffect(() => {
     if (localStorage.getItem('adicto_auth') === 'true') onLogin();
-  }, []);
+  }, [onLogin]);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,15 +70,19 @@ const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
         </div>
 
         <div className="space-y-4">
-          <input 
-            type="email" placeholder="Email"
-            className="w-full bg-black border border-white/10 p-4 rounded-2xl text-white outline-none focus:border-red-600 transition-all text-sm font-mono"
-            value={email} onChange={(e) => setEmail(e.target.value)}
-          />
           <div className="relative">
+            <User className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
+            <input 
+              type="email" placeholder="Email"
+              className="w-full bg-black border border-white/10 p-4 pl-12 rounded-2xl text-white outline-none focus:border-red-600 transition-all text-sm font-mono"
+              value={email} onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
+          <div className="relative">
+            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
             <input 
               type={showPass ? "text" : "password"} placeholder="Password"
-              className="w-full bg-black border border-white/10 p-4 rounded-2xl text-white outline-none focus:border-red-600 transition-all text-sm font-mono"
+              className="w-full bg-black border border-white/10 p-4 pl-12 rounded-2xl text-white outline-none focus:border-red-600 transition-all text-sm font-mono"
               value={pass} onChange={(e) => setPass(e.target.value)}
             />
             <button 
@@ -95,7 +98,7 @@ const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
           <input 
             type="checkbox" id="remember" checked={rememberMe} 
             onChange={() => setRememberMe(!rememberMe)}
-            className="accent-red-600 h-4 w-4"
+            className="accent-red-600 h-4 w-4 rounded border-white/10 bg-black"
           />
           <label htmlFor="remember" className="text-zinc-500 text-[10px] uppercase font-bold cursor-pointer select-none">Remember Me</label>
         </div>
@@ -180,41 +183,41 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent }: any) =
         <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="bg-black/95 border-b border-white/5 p-6 flex flex-col items-center gap-6 backdrop-blur-xl">
           <div className="flex items-center gap-2 text-[10px] font-bold text-zinc-500 italic uppercase"><Settings2 size={12}/> Tuning: <span className="text-white">{activeComponent.name}</span></div>
           
-          <div className="flex flex-wrap justify-center gap-12 w-full max-w-4xl">
+          <div className="flex flex-wrap justify-center gap-12 w-full max-w-5xl px-4">
             {/* Scale Control */}
-            <div className="flex flex-col gap-3 min-w-[250px]">
+            <div className="flex flex-col gap-3 min-w-[300px] flex-1">
               <div className="flex justify-between items-center">
                 <label className="text-[9px] uppercase text-zinc-500 font-black tracking-widest">Size (Scale)</label>
                 <input 
                   type="number" step="0.01" value={offsets[activeComponent.id]?.s || 1}
                   onChange={e => updateTune('s', parseFloat(e.target.value))}
-                  className="bg-zinc-800 text-white text-[10px] w-12 text-center p-1 rounded font-mono border border-white/5"
+                  className="bg-zinc-800 text-white text-[10px] w-14 text-center p-1 rounded font-mono border border-white/10"
                 />
               </div>
               <input type="range" min="0.8" max="1.2" step="0.001" value={offsets[activeComponent.id]?.s || 1} onChange={e => updateTune('s', parseFloat(e.target.value))} className="w-full h-1.5 bg-zinc-800 rounded-lg appearance-none accent-red-600 cursor-pointer" />
             </div>
 
             {/* Pos X Control */}
-            <div className="flex flex-col gap-3 min-w-[250px]">
+            <div className="flex flex-col gap-3 min-w-[300px] flex-1">
               <div className="flex justify-between items-center">
                 <label className="text-[9px] uppercase text-zinc-500 font-black tracking-widest">Position X (Horizontal)</label>
                 <input 
                   type="number" value={offsets[activeComponent.id]?.x || 0}
                   onChange={e => updateTune('x', parseInt(e.target.value))}
-                  className="bg-zinc-800 text-white text-[10px] w-12 text-center p-1 rounded font-mono border border-white/5"
+                  className="bg-zinc-800 text-white text-[10px] w-14 text-center p-1 rounded font-mono border border-white/10"
                 />
               </div>
               <input type="range" min="-40" max="40" step="1" value={offsets[activeComponent.id]?.x || 0} onChange={e => updateTune('x', parseInt(e.target.value))} className="w-full h-1.5 bg-zinc-800 rounded-lg appearance-none accent-red-600 cursor-pointer" />
             </div>
 
             {/* Pos Y Control */}
-            <div className="flex flex-col gap-3 min-w-[250px]">
+            <div className="flex flex-col gap-3 min-w-[300px] flex-1">
               <div className="flex justify-between items-center">
                 <label className="text-[9px] uppercase text-zinc-500 font-black tracking-widest">Position Y (Vertical)</label>
                 <input 
                   type="number" value={offsets[activeComponent.id]?.y || 0}
                   onChange={e => updateTune('y', parseInt(e.target.value))}
-                  className="bg-zinc-800 text-white text-[10px] w-12 text-center p-1 rounded font-mono border border-white/5"
+                  className="bg-zinc-800 text-white text-[10px] w-14 text-center p-1 rounded font-mono border border-white/10"
                 />
               </div>
               <input type="range" min="-40" max="40" step="1" value={offsets[activeComponent.id]?.y || 0} onChange={e => updateTune('y', parseInt(e.target.value))} className="w-full h-1.5 bg-zinc-800 rounded-lg appearance-none accent-red-600 cursor-pointer" />
@@ -224,7 +227,7 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent }: any) =
       )}
     </div>
   );
-};};
+};
 
 // --- VISUALIZER & OPTION CARD ---
 const Visualizer = ({ selectedComponents, offsets }: { selectedComponents: Component[], offsets: Record<string, OffsetData> }) => (
@@ -271,16 +274,6 @@ const OptionCard = ({ component, isSelected, onClick }: { component: Component, 
   </motion.button>
 );
 
-// --- MAIN CONFIGURATOR ---
-const INITIAL_STEPS: Step[] = [
-  { id: 'frame', title: 'Frame', options: [] }, { id: 'wheelset', title: 'Wheelset', options: [] },
-  { id: 'tyres', title: 'Tyres', options: [] }, { id: 'cockpit', title: 'Cockpit', options: [] },
-  { id: 'tape', title: 'Tape', options: [] }, { id: 'saddle', title: 'Saddle', options: [] },
-  { id: 'shifters', title: 'Shifters', options: [] }, { id: 'crankset', title: 'Crankset', options: [] },
-  { id: 'derailleurs', title: 'Derailleurs', options: [] }, { id: 'cassette', title: 'Cassette', options: [] },
-  { id: 'discs', title: 'Discs', options: [] }
-];
-
 export default function BikeConfigurator() {
   const [isAdminMode, setIsAdminMode] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -292,7 +285,6 @@ export default function BikeConfigurator() {
     if (path === '/admin' || urlParams.get('admin') === 'true') {
       setIsAdminMode(true);
     }
-    // Load offsets
     fetch('/offsets.json').then(r => r.json()).then(data => setOffsets(data)).catch(() => {});
   }, []);
 
