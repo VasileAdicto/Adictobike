@@ -33,15 +33,23 @@ interface OffsetData {
   y: number; // offsetY
 }
 
-// --- ADMIN LOGIN COMPONENT ---
+//// --- ADMIN LOGIN COMPONENT ---
 const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
   const [email, setEmail] = useState('');
   const [pass, setPass] = useState('');
+  const [showPass, setShowPass] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
   const [error, setError] = useState('');
+
+  // Перевірка при завантаженні
+  useEffect(() => {
+    if (localStorage.getItem('adicto_auth') === 'true') onLogin();
+  }, []);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     if (email === "hello@adicto.bike" && pass === "Scalpel2012!") {
+      if (rememberMe) localStorage.setItem('adicto_auth', 'true');
       onLogin();
     } else {
       setError("Invalid credentials");
@@ -49,11 +57,11 @@ const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
   };
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center p-6 selection:bg-red-600">
+    <div className="min-h-screen bg-black flex items-center justify-center p-6 selection:bg-red-600 font-sans">
       <motion.form 
         initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
         onSubmit={handleLogin} 
-        className="bg-zinc-900/50 p-8 rounded-[2.5rem] border border-white/5 w-full max-w-md backdrop-blur-xl shadow-2xl"
+        className="bg-zinc-900/50 p-10 rounded-[2.5rem] border border-white/5 w-full max-w-md backdrop-blur-xl shadow-2xl"
       >
         <div className="flex flex-col items-center mb-8">
           <div className="w-12 h-12 bg-red-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-red-600/20">
@@ -63,22 +71,33 @@ const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
         </div>
 
         <div className="space-y-4">
+          <input 
+            type="email" placeholder="Email"
+            className="w-full bg-black border border-white/10 p-4 rounded-2xl text-white outline-none focus:border-red-600 transition-all text-sm font-mono"
+            value={email} onChange={(e) => setEmail(e.target.value)}
+          />
           <div className="relative">
-            <User className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
             <input 
-              type="email" placeholder="Email"
-              className="w-full bg-black border border-white/10 p-4 pl-12 rounded-2xl text-white outline-none focus:border-red-600 transition-all font-mono text-sm"
-              value={email} onChange={(e) => setEmail(e.target.value)}
-            />
-          </div>
-          <div className="relative">
-            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
-            <input 
-              type="password" placeholder="Password"
-              className="w-full bg-black border border-white/10 p-4 pl-12 rounded-2xl text-white outline-none focus:border-red-600 transition-all font-mono text-sm"
+              type={showPass ? "text" : "password"} placeholder="Password"
+              className="w-full bg-black border border-white/10 p-4 rounded-2xl text-white outline-none focus:border-red-600 transition-all text-sm font-mono"
               value={pass} onChange={(e) => setPass(e.target.value)}
             />
+            <button 
+              type="button" onClick={() => setShowPass(!showPass)}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white transition-colors text-[10px] font-bold uppercase"
+            >
+              {showPass ? "Hide" : "Show"}
+            </button>
           </div>
+        </div>
+
+        <div className="flex items-center gap-2 mt-4 px-2">
+          <input 
+            type="checkbox" id="remember" checked={rememberMe} 
+            onChange={() => setRememberMe(!rememberMe)}
+            className="accent-red-600 h-4 w-4"
+          />
+          <label htmlFor="remember" className="text-zinc-500 text-[10px] uppercase font-bold cursor-pointer select-none">Remember Me</label>
         </div>
 
         {error && <p className="text-red-600 text-[10px] text-center mt-4 uppercase font-black italic tracking-widest">{error}</p>}
@@ -108,16 +127,12 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent }: any) =
         headers: { Authorization: `token ${GITHUB_TOKEN}` }
       });
       if (getRes.ok) {
-        const data = await res.json();
+        const data = await getRes.json();
         sha = data.sha;
       }
-
       const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${path}`, {
         method: "PUT",
-        headers: {
-          Authorization: `token ${GITHUB_TOKEN}`,
-          "Content-Type": "application/json",
-        },
+        headers: { Authorization: `token ${GITHUB_TOKEN}`, "Content-Type": "application/json" },
         body: JSON.stringify({
           message: `Admin update: ${path}`,
           content: isJson ? btoa(unescape(encodeURIComponent(content))) : content,
@@ -125,7 +140,6 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent }: any) =
           branch: BRANCH
         }),
       });
-
       if (res.ok) setStatus("✅ Success!");
       else setStatus("❌ Error");
     } catch (err) { setStatus("❌ Failed"); }
@@ -142,14 +156,8 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent }: any) =
   return (
     <div className="z-[100] sticky top-0 shadow-2xl">
       <motion.div initial={{ y: -50 }} animate={{ y: 0 }} className="bg-zinc-900 border-b border-red-600/50 p-3 flex flex-wrap gap-4 items-center justify-center backdrop-blur-md">
-        <div className="flex items-center gap-2 text-[10px] font-black uppercase text-red-600 tracking-tighter italic">
-          <Database size={12}/> Admin Panel
-        </div>
-        <select 
-          value={selectedCat} 
-          onChange={(e) => setSelectedCat(e.target.value)}
-          className="bg-black border border-white/10 text-[10px] p-1.5 rounded-lg uppercase font-bold text-white outline-none focus:border-red-600 transition-all"
-        >
+        <div className="flex items-center gap-2 text-[10px] font-black uppercase text-red-600 tracking-tighter italic"><Database size={12}/> GitHub Admin</div>
+        <select value={selectedCat} onChange={(e) => setSelectedCat(e.target.value)} className="bg-black border border-white/10 text-[10px] p-1.5 rounded-lg uppercase font-bold text-white outline-none focus:border-red-600 transition-all">
           <option value="excel">📁 Database (data.xlsx)</option>
           {categories.map((cat: string) => <option key={cat} value={cat}>🖼️ Folder: {cat}</option>)}
         </select>
@@ -160,46 +168,63 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent }: any) =
              if (file) {
                 const reader = new FileReader();
                 reader.readAsDataURL(file);
-                reader.onload = () => saveToGithub(
-                  selectedCat === 'excel' ? "public/data.xlsx" : `public/parts/${selectedCat}/${file.name}`, 
-                  (reader.result as string).split(',')[1]
-                );
+                reader.onload = () => saveToGithub(selectedCat === 'excel' ? "public/data.xlsx" : `public/parts/${selectedCat}/${file.name}`, (reader.result as string).split(',')[1]);
              }
           }} />
         </label>
-        <button 
-          onClick={() => saveToGithub("public/offsets.json", JSON.stringify(offsets), true)}
-          className="bg-zinc-800 text-white px-4 py-1.5 rounded-lg text-[10px] font-black uppercase hover:bg-zinc-700 transition-all flex items-center gap-2 italic border border-white/5"
-        >
-          <Save size={12}/> Save Offsets
-        </button>
+        <button onClick={() => saveToGithub("public/offsets.json", JSON.stringify(offsets), true)} className="bg-zinc-800 text-white px-4 py-1.5 rounded-lg text-[10px] font-black uppercase hover:bg-zinc-700 transition-all flex items-center gap-2 italic border border-white/5"><Save size={12}/> Save Offsets</button>
         {status && <span className="text-[9px] font-mono uppercase text-zinc-400 animate-pulse">{status}</span>}
       </motion.div>
 
       {activeComponent && (
-        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="bg-black/90 border-b border-white/5 p-4 flex flex-wrap justify-center gap-8 backdrop-blur-md">
-          <div className="flex items-center gap-2 text-[10px] font-bold text-zinc-500 italic uppercase">
-            <Settings2 size={12}/> Tuning: <span className="text-white">{activeComponent.name}</span>
-          </div>
-          <div className="flex gap-6 items-center">
-            <div className="flex flex-col gap-1">
-              <label className="text-[8px] uppercase text-zinc-500 font-bold">Size: {(offsets[activeComponent.id]?.s || 1).toFixed(2)}</label>
-              <input type="range" min="0.5" max="1.5" step="0.01" value={offsets[activeComponent.id]?.s || 1} onChange={e => updateTune('s', parseFloat(e.target.value))} className="w-32 h-1 bg-zinc-800 rounded-lg appearance-none accent-red-600" />
+        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="bg-black/95 border-b border-white/5 p-6 flex flex-col items-center gap-6 backdrop-blur-xl">
+          <div className="flex items-center gap-2 text-[10px] font-bold text-zinc-500 italic uppercase"><Settings2 size={12}/> Tuning: <span className="text-white">{activeComponent.name}</span></div>
+          
+          <div className="flex flex-wrap justify-center gap-12 w-full max-w-4xl">
+            {/* Scale Control */}
+            <div className="flex flex-col gap-3 min-w-[250px]">
+              <div className="flex justify-between items-center">
+                <label className="text-[9px] uppercase text-zinc-500 font-black tracking-widest">Size (Scale)</label>
+                <input 
+                  type="number" step="0.01" value={offsets[activeComponent.id]?.s || 1}
+                  onChange={e => updateTune('s', parseFloat(e.target.value))}
+                  className="bg-zinc-800 text-white text-[10px] w-12 text-center p-1 rounded font-mono border border-white/5"
+                />
+              </div>
+              <input type="range" min="0.8" max="1.2" step="0.001" value={offsets[activeComponent.id]?.s || 1} onChange={e => updateTune('s', parseFloat(e.target.value))} className="w-full h-1.5 bg-zinc-800 rounded-lg appearance-none accent-red-600 cursor-pointer" />
             </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-[8px] uppercase text-zinc-500 font-bold">Pos X: {offsets[activeComponent.id]?.x || 0}px</label>
-              <input type="range" min="-300" max="300" value={offsets[activeComponent.id]?.x || 0} onChange={e => updateTune('x', parseInt(e.target.value))} className="w-32 h-1 bg-zinc-800 rounded-lg appearance-none accent-red-600" />
+
+            {/* Pos X Control */}
+            <div className="flex flex-col gap-3 min-w-[250px]">
+              <div className="flex justify-between items-center">
+                <label className="text-[9px] uppercase text-zinc-500 font-black tracking-widest">Position X (Horizontal)</label>
+                <input 
+                  type="number" value={offsets[activeComponent.id]?.x || 0}
+                  onChange={e => updateTune('x', parseInt(e.target.value))}
+                  className="bg-zinc-800 text-white text-[10px] w-12 text-center p-1 rounded font-mono border border-white/5"
+                />
+              </div>
+              <input type="range" min="-40" max="40" step="1" value={offsets[activeComponent.id]?.x || 0} onChange={e => updateTune('x', parseInt(e.target.value))} className="w-full h-1.5 bg-zinc-800 rounded-lg appearance-none accent-red-600 cursor-pointer" />
             </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-[8px] uppercase text-zinc-500 font-bold">Pos Y: {offsets[activeComponent.id]?.y || 0}px</label>
-              <input type="range" min="-300" max="300" value={offsets[activeComponent.id]?.y || 0} onChange={e => updateTune('y', parseInt(e.target.value))} className="w-32 h-1 bg-zinc-800 rounded-lg appearance-none accent-red-600" />
+
+            {/* Pos Y Control */}
+            <div className="flex flex-col gap-3 min-w-[250px]">
+              <div className="flex justify-between items-center">
+                <label className="text-[9px] uppercase text-zinc-500 font-black tracking-widest">Position Y (Vertical)</label>
+                <input 
+                  type="number" value={offsets[activeComponent.id]?.y || 0}
+                  onChange={e => updateTune('y', parseInt(e.target.value))}
+                  className="bg-zinc-800 text-white text-[10px] w-12 text-center p-1 rounded font-mono border border-white/5"
+                />
+              </div>
+              <input type="range" min="-40" max="40" step="1" value={offsets[activeComponent.id]?.y || 0} onChange={e => updateTune('y', parseInt(e.target.value))} className="w-full h-1.5 bg-zinc-800 rounded-lg appearance-none accent-red-600 cursor-pointer" />
             </div>
           </div>
         </motion.div>
       )}
     </div>
   );
-};
+};};
 
 // --- VISUALIZER & OPTION CARD ---
 const Visualizer = ({ selectedComponents, offsets }: { selectedComponents: Component[], offsets: Record<string, OffsetData> }) => (
