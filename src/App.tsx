@@ -58,11 +58,11 @@ const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
   return (
     <div className="min-h-screen bg-black flex items-center justify-center p-6 selection:bg-red-600 font-sans">
       <motion.form initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} onSubmit={handleLogin} className="bg-zinc-900/50 p-10 rounded-[2.5rem] border border-white/5 w-full max-w-md backdrop-blur-xl shadow-2xl">
-        <div className="flex flex-col items-center mb-8 text-white">
+        <div className="flex flex-col items-center mb-8">
           <div className="w-12 h-12 bg-red-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-red-600/20"><Lock size={24} /></div>
-          <h2 className="text-xl font-black uppercase tracking-widest italic text-center">Adicto Admin</h2>
+          <h2 className="text-xl font-black uppercase tracking-widest italic text-center text-white">Adicto Admin</h2>
         </div>
-        <div className="space-y-4">
+        <div className="space-y-4 text-black">
           <input type="email" placeholder="Email" className="w-full bg-black border border-white/10 p-4 rounded-2xl text-white outline-none focus:border-red-600 transition-all text-sm font-mono" value={email} onChange={(e) => setEmail(e.target.value)} />
           <div className="relative">
             <input type={showPass ? "text" : "password"} placeholder="Password" className="w-full bg-black border border-white/10 p-4 rounded-2xl text-white outline-none focus:border-red-600 transition-all text-sm font-mono" value={pass} onChange={(e) => setPass(e.target.value)} />
@@ -86,6 +86,7 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
   const [status, setStatus] = useState('');
   const GITHUB_TOKEN = "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"; 
   const REPO = "VasileAdicto/Adictobike";
+  const BRANCH = "main";
 
   const saveToGithub = async (path: string, content: string, isJson = false) => {
     setStatus("Saving...");
@@ -96,7 +97,7 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
       const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${path}`, {
         method: "PUT",
         headers: { Authorization: `token ${GITHUB_TOKEN}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ message: `Admin update: ${path}`, content: isJson ? btoa(unescape(encodeURIComponent(content))) : content, sha: sha || undefined, branch: "main" }),
+        body: JSON.stringify({ message: `Admin update: ${path}`, content: isJson ? btoa(unescape(encodeURIComponent(content))) : content, sha: sha || undefined, branch: BRANCH }),
       });
       if (res.ok) setStatus("✅ Success!"); else setStatus("❌ Error");
     } catch (err) { setStatus("❌ Failed"); }
@@ -110,7 +111,7 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
   return (
     <div className="z-[100] sticky top-0 shadow-2xl font-sans text-white">
       <motion.div initial={{ y: -50 }} animate={{ y: 0 }} className="bg-zinc-900 border-b border-white/5 p-2 flex gap-3 items-center justify-center backdrop-blur-md">
-        <select value={selectedCat} onChange={(e) => setSelectedCat(e.target.value)} className="bg-black border border-white/10 text-[9px] px-2 py-1 rounded uppercase font-bold outline-none focus:border-red-600">
+        <select value={selectedCat} onChange={(e) => setSelectedCat(e.target.value)} className="bg-black border border-white/10 text-[9px] px-2 py-1 rounded uppercase font-bold outline-none focus:border-red-600 transition-all">
           <option value="excel">📁 EXCEL</option>
           {categories?.map((cat: string) => <option key={cat} value={cat}>🖼️ {cat.toUpperCase()}</option>)}
         </select>
@@ -118,20 +119,20 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
         <div className="flex gap-1">
           <label className="cursor-pointer bg-zinc-800 text-zinc-300 px-2 py-1 rounded text-[9px] font-bold uppercase hover:bg-zinc-700 flex items-center gap-1 italic"><Upload size={10}/> Files
             <input type="file" className="hidden" multiple onChange={(e) => {
-              const files = e.target.files;
-              if (files) Array.from(files).forEach(file => {
-                const reader = new FileReader(); reader.readAsDataURL(file);
-                reader.onload = () => saveToGithub(selectedCat === 'excel' ? "public/data.xlsx" : `public/parts/${selectedCat}/${file.name}`, (reader.result as string).split(',')[1]);
-              });
+                const files = e.target.files;
+                if (files) Array.from(files).forEach(file => {
+                  const reader = new FileReader(); reader.readAsDataURL(file);
+                  reader.onload = () => saveToGithub(selectedCat === 'excel' ? "public/data.xlsx" : `public/parts/${selectedCat}/${file.name}`, (reader.result as string).split(',')[1]);
+                });
             }} />
           </label>
           <label className="cursor-pointer bg-zinc-800 text-zinc-300 px-2 py-1 rounded text-[9px] font-bold uppercase hover:bg-zinc-700 flex items-center gap-1 italic"><FolderOpen size={10}/> Folder
             <input type="file" className="hidden" webkitdirectory="" onChange={(e: any) => {
-              const files = e.target.files;
-              if (files) Array.from(files).forEach((file: any) => {
-                const reader = new FileReader(); reader.readAsDataURL(file);
-                reader.onload = () => saveToGithub(`public/parts/${selectedCat}/${file.webkitRelativePath}`, (reader.result as string).split(',')[1]);
-              });
+                const files = e.target.files;
+                if (files) Array.from(files).forEach((file: any) => {
+                  const reader = new FileReader(); reader.readAsDataURL(file);
+                  reader.onload = () => saveToGithub(`public/parts/${selectedCat}/${file.webkitRelativePath}`, (reader.result as string).split(',')[1]);
+                });
             }} />
           </label>
         </div>
@@ -152,29 +153,44 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
           <button onClick={() => setIsZoomed(!isZoomed)} className={cn("px-2 py-1 rounded text-[9px] font-bold uppercase transition-all flex items-center gap-2", isZoomed ? "bg-red-600 text-white" : "bg-zinc-800 text-zinc-400")}><Search size={10}/> {isZoomed ? `${zoomScale}X` : 'Magnify'}</button>
           {isZoomed && (
             <div className="flex items-center gap-2 px-1 animate-in fade-in slide-in-from-left-2">
-              <span className="text-[7px] text-zinc-500 font-bold uppercase">Zoom</span>
+              <span className="text-[7px] text-zinc-500 font-bold uppercase">Scale</span>
               <input type="range" min="2" max="10" step="0.1" value={zoomScale} onChange={(e) => setZoomScale(parseFloat(e.target.value))} className="w-20 h-1 bg-zinc-700 appearance-none accent-red-600" />
             </div>
           )}
         </div>
+
         {status && <span className="text-[8px] font-mono uppercase text-red-600 animate-pulse ml-1">{status}</span>}
       </motion.div>
 
       {activeComponent && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-black/80 border-b border-white/5 p-2 flex justify-between items-center px-6 backdrop-blur-xl gap-10">
           <div className="flex flex-col gap-1 flex-1">
-            {[ { key: 's', label: 'Size', min: 0.8, max: 1.2, step: 0.001, reset: 1 }, { key: 'x', label: 'Pos X', min: -40, max: 40, step: 1, reset: 0 }, { key: 'y', label: 'Pos Y', min: -40, max: 40, step: 1, reset: 0 } ].map((item) => (
+            {[
+              { key: 's', label: 'Size', min: 0.8, max: 1.2, step: 0.001, reset: 1 },
+              { key: 'x', label: 'Pos X', min: -40, max: 40, step: 1, reset: 0 },
+              { key: 'y', label: 'Pos Y', min: -40, max: 40, step: 1, reset: 0 }
+            ].map((item) => (
               <div key={item.key} className="flex items-center gap-3">
                 <span className="text-[8px] text-zinc-500 font-black w-8 uppercase">{item.label}</span>
-                <input type="range" min={item.min} max={item.max} step={item.step} value={offsets[activeComponent.id]?.[item.key as keyof OffsetData] ?? item.reset} onChange={e => updateTune(item.key as keyof OffsetData, parseFloat(e.target.value))} className="flex-1 h-1 bg-zinc-800 rounded-lg appearance-none accent-red-600 cursor-pointer" />
-                <input type="number" step={item.step} value={offsets[activeComponent.id]?.[item.key as keyof OffsetData] ?? item.reset} onChange={e => updateTune(item.key as keyof OffsetData, parseFloat(e.target.value))} className="bg-transparent text-white text-[9px] w-10 text-right font-mono border-b border-white/5 focus:border-red-600 outline-none" />
+                <input type="range" min={item.min} max={item.max} step={item.step} 
+                  value={offsets[activeComponent.id]?.[item.key as keyof OffsetData] ?? item.reset} 
+                  onChange={e => updateTune(item.key as keyof OffsetData, parseFloat(e.target.value))} 
+                  className="flex-1 h-1 bg-zinc-800 rounded-lg appearance-none accent-red-600 cursor-pointer" 
+                />
+                <input type="number" step={item.step} 
+                  value={offsets[activeComponent.id]?.[item.key as keyof OffsetData] ?? item.reset}
+                  onChange={e => updateTune(item.key as keyof OffsetData, parseFloat(e.target.value))}
+                  className="bg-transparent text-white text-[9px] w-10 text-right font-mono border-b border-white/5 focus:border-red-600 outline-none" 
+                />
                 <button onClick={() => updateTune(item.key as keyof OffsetData, item.reset)} className="text-zinc-600 hover:text-red-600 transition-colors"><RotateCcw size={10}/></button>
               </div>
             ))}
           </div>
           <div className="flex flex-col items-end gap-1 shrink-0 text-white">
             <div className="text-[9px] font-black text-red-600 italic uppercase tracking-widest leading-none mb-1">{activeComponent.name}</div>
-            <button onClick={() => saveToGithub("public/offsets.json", JSON.stringify(offsets), true)} className="bg-red-600 text-white px-5 py-2 rounded-lg text-[10px] font-black uppercase hover:bg-red-700 transition-all flex items-center gap-2 italic shadow-lg shadow-red-600/20"><Save size={12}/> Save Offsets</button>
+            <button onClick={() => saveToGithub("public/offsets.json", JSON.stringify(offsets), true)} className="bg-red-600 text-white px-5 py-2 rounded-lg text-[10px] font-black uppercase hover:bg-red-700 transition-all flex items-center gap-2 italic shadow-lg shadow-red-600/20">
+              <Save size={12}/> Save Offsets
+            </button>
           </div>
         </motion.div>
       )}
@@ -200,7 +216,7 @@ const Visualizer = ({ selectedComponents, offsets, showGrid, gridSize, isZoomed,
           })}
         </AnimatePresence>
       </motion.div>
-      {isZoomed && <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-red-600 text-white px-4 py-1 rounded-full text-[8px] font-black uppercase flex items-center gap-2 z-[70] shadow-2xl"><Move size={10}/> {zoomScale.toFixed(1)}X - Drag to Move</div>}
+      {isZoomed && <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-red-600 text-white px-4 py-1 rounded-full text-[8px] font-black uppercase flex items-center gap-2 z-[70] shadow-2xl"><Move size={10}/> {zoomScale}X - Drag to Move</div>}
     </div>
   );
 };
@@ -220,10 +236,12 @@ export default function BikeConfigurator() {
   const [isAdminMode, setIsAdminMode] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [offsets, setOffsets] = useState<Record<string, OffsetData>>({});
+  
   const [showGrid, setShowGrid] = useState(false);
   const [gridSize, setGridSize] = useState(20);
   const [zoomScale, setZoomScale] = useState(5);
   const [isZoomed, setIsZoomed] = useState(false);
+
   const [steps, setSteps] = useState<Step[]>(INITIAL_STEPS);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [selections, setSelections] = useState<Record<string, string>>({});
@@ -266,7 +284,11 @@ export default function BikeConfigurator() {
 
   const filteredOptions = useMemo(() => {
     const currentStep = steps[currentStepIndex] || steps[0];
-    return currentStep.options.filter(opt => !activeLogic || !opt.logic || opt.logic.trim() === "" || opt.logic.trim() === activeLogic);
+    return currentStep.options.filter(opt => {
+      if (!activeLogic) return true;
+      if (!opt.logic || opt.logic.trim() === "") return true;
+      return opt.logic.trim() === activeLogic;
+    });
   }, [steps, currentStepIndex, activeLogic]);
 
   const selectedComponents = useMemo(() => steps.map(s => {
@@ -281,6 +303,26 @@ export default function BikeConfigurator() {
 
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-red-600 pb-28 lg:pb-24 overflow-x-hidden">
+      {/* RESTORING SCROLLBAR DESIGN */}
+      <style>{`
+        .custom-scroll-container::-webkit-scrollbar {
+          width: 4px;
+          height: 4px;
+        }
+        .custom-scroll-container::-webkit-scrollbar-track {
+          background: rgba(255, 255, 255, 0.05);
+          border-radius: 10px;
+        }
+        .custom-scroll-container::-webkit-scrollbar-thumb {
+          background: #ef4444;
+          border-radius: 10px;
+        }
+        .custom-scroll-container {
+          scrollbar-width: thin;
+          scrollbar-color: #ef4444 rgba(255, 255, 255, 0.05);
+        }
+      `}</style>
+
       {isLoggedIn ? (
         <AdminPanel categories={INITIAL_STEPS.map(s => s.title)} offsets={offsets} setOffsets={setOffsets} activeComponent={activeComponentForTuning} showGrid={showGrid} setShowGrid={setShowGrid} gridSize={gridSize} setGridSize={setGridSize} isZoomed={isZoomed} setIsZoomed={setIsZoomed} zoomScale={zoomScale} setZoomScale={setZoomScale} />
       ) : (
@@ -299,7 +341,7 @@ export default function BikeConfigurator() {
           </div>
           <div className="lg:col-span-3 flex flex-col bg-zinc-900/40 rounded-[2.5rem] border border-white/5 p-4 lg:p-6 relative overflow-hidden order-2 shadow-2xl">
             <div className="flex-1 overflow-x-auto lg:overflow-y-auto lg:overflow-x-hidden custom-scroll-container pb-2 lg:pb-0" style={{ display: 'flex', flexDirection: 'column' }}>
-                <div className="flex flex-row lg:flex-col gap-3 min-w-full text-zinc-300">
+                <div className="flex flex-row lg:flex-col gap-3 min-w-full">
                   <AnimatePresence mode="popLayout">
                     {filteredOptions.map((option) => (
                       <div key={option.id} className="w-[31%] min-w-[31%] lg:w-full lg:min-w-0 shrink-0">
@@ -315,7 +357,7 @@ export default function BikeConfigurator() {
 
       <div className="fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur-2xl border-t border-white/5 z-40">
         <div className="max-w-[1500px] mx-auto px-4 lg:px-6 py-6 grid grid-cols-12 gap-2 items-center">
-          <button onClick={() => currentStepIndex > 0 && setCurrentStepIndex(currentStepIndex - 1)} className="col-span-3 lg:col-span-2 flex items-center gap-1 text-zinc-500 hover:text-white font-black uppercase text-[10px] italic"><ChevronLeft size={20} /> Back</button>
+          <button onClick={() => currentStepIndex > 0 && setCurrentStepIndex(currentStepIndex - 1)} className="col-span-3 lg:col-span-2 flex items-center gap-1 text-zinc-500 hover:text-white transition-all font-black uppercase text-[10px] italic"><ChevronLeft size={20} /> Back</button>
           <div className="col-span-6 lg:col-span-7 flex justify-center lg:justify-end items-center gap-4 lg:gap-10">
             <div className="text-center lg:text-right text-zinc-300"><p className="text-[7px] text-zinc-600 uppercase font-black mb-0.5 italic">Weight</p><p className="font-mono text-xs">{selectedComponents.reduce((acc, c) => acc + c.weight, 0)}g</p></div>
             <div className="h-8 w-px bg-white/10" />
@@ -333,7 +375,6 @@ export default function BikeConfigurator() {
   );
 }
 
-// --- SUMMARY VIEW WITH FULL PDF INFO ---
 function SummaryView({ selections, onReset }: any) {
   const totalPrice = selections.reduce((acc: number, c: any) => acc + c.price, 0);
   const totalWeight = selections.reduce((acc: number, c: any) => acc + c.weight, 0);
@@ -350,13 +391,11 @@ function SummaryView({ selections, onReset }: any) {
     const pageHeight = doc.internal.pageSize.getHeight();
     const cleanText = (text: string) => text ? String(text).replace(/[^\x00-\x7F]/g, "").toUpperCase() : "";
 
-    // 1. ЛОГОТИП
     try {
       const logoBase64 = await getBase64Image("/design/Logo.png");
-      if (logoBase64) doc.addImage(logoBase64, 'PNG', (pageWidth / 2) - 15, 8, 30, 10);
+      if (logoBase64) doc.addImage(logoBase64, 'PNG', (pageWidth / 2) - 15, 8, 10, 10);
     } catch (e) {}
 
-    // 2. ВЕЛОСИПЕД (ЗБІРКА)
     try {
       const sortedByZ = [...selections].sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
       for (const comp of sortedByZ) {
@@ -367,7 +406,6 @@ function SummaryView({ selections, onReset }: any) {
       }
     } catch (e) {}
 
-    // 3. ТАБЛИЦЯ З РОЗДІЛАМИ ТА НАЗВАМИ
     autoTable(doc, { 
       startY: 135, 
       head: [['SECTION', 'COMPONENT', 'BRAND', 'WEIGHT', 'PRICE']],
@@ -387,21 +425,18 @@ function SummaryView({ selections, onReset }: any) {
     });
 
     const finalY = (doc as any).lastAutoTable.finalY + 10;
-
-    // 4. ДИСКЛЕЙМЕР (ТЕКСТ ПРО ВАГУ)
     doc.setFontSize(6);
     doc.setTextColor(100);
     const disclaimer = "NOTICE: THE WEIGHT AND PRICE INDICATED ARE PRELIMINARY AND SUBJECT TO MINOR CHANGES BASED ON COMPONENT AVAILABILITY. ADICTO.BIKE RESERVES THE RIGHT TO MODIFY SPECIFICATIONS WITHOUT PRIOR NOTICE.";
     doc.text(doc.splitTextToSize(disclaimer, pageWidth - 30), 15, finalY);
 
-    // 5. КОНТАКТИ ТА QR-КОД
     doc.setFontSize(7);
     doc.setTextColor(20);
     doc.text("WWW.ADICTO.BIKE  |  @ADICTO.BIKE", pageWidth / 2, pageHeight - 15, { align: 'center' });
     
     try {
       const qrBase64 = await getBase64Image("/design/qr-code.png");
-      if (qrBase64) doc.addImage(qrBase64, 'PNG', pageWidth - 35, pageHeight - 35, 20, 20);
+      if (qrBase64) doc.addImage(qrBase64, 'PNG', pageWidth - 50, pageHeight - 50, 35, 35);
     } catch (e) {}
 
     doc.save(`ADICTO_BUILD.pdf`);
