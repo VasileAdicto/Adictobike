@@ -138,7 +138,7 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
           {showGrid && (
             <div className="flex items-center gap-2 px-1 border-r border-white/5 mr-1">
               <span className="text-[7px] text-zinc-500 font-bold uppercase">Grid: {gridSize}px</span>
-              <input type="range" min="1" max="20" step="1" value={gridSize} onChange={(e) => setGridSize(parseInt(e.target.value))} className="w-16 h-1 bg-zinc-700 appearance-none accent-red-600" />
+              <input type="range" min="10" max="100" step="1" value={gridSize} onChange={(e) => setGridSize(parseInt(e.target.value))} className="w-20 h-1 bg-zinc-700 appearance-none accent-red-600" />
             </div>
           )}
         </div>
@@ -195,15 +195,16 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
   );
 };
 
-// --- VISUALIZER COMPONENT ---
+// --- ОНОВЛЕНИЙ VISUALIZER З ГНУЧКОЮ СІТКОЮ ---
 const Visualizer = ({ selectedComponents, offsets, showGrid, gridSize, isZoomed, zoomScale }: any) => {
   return (
     <div id="bike-visualizer" className="relative w-full h-full bg-zinc-950 rounded-[1.5rem] lg:rounded-[2.5rem] overflow-hidden border border-white/5 shadow-[0_0_100px_rgba(0,0,0,0.5)] flex items-center justify-center cursor-crosshair">
       
+      {/* ТВОЯ СІТКА ТУТ (динамічно змінюється від gridSize) */}
       {showGrid && (
-        <div className="absolute inset-0 z-[60] pointer-events-none opacity-[0.15]" 
+        <div className="absolute inset-0 z-[60] pointer-events-none opacity-[0.2]" 
              style={{ 
-               backgroundImage: `linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)`, 
+               backgroundImage: `linear-gradient(to right, rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.5) 1px, transparent 1px)`, 
                backgroundSize: `${gridSize}px ${gridSize}px` 
              }} />
       )}
@@ -213,16 +214,16 @@ const Visualizer = ({ selectedComponents, offsets, showGrid, gridSize, isZoomed,
         dragMomentum={false}
         dragConstraints={{ left: -2500, right: 2500, top: -2500, bottom: 2500 }}
         animate={{ 
-          scale: isZoomed ? zoomScale : 1,
-          x: isZoomed ? undefined : 0,
+          scale: isZoomed ? (zoomScale || 5) : 1,
+          x: isZoomed ? undefined : 0, // Повернення в центр при вимкненні зуму
           y: isZoomed ? undefined : 0
         }}
         transition={{ type: 'spring', damping: 25, stiffness: 120 }}
         className="relative w-full h-full flex items-center justify-center"
       >
         <AnimatePresence mode="popLayout">
-          {selectedComponents.map((comp: any) => {
-            const tune = offsets[comp.id] || { s: 1, x: 0, y: 0 };
+          {selectedComponents?.map((comp: any) => {
+            const tune = (offsets && offsets[comp.id]) || { s: 1, x: 0, y: 0 };
             return (
               <motion.img
                 key={comp.id} src={comp.imageUrl} crossOrigin="anonymous" loading="eager" alt={comp.name}
