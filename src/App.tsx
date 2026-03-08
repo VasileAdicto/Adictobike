@@ -1,6 +1,3 @@
-Так, осб це версія повністю робоча. Тут працює логика, адмінка, Пдф, картинки, дизайн норм. Назвемо Project1
-Внеси тут потрібні зміни, але спробуй не видалити нічого не зайвого.
-
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Download, CheckCircle2, Upload, Database, Lock, User, Settings2, Save, RotateCcw, Grid3X3, Search, Move, FolderOpen, Key, Eye, EyeOff, LogOut } from 'lucide-react';
