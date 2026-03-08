@@ -332,7 +332,29 @@ export default function BikeConfigurator() {
       {isLoggedIn ? (
         <AdminPanel categories={INITIAL_STEPS.map(s => s.title)} offsets={offsets} setOffsets={setOffsets} activeComponent={activeComponentForTuning} showGrid={showGrid} setShowGrid={setShowGrid} gridSize={gridSize} setGridSize={setGridSize} isZoomed={isZoomed} setIsZoomed={setIsZoomed} zoomScale={zoomScale} setZoomScale={setZoomScale} onLogout={handleLogout} />
       ) : (
-        <nav className="border-b border-white/5 px-4 lg:px-8 py-2 flex justify-between items-center bg-black/80 backdrop-blur-2xl sticky top-0 z-50"><div className="flex items-center gap-4 pl-2"><img src="/design/Logo.png" alt="Logo" className="h-4 lg:h-6 w-auto object-contain" /></div><div className="text-zinc-400 font-mono text-[7px] pr-2 opacity-70 uppercase tracking-widest italic">Build by Vasile & AI</div></nav>
+       <nav className="border-b border-white/5 px-4 lg:px-8 py-3 flex justify-between items-center bg-black/80 backdrop-blur-2xl sticky top-0 z-50 text-white">
+  {/* ГРУПА: ЛОГО + НАПИС */}
+  <div className="flex items-center gap-3">
+    <img src="/design/Logo.png" alt="Logo" className="h-4 lg:h-5 w-auto" />
+    <div className="text-zinc-600 font-mono text-[6px] lg:text-[7px] uppercase tracking-widest italic border-l border-white/10 pl-3">
+      Build by Vasile & AI
+    </div>
+  </div>
+
+  {/* ГРУПА: КНОПКА (LOGIN АБО USER) */}
+  <div className="flex items-center gap-4">
+    {user ? (
+      <button onClick={() => setIsDashboardOpen(true)} className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full border border-white/5 transition-all hover:bg-white/10">
+        <UserIcon size={12} className="text-red-600"/> 
+        <span className="text-[9px] font-black uppercase italic">{user.name}</span>
+      </button>
+    ) : (
+      <button onClick={() => setIsAuthModalOpen(true)} className="flex items-center gap-2 bg-red-600 px-4 py-1.5 rounded-full text-[9px] font-black uppercase italic tracking-widest transition-all active:scale-95">
+        <LogIn size={12}/> Login
+      </button>
+    )}
+  </div>
+</nav>
       )}
 
       <main className="max-w-[1500px] mx-auto px-4 lg:px-6 pt-2 lg:pt-3">
