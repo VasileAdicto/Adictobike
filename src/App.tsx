@@ -33,7 +33,7 @@ interface OffsetData {
   y: number; 
 }
 
-// --- ADMIN LOGIN ---
+// --- ADMIN LOGIN COMPONENT ---
 const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
   const [email, setEmail] = useState('');
   const [pass, setPass] = useState('');
@@ -50,7 +50,9 @@ const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
     if (email === "hello@adicto.bike" && pass === "Scalpel2012!") {
       if (rememberMe) localStorage.setItem('adicto_auth', 'true');
       onLogin();
-    } else { setError("Invalid credentials"); }
+    } else {
+      setError("Invalid credentials");
+    }
   };
 
   return (
@@ -67,9 +69,9 @@ const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
             <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white transition-colors text-[10px] font-bold uppercase">{showPass ? "Hide" : "Show"}</button>
           </div>
         </div>
-        <div className="flex items-center gap-2 mt-4 px-2 text-white">
+        <div className="flex items-center gap-2 mt-4 px-2">
           <input type="checkbox" id="remember" checked={rememberMe} onChange={() => setRememberMe(!rememberMe)} className="accent-red-600 h-4 w-4 rounded border-white/10 bg-black" />
-          <label htmlFor="remember" className="text-zinc-500 text-[10px] uppercase font-bold cursor-pointer select-none">Remember Me</label>
+          <label htmlFor="remember" className="text-zinc-500 text-[10px] uppercase font-bold cursor-pointer select-none text-white">Remember Me</label>
         </div>
         {error && <p className="text-red-600 text-[10px] text-center mt-4 uppercase font-black italic tracking-widest">{error}</p>}
         <button className="w-full bg-red-600 py-4 rounded-2xl font-black uppercase tracking-widest text-white mt-8 hover:bg-red-700 active:scale-95 transition-all shadow-lg shadow-red-600/20 text-sm italic">Access Dashboard</button>
@@ -82,71 +84,43 @@ const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
 const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid, setShowGrid, gridSize, setGridSize, isZoomed, setIsZoomed, zoomScale, setZoomScale, onLogout }: any) => {
   const [selectedCat, setSelectedCat] = useState('excel');
   const [status, setStatus] = useState('');
-  const [showToken, setShowToken] = useState(false);
   const [token, setToken] = useState(localStorage.getItem('adicto_github_token') || ''); 
+  const [showToken, setShowToken] = useState(false);
   const REPO = "VasileAdicto/Adictobike";
   const BRANCH = "main";
 
   const saveToGithub = async (path: string, content: string, isJson = false) => {
     if (!token) { setStatus("❌ Token Required"); return false; }
+    setStatus("Saving...");
     try {
       let sha = "";
       const getRes = await fetch(`https://api.github.com/repos/${REPO}/contents/${path}`, { headers: { Authorization: `token ${token}` } });
       if (getRes.ok) { const data = await getRes.json(); sha = data.sha; }
-      
       const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${path}`, {
         method: "PUT",
         headers: { Authorization: `token ${token}`, "Content-Type": "application/json" },
         body: JSON.stringify({ message: `Admin update: ${path}`, content: isJson ? btoa(unescape(encodeURIComponent(content))) : content, sha: sha || undefined, branch: BRANCH }),
       });
-      if (res.ok) {
-          localStorage.setItem('adicto_github_token', token);
-          return true;
-      }
+      if (res.ok) { setStatus("✅ Success!"); localStorage.setItem('adicto_github_token', token); setTimeout(() => setStatus(''), 3000); return true; }
       return false;
     } catch (err) { return false; }
   };
 
-  const updateTune = (key: keyof OffsetData, val: number) => {
-    if (!activeComponent) return;
-    setOffsets((prev: any) => ({ ...prev, [activeComponent.id]: { ...(prev[activeComponent.id] || { s: 1, x: 0, y: 0 }), [key]: val } }));
-  };
-
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>, isFolder: boolean) => {
     const files = e.target.files;
-    if (!files || files.length === 0) return;
-
-    const fileArray = Array.from(files);
-    setStatus(`⏳ Loading 0/${fileArray.length}...`);
-
-    for (let i = 0; i < fileArray.length; i++) {
-      const file = fileArray[i];
-      setStatus(`⏳ Sending ${i + 1}/${fileArray.length}...`);
-      const contentBase64 = await new Promise<string>((resolve) => {
+    if (files) {
+      const fileArray = Array.from(files);
+      for (const file of fileArray) {
         const reader = new FileReader();
         reader.readAsDataURL(file);
-        reader.onload = () => resolve((reader.result as string).split(',')[1]);
-      });
-      const fileName = isFolder ? file.webkitRelativePath : file.name;
-      const path = selectedCat === 'excel' ? "public/data.xlsx" : `public/parts/${selectedCat}/${fileName}`;
-      const success = await saveToGithub(path, contentBase64);
-      if (!success) { setStatus(`❌ Error at ${file.name}`); return; }
-    }
-
-    setStatus("✅ Success!");
-    setTimeout(() => setStatus(''), 3000); // ОЧИЩЕННЯ СТАТУСУ ЧЕРЕЗ 3 СЕКУНДИ
-    e.target.value = ""; 
-  };
-
-  const handleSaveOffsets = async () => {
-    setStatus("Saving...");
-    const success = await saveToGithub("public/offsets.json", JSON.stringify(offsets), true);
-    if (success) {
-      setStatus("✅ Saved!");
-      setTimeout(() => setStatus(''), 3000); // ОЧИЩЕННЯ СТАТУСУ ЧЕРЕЗ 3 СЕКУНДИ
-    } else {
-      setStatus("❌ Error");
-      setTimeout(() => setStatus(''), 3000);
+        reader.onload = async () => {
+          const content = (reader.result as string).split(',')[1];
+          const fileName = isFolder ? (file as any).webkitRelativePath : file.name;
+          const path = selectedCat === 'excel' ? "public/data.xlsx" : `public/parts/${selectedCat}/${fileName}`;
+          await saveToGithub(path, content);
+        };
+      }
+      e.target.value = "";
     }
   };
 
@@ -156,7 +130,7 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
         <div className="flex items-center gap-2 bg-black/40 px-2 py-1 rounded-lg border border-white/10 focus-within:border-red-600 transition-all">
           <Key size={10} className={token ? "text-red-600" : "text-zinc-500"} />
           <input type={showToken ? "text" : "password"} placeholder="TOKEN" value={token} onChange={(e) => setToken(e.target.value)} className="bg-transparent text-[9px] w-20 outline-none font-mono uppercase text-white" />
-          <button onClick={() => setShowToken(!showToken)} className="text-zinc-600 hover:text-white">{showToken ? <EyeOff size={10} /> : <Eye size={10} />}</button>
+          <button onClick={() => setShowToken(!showToken)} className="text-zinc-500 hover:text-white">{showToken ? <EyeOff size={10} /> : <Eye size={10} />}</button>
         </div>
         <select value={selectedCat} onChange={(e) => setSelectedCat(e.target.value)} className="bg-black border border-white/10 text-[9px] px-2 py-1 rounded uppercase font-bold outline-none focus:border-red-600 transition-all text-white">
           <option value="excel">📁 EXCEL</option>
@@ -167,45 +141,10 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
           <label className="cursor-pointer bg-zinc-800 text-zinc-300 px-2 py-1 rounded text-[9px] font-bold uppercase hover:bg-zinc-700 flex items-center gap-1 italic"><FolderOpen size={10}/> Folder<input type="file" className="hidden" webkitdirectory="" onChange={(e: any) => handleUpload(e, true)} /></label>
         </div>
         <div className="h-4 w-px bg-white/10 mx-1" />
-        <div className="flex items-center gap-2 bg-black/40 p-1 rounded-lg border border-white/5">
-          <button onClick={() => setShowGrid(!showGrid)} className={cn("px-2 py-1 rounded text-[9px] font-bold uppercase transition-all", showGrid ? "bg-red-600 text-white" : "bg-zinc-800 text-zinc-400")}><Grid3X3 size={10}/></button>
-          {showGrid && (
-            <div className="flex items-center gap-2 px-1 border-r border-white/5 mr-1 animate-in fade-in slide-in-from-left-2">
-              <span className="text-[7px] text-zinc-500 font-bold uppercase whitespace-nowrap">Grid: {gridSize}px</span>
-              <input type="range" min="10" max="100" step="1" value={gridSize} onChange={(e) => setGridSize(parseInt(e.target.value))} className="w-16 h-1 bg-zinc-700 appearance-none accent-red-600" />
-            </div>
-          )}
-        </div>
-        <div className="flex items-center gap-2 bg-black/40 p-1 rounded-lg border border-white/5">
-          <button onClick={() => setIsZoomed(!isZoomed)} className={cn("px-2 py-1 rounded text-[9px] font-bold uppercase transition-all flex items-center gap-2", isZoomed ? "bg-red-600 text-white" : "bg-zinc-800 text-zinc-400")}><Search size={10}/> {isZoomed ? `${zoomScale}X` : 'Magnify'}</button>
-          {isZoomed && (
-            <div className="flex items-center gap-2 px-1 animate-in fade-in slide-in-from-left-2">
-              <span className="text-[7px] text-zinc-500 font-bold uppercase text-white">Scale</span>
-              <input type="range" min="2" max="10" step="0.1" value={zoomScale} onChange={(e) => setZoomScale(parseFloat(e.target.value))} className="w-20 h-1 bg-zinc-700 appearance-none accent-red-600" />
-            </div>
-          )}
-        </div>
-        <button onClick={onLogout} className="text-zinc-500 hover:text-red-600 transition-colors p-1" title="Logout"><LogOut size={12} /></button>
-        {status && <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-[8px] font-mono uppercase text-red-600 ml-1">{status}</motion.span>}
+        <button onClick={() => saveToGithub("public/offsets.json", JSON.stringify(offsets), true)} className="bg-red-600 text-white px-3 py-1 rounded text-[9px] font-bold uppercase hover:bg-red-700 flex items-center gap-1 italic"><Save size={10}/> Offsets</button>
+        <button onClick={onLogout} className="text-zinc-500 hover:text-red-600 p-1"><LogOut size={12} /></button>
+        {status && <span className="text-[8px] font-mono uppercase text-red-600 ml-1">{status}</span>}
       </motion.div>
-      {activeComponent && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-black/80 border-b border-white/5 p-2 flex justify-between items-center px-6 backdrop-blur-xl gap-10">
-          <div className="flex flex-col gap-1 flex-1">
-            {[ { key: 's', label: 'Size', min: 0.8, max: 1.2, step: 0.001, reset: 1 }, { key: 'x', label: 'Pos X', min: -40, max: 40, step: 1, reset: 0 }, { key: 'y', label: 'Pos Y', min: -40, max: 40, step: 1, reset: 0 } ].map((item) => (
-              <div key={item.key} className="flex items-center gap-3">
-                <span className="text-[8px] text-zinc-500 font-black w-8 uppercase">{item.label}</span>
-                <input type="range" min={item.min} max={item.max} step={item.step} value={offsets[activeComponent.id]?.[item.key as keyof OffsetData] ?? item.reset} onChange={e => updateTune(item.key as keyof OffsetData, parseFloat(e.target.value))} className="flex-1 h-1 bg-zinc-800 rounded-lg appearance-none accent-red-600 cursor-pointer" />
-                <input type="number" step={item.step} value={offsets[activeComponent.id]?.[item.key as keyof OffsetData] ?? item.reset} onChange={e => updateTune(item.key as keyof OffsetData, parseFloat(e.target.value))} className="bg-transparent text-white text-[9px] w-10 text-right font-mono border-b border-white/5 focus:border-red-600 outline-none" />
-                <button onClick={() => updateTune(item.key as keyof OffsetData, item.reset)} className="text-zinc-600 hover:text-red-600 transition-colors"><RotateCcw size={10}/></button>
-              </div>
-            ))}
-          </div>
-          <div className="flex flex-col items-end gap-1 shrink-0 text-white">
-            <div className="text-[9px] font-black text-red-600 italic uppercase tracking-widest leading-none mb-1">{activeComponent.name}</div>
-            <button onClick={handleSaveOffsets} className="bg-red-600 text-white px-5 py-2 rounded-lg text-[10px] font-black uppercase hover:bg-red-700 transition-all flex items-center gap-2 italic shadow-lg shadow-red-600/20"><Save size={12}/> Save Offsets</button>
-          </div>
-        </motion.div>
-      )}
     </div>
   );
 };
@@ -228,7 +167,7 @@ const Visualizer = ({ selectedComponents, offsets, showGrid, gridSize, isZoomed,
           })}
         </AnimatePresence>
       </motion.div>
-      {isZoomed && <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-red-600 text-white px-4 py-1 rounded-full text-[8px] font-black uppercase flex items-center gap-2 z-[70] shadow-2xl"><Move size={10}/> {zoomScale.toFixed(1)}X - Drag to Move</div>}
+      {isZoomed && <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-red-600 text-white px-4 py-1 rounded-full text-[8px] font-black uppercase flex items-center gap-2 z-[70] shadow-2xl"><Move size={10}/> {zoomScale}X - Drag to Move</div>}
     </div>
   );
 };
@@ -258,14 +197,8 @@ export default function BikeConfigurator() {
   const [isFinished, setIsFinished] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const currentStep = steps[currentStepIndex] || steps[0];
-
-  const handleLogout = () => {
-    localStorage.removeItem('adicto_auth');
-    localStorage.removeItem('adicto_github_token');
-    setIsLoggedIn(false);
-    window.location.reload();
-  };
+  // REF ДЛЯ ГОРИЗОНТАЛЬНОГО СКРОЛУ РОЗДІЛІВ
+  const stepsNavRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const path = window.location.pathname; 
@@ -292,6 +225,19 @@ export default function BikeConfigurator() {
     }; autoLoadExcel();
   }, []);
 
+  // ЦЕЙ ЕФЕКТ ПЕРЕМІЩУЄ АКТИВНИЙ РОЗДІЛ ВЛІВО
+  useEffect(() => {
+    if (stepsNavRef.current) {
+      const activeBtn = stepsNavRef.current.children[currentStepIndex] as HTMLElement;
+      if (activeBtn) {
+        stepsNavRef.current.scrollTo({
+          left: activeBtn.offsetLeft - 20,
+          behavior: 'smooth'
+        });
+      }
+    }
+  }, [currentStepIndex]);
+
   const activeLogic = useMemo(() => {
     if (currentStepIndex === 0) return null;
     const prevStepId = steps[currentStepIndex - 1]?.id;
@@ -302,20 +248,20 @@ export default function BikeConfigurator() {
   }, [selections, currentStepIndex, steps]);
 
   const filteredOptions = useMemo(() => {
-    if (!currentStep) return [];
-    return currentStep.options.filter(option => {
+    const currentStep = steps[currentStepIndex] || steps[0];
+    return currentStep.options.filter(opt => {
       if (!activeLogic) return true;
-      if (!option.logic || option.logic.trim() === "") return true;
-      return option.logic.trim() === activeLogic;
+      if (!opt.logic || opt.logic.trim() === "") return true;
+      return opt.logic.trim() === activeLogic;
     });
-  }, [currentStep, activeLogic]);
+  }, [steps[currentStepIndex], activeLogic]);
 
   const selectedComponents = useMemo(() => steps.map(s => {
     const opt = s.options.find(o => o.id === selections[s.id]);
     return opt ? { ...opt, stepTitle: s.title } : null;
   }).filter((c): c is Component => !!c), [selections, steps]);
 
-  const activeComponentForTuning = useMemo(() => currentStep?.options.find(o => o.id === selections[currentStep?.id]), [currentStep, selections]);
+  const activeComponentForTuning = useMemo(() => steps[currentStepIndex]?.options.find(o => o.id === selections[steps[currentStepIndex]?.id]), [steps, currentStepIndex, selections]);
 
   if (isAdminMode && !isLoggedIn) return <AdminLogin onLogin={() => setIsLoggedIn(true)} />;
   if (isFinished) return <SummaryView selections={selectedComponents} onReset={() => window.location.reload()} />;
@@ -323,14 +269,31 @@ export default function BikeConfigurator() {
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-red-600 pb-28 lg:pb-24 overflow-x-hidden">
       <style>{`
-        .custom-scroll-container::-webkit-scrollbar { width: 4px; height: 4px; }
-        .custom-scroll-container::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); border-radius: 10px; }
-        .custom-scroll-container::-webkit-scrollbar-thumb { background: #ef4444; border-radius: 10px; }
-        .custom-scroll-container { scrollbar-width: thin; scrollbar-color: #ef4444 rgba(255, 255, 255, 0.05); }
+        /* СКРОЛБАР ЗАВЖДИ АКТИВНИЙ ТА ЧЕРВОНИЙ */
+        .custom-scroll-container::-webkit-scrollbar, 
+        .steps-scroll-container::-webkit-scrollbar { 
+          width: 4px; 
+          height: 4px; 
+          display: block !important;
+        }
+        .custom-scroll-container::-webkit-scrollbar-track,
+        .steps-scroll-container::-webkit-scrollbar-track { 
+          background: rgba(255, 255, 255, 0.05); 
+          border-radius: 10px; 
+        }
+        .custom-scroll-container::-webkit-scrollbar-thumb,
+        .steps-scroll-container::-webkit-scrollbar-thumb { 
+          background: #ef4444; 
+          border-radius: 10px; 
+        }
+        .custom-scroll-container, .steps-scroll-container { 
+          scrollbar-width: thin; 
+          scrollbar-color: #ef4444 rgba(255, 255, 255, 0.05); 
+        }
       `}</style>
 
       {isLoggedIn ? (
-        <AdminPanel categories={INITIAL_STEPS.map(s => s.title)} offsets={offsets} setOffsets={setOffsets} activeComponent={activeComponentForTuning} showGrid={showGrid} setShowGrid={setShowGrid} gridSize={gridSize} setGridSize={setGridSize} isZoomed={isZoomed} setIsZoomed={setIsZoomed} zoomScale={zoomScale} setZoomScale={setZoomScale} onLogout={handleLogout} />
+        <AdminPanel categories={INITIAL_STEPS.map(s => s.title)} offsets={offsets} setOffsets={setOffsets} activeComponent={activeComponentForTuning} showGrid={showGrid} setShowGrid={setShowGrid} gridSize={gridSize} setGridSize={setGridSize} isZoomed={isZoomed} setIsZoomed={setIsZoomed} zoomScale={zoomScale} setZoomScale={setZoomScale} onLogout={() => setIsLoggedIn(false)} />
       ) : (
         <nav className="border-b border-white/5 px-4 lg:px-8 py-2 flex justify-between items-center bg-black/80 backdrop-blur-2xl sticky top-0 z-50"><div className="flex items-center gap-4 pl-2"><img src="/design/Logo.png" alt="Logo" className="h-4 lg:h-6 w-auto object-contain" /></div><div className="text-zinc-400 font-mono text-[7px] pr-2 opacity-70 uppercase tracking-widest italic">Build by Vasile & AI</div></nav>
       )}
@@ -338,20 +301,26 @@ export default function BikeConfigurator() {
       <main className="max-w-[1500px] mx-auto px-4 lg:px-6 pt-2 lg:pt-3">
         <div className="flex flex-col lg:grid lg:grid-cols-12 gap-6 lg:gap-10 lg:h-[550px] items-stretch">
           <div className="lg:col-span-9 flex flex-col gap-2 order-1">
-            <div className="flex overflow-x-auto no-scrollbar gap-x-6 gap-y-2 pb-2">
+            
+            {/* КОНТЕЙНЕР РОЗДІЛІВ З АВТО-СКРОЛОМ */}
+            <div 
+              ref={stepsNavRef}
+              className="flex overflow-x-auto no-scrollbar steps-scroll-container gap-x-6 gap-y-2 pb-2"
+            >
               {steps.map((step, idx) => (
                 <button key={step.id} onClick={() => setCurrentStepIndex(idx)} className={cn("transition-all duration-300 text-[10px] font-black italic uppercase tracking-widest pb-1 border-b-2 whitespace-nowrap", idx === currentStepIndex ? "text-red-600 border-red-600 drop-shadow-[0_0_9px_rgba(255,0,0,0.3)]" : "text-white opacity-20 border-transparent hover:opacity-100")}>{step.title}</button>
               ))}
             </div>
+
             <div className="h-[280px] md:h-[400px] lg:flex-1 relative"><Visualizer selectedComponents={selectedComponents} offsets={offsets} showGrid={showGrid} gridSize={gridSize} isZoomed={isZoomed} zoomScale={zoomScale} /></div>
           </div>
           <div className="lg:col-span-3 flex flex-col bg-zinc-900/40 rounded-[2.5rem] border border-white/5 p-4 lg:p-6 relative overflow-hidden order-2 shadow-2xl">
             <div className="flex-1 overflow-x-auto lg:overflow-y-auto lg:overflow-x-hidden custom-scroll-container pb-2 lg:pb-0" style={{ display: 'flex', flexDirection: 'column' }}>
-                <div className="flex flex-row lg:flex-col gap-3 min-w-full">
+                <div className="flex flex-row lg:flex-col gap-3 min-w-full text-zinc-300">
                   <AnimatePresence mode="popLayout">
                     {filteredOptions.map((option) => (
                       <div key={option.id} className="w-[31%] min-w-[31%] lg:w-full lg:min-w-0 shrink-0">
-                        <OptionCard component={option} isSelected={selections[currentStep.id] === option.id} onClick={() => setSelections(prev => ({...prev, [currentStep.id]: option.id}))} />
+                        <OptionCard component={option} isSelected={selections[steps[currentStepIndex].id] === option.id} onClick={() => setSelections(prev => ({...prev, [steps[currentStepIndex].id]: option.id}))} />
                       </div>
                     ))}
                   </AnimatePresence>
@@ -371,7 +340,7 @@ export default function BikeConfigurator() {
           </div>
           <div className="col-span-3 flex justify-end">
             <button onClick={() => {
-                if (filteredOptions.length > 0 && !selections[currentStep.id]) { setError("Select!"); return; }
+                if (filteredOptions.length > 0 && !selections[steps[currentStepIndex].id]) { setError("Select!"); return; }
                 currentStepIndex < steps.length - 1 ? setCurrentStepIndex(currentStepIndex + 1) : setIsFinished(true);
               }} className="bg-red-600 hover:bg-red-700 text-white h-[32px] px-6 rounded-lg font-black uppercase text-[10px] italic flex items-center gap-2 active:scale-95 shadow-lg shadow-red-600/20">{currentStepIndex === steps.length - 1 ? 'Finish' : 'Next'} <ChevronRight size={14} /></button>
           </div>
@@ -384,11 +353,13 @@ export default function BikeConfigurator() {
 function SummaryView({ selections, onReset }: any) {
   const totalPrice = selections.reduce((acc: number, c: any) => acc + c.price, 0);
   const totalWeight = selections.reduce((acc: number, c: any) => acc + c.weight, 0);
+  
   const getBase64Image = async (url: string): Promise<string> => {
     try { const res = await fetch(url); const blob = await res.blob();
       return new Promise((resolve, reject) => { const reader = new FileReader(); reader.onloadend = () => resolve(reader.result as string); reader.onerror = reject; reader.readAsDataURL(blob); });
     } catch (e) { return ""; }
   };
+
   const handleExport = async () => {
     const doc = new jsPDF(); const pageWidth = doc.internal.pageSize.getWidth(); const pageHeight = doc.internal.pageSize.getHeight();
     const cleanText = (text: string) => text ? String(text).replace(/[^\x00-\x7F]/g, "").toUpperCase() : "";
