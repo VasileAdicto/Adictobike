@@ -27,7 +27,7 @@ interface SavedBuild {
 // --- CONSTANTS ---
 const INITIAL_STEPS: Step[] = [ { id: 'frame', title: 'Frame', options: [] }, { id: 'wheelset', title: 'Wheelset', options: [] }, { id: 'tyres', title: 'Tyres', options: [] }, { id: 'cockpit', title: 'Cockpit', options: [] }, { id: 'tape', title: 'Tape', options: [] }, { id: 'saddle', title: 'Saddle', options: [] }, { id: 'shifters', title: 'Shifters', options: [] }, { id: 'crankset', title: 'Crankset', options: [] }, { id: 'derailleurs', title: 'Derailleurs', options: [] }, { id: 'cassette', title: 'Cassette', options: [] }, { id: 'discs', title: 'Discs', options: [] } ];
 
-// --- HELPER COMPONENTS (Moved to top to prevent ReferenceError) ---
+// --- SUB-COMPONENTS (DEFINED BEFORE MAIN COMPONENT) ---
 
 const OptionCard = ({ component, isSelected, onClick }: { component: Component, isSelected: boolean, onClick: () => void }) => (
   <motion.button layout onClick={(e) => { e.preventDefault(); onClick(); }} className={cn("relative flex flex-col p-2 lg:p-3 rounded-xl lg:rounded-2xl border text-left transition-all group w-full shrink-0", isSelected ? "border-red-600 bg-red-600/5 ring-1 ring-red-600/20 shadow-[0_0_20px_rgba(255,0,0,0.1)]" : "border-white/5 bg-zinc-900/50 hover:border-white/20 hover:bg-zinc-900")}>
@@ -100,13 +100,99 @@ const AuthModal = ({ isOpen, onClose, onLogin }: any) => {
   );
 };
 
-// --- USER DASHBOARD ---
+// --- ADMIN LOGIN ---
+const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
+  const [email, setEmail] = useState('');
+  const [pass, setPass] = useState('');
+  const [error, setError] = useState('');
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (email === "hello@adicto.bike" && pass === "Scalpel2012!") onLogin();
+    else setError("Invalid credentials");
+  };
+  return (
+    <div className="min-h-screen bg-black flex items-center justify-center p-6 selection:bg-red-600 font-sans">
+      <form onSubmit={handleLogin} className="bg-zinc-900 border border-white/5 p-10 rounded-[2.5rem] w-full max-w-md shadow-2xl">
+        <div className="flex flex-col items-center mb-8">
+          <div className="w-12 h-12 bg-red-600 rounded-2xl flex items-center justify-center mb-4"><Lock size={24} className="text-white"/></div>
+          <h2 className="text-xl font-black uppercase italic text-center text-white">Adicto Admin</h2>
+        </div>
+        <div className="space-y-4">
+          <input type="email" placeholder="Email" className="w-full bg-black border border-white/10 p-4 rounded-2xl text-white outline-none focus:border-red-600 transition-all text-sm font-mono" value={email} onChange={(e) => setEmail(e.target.value)} />
+          <input type="password" placeholder="Password" className="w-full bg-black border border-white/10 p-4 rounded-2xl text-white outline-none focus:border-red-600 transition-all text-sm font-mono" value={pass} onChange={(e) => setPass(e.target.value)} />
+        </div>
+        {error && <p className="text-red-600 text-[10px] text-center mt-4 uppercase font-black italic">{error}</p>}
+        <button className="w-full bg-red-600 py-4 rounded-2xl font-black uppercase text-white mt-8 hover:bg-red-700 transition-all italic tracking-widest">Access Dashboard</button>
+      </form>
+    </div>
+  );
+};
+
+// --- ADMIN PANEL COMPONENT ---
+const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, onLogout }: any) => {
+  const [selectedCat, setSelectedCat] = useState('excel');
+  const [status, setStatus] = useState('');
+  const [token, setToken] = useState(localStorage.getItem('adicto_github_token') || ''); 
+  const REPO = "VasileAdicto/Adictobike";
+  const BRANCH = "main";
+
+  const saveToGithub = async (path: string, content: string, isJson = false) => {
+    if (!token) { setStatus("❌ Token Required"); return false; }
+    try {
+      let sha = "";
+      const getRes = await fetch(`https://api.github.com/repos/${REPO}/contents/${path}`, { headers: { Authorization: `token ${token}` } });
+      if (getRes.ok) { const data = await getRes.json(); sha = data.sha; }
+      const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${path}`, {
+        method: "PUT",
+        headers: { Authorization: `token ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ message: `Admin update: ${path}`, content: isJson ? btoa(unescape(encodeURIComponent(content))) : content, sha: sha || undefined, branch: BRANCH }),
+      });
+      if (res.ok) { setStatus("✅ Success!"); localStorage.setItem('adicto_github_token', token); setTimeout(() => setStatus(''), 3000); return true; }
+      return false;
+    } catch (err) { return false; }
+  };
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files; if (!files) return;
+    const fileArray = Array.from(files);
+    for (let i = 0; i < fileArray.length; i++) {
+        const file = fileArray[i];
+        const reader = new FileReader(); reader.readAsDataURL(file);
+        const result = await new Promise((res) => { reader.onload = () => res(reader.result); });
+        const path = `public/parts/${selectedCat}/${file.name}`;
+        await saveToGithub(path, (result as string).split(',')[1]);
+    }
+    setStatus("✅ Done");
+    e.target.value = "";
+  };
+
+  return (
+    <div className="z-[100] sticky top-0 bg-zinc-900 border-b border-white/5 p-2 flex gap-3 items-center justify-center backdrop-blur-md font-sans text-white">
+      <div className="flex items-center gap-2 bg-black/40 px-2 py-1 rounded-lg border border-white/10 focus-within:border-red-600 transition-all">
+        <Key size={10} className="text-red-600" />
+        <input type="password" placeholder="TOKEN" value={token} onChange={(e) => setToken(e.target.value)} className="bg-transparent text-[9px] w-20 outline-none font-mono uppercase" />
+      </div>
+      <select value={selectedCat} onChange={(e) => setSelectedCat(e.target.value)} className="bg-black border border-white/10 text-[9px] px-2 py-1 rounded uppercase font-bold text-white outline-none focus:border-red-600">
+        <option value="excel">📁 EXCEL</option>
+        {categories?.map((cat: string) => <option key={cat} value={cat}>🖼️ {cat.toUpperCase()}</option>)}
+      </select>
+      <div className="flex gap-1">
+        <label className="cursor-pointer bg-zinc-800 text-zinc-300 px-2 py-1 rounded text-[9px] font-bold uppercase hover:bg-zinc-700 flex items-center gap-1 italic"><Upload size={10}/> Files<input type="file" className="hidden" multiple onChange={handleUpload} /></label>
+      </div>
+      <button onClick={() => saveToGithub("public/offsets.json", JSON.stringify(offsets), true)} className="bg-red-600 text-white px-3 py-1 rounded text-[9px] font-bold uppercase hover:bg-red-700 flex items-center gap-1 italic tracking-widest"><Save size={10}/> Offsets</button>
+      <button onClick={onLogout} className="text-zinc-500 hover:text-red-600 p-1 transition-colors"><LogOut size={14}/></button>
+      {status && <span className="text-[8px] font-mono uppercase text-red-600 ml-1">{status}</span>}
+    </div>
+  );
+};
+
+// --- USER DASHBOARD (GARAGE) ---
 const UserDashboard = ({ builds, onEdit, onDelete, onClose, onLogout, onPDF }: any) => {
   const [selected, setSelected] = useState<string[]>([]);
   return (
     <div className="fixed inset-0 z-[150] bg-black text-white flex flex-col font-sans overflow-hidden">
       <div className="flex-1 overflow-y-auto p-6 lg:p-12 selection:bg-red-600">
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-7xl mx-auto text-white">
           <div className="flex justify-between items-start mb-16">
             <div className="leading-tight">
               <h2 className="text-xs font-black uppercase tracking-widest text-white">My Adicto</h2>
@@ -117,7 +203,7 @@ const UserDashboard = ({ builds, onEdit, onDelete, onClose, onLogout, onPDF }: a
               <button onClick={onClose} className="bg-zinc-900 p-2 rounded-full hover:bg-zinc-800 transition-colors"><X size={18}/></button>
             </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 text-white">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {builds.map((b: SavedBuild) => (
               <div key={b.id} className="bg-zinc-900/50 border border-white/5 rounded-[2rem] p-6 hover:border-white/10 transition-all group relative">
                 <div className="flex justify-between items-start mb-4">
@@ -132,7 +218,9 @@ const UserDashboard = ({ builds, onEdit, onDelete, onClose, onLogout, onPDF }: a
                 </button>
                 <div className="mb-6">
                   <p className="text-[7px] text-zinc-600 uppercase font-black mb-1 italic">Configuration:</p>
-                  <p className="text-[8px] text-zinc-500 uppercase leading-tight line-clamp-2 italic font-medium">{b.components.map(c => `${c.brand}`).join(' • ')}</p>
+                  <p className="text-[8px] text-zinc-500 uppercase leading-tight line-clamp-2 italic font-medium">
+                    {b.components.map(c => `${c.brand}`).join(' • ')}
+                  </p>
                 </div>
                 <div className="flex justify-between items-end border-t border-white/5 pt-4 mt-auto">
                   <div><p className="text-[7px] font-black uppercase text-zinc-600 tracking-tighter">Price</p><p className="font-mono text-xs text-red-600">€{b.totalPrice.toLocaleString()}</p></div>
@@ -148,7 +236,7 @@ const UserDashboard = ({ builds, onEdit, onDelete, onClose, onLogout, onPDF }: a
       </div>
       <div className="p-10 border-t border-white/5 text-center bg-black text-zinc-500">
         <p className="text-[8px] font-bold uppercase tracking-[0.3em] mb-2">Powered by Adicto.Bike All Right Reserved</p>
-        <p className="text-[8px] font-bold uppercase tracking-[0.1em]">Please contact us if you have any questions or bugs (баг) — hello@adicto.bike</p>
+        <p className="text-[8px] font-bold uppercase tracking-[0.1em]">Please contact us if you have any questions or bugs (баг) — <a href="mailto:hello@adicto.bike" className="hover:text-red-600">hello@adicto.bike</a></p>
       </div>
     </div>
   );
@@ -158,7 +246,7 @@ const UserDashboard = ({ builds, onEdit, onDelete, onClose, onLogout, onPDF }: a
 
 export default function BikeConfigurator() {
   const [isAdminMode, setIsAdminMode] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
   const [offsets, setOffsets] = useState<Record<string, OffsetData>>({});
   const [steps, setSteps] = useState<Step[]>(INITIAL_STEPS);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
@@ -168,6 +256,7 @@ export default function BikeConfigurator() {
   const [savedBuilds, setSavedBuilds] = useState<SavedBuild[]>(JSON.parse(localStorage.getItem('adicto_saved_builds') || '[]'));
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isDashboardOpen, setIsDashboardOpen] = useState(false);
+
   const stepsNavRef = useRef<HTMLDivElement>(null);
   const currentStep = steps[currentStepIndex] || steps[0];
 
@@ -175,14 +264,14 @@ export default function BikeConfigurator() {
     const path = window.location.pathname; 
     if (path === '/admin') setIsAdminMode(true);
     fetch('/offsets.json').then(r => r.ok ? r.json() : {}).then(data => setOffsets(data)).catch(() => {});
-    const loadData = async () => {
+    const loadExcel = async () => {
         try {
           const res = await fetch('/data.xlsx'); if (!res.ok) return;
           const XLSX = await import('xlsx');
           const buffer = await res.arrayBuffer();
           const wb = XLSX.read(buffer);
           const newSteps = INITIAL_STEPS.map(step => {
-            const sheet = wb.Sheets[Object.keys(wb.Sheets).find(n => n.toUpperCase().trim() === step.title.toUpperCase().trim()) || ""];
+            const sheet = wb.Sheets[Object.keys(workbook.Sheets).find(n => n.toUpperCase().trim() === step.title.toUpperCase().trim()) || ""];
             if (sheet) {
               const data = XLSX.utils.sheet_to_json(sheet);
               return { ...step, options: data.map((row: any, idx: number) => ({
@@ -191,7 +280,7 @@ export default function BikeConfigurator() {
             } return step;
           }); setSteps(newSteps);
         } catch (e) {}
-    }; loadData();
+    }; loadExcel();
   }, []);
 
   useEffect(() => {
@@ -216,19 +305,8 @@ export default function BikeConfigurator() {
     return opt ? { ...opt, stepTitle: s.title } : null;
   }).filter((c): c is Component => !!c), [selections, steps]);
 
-  const handleEditFromGarage = (b: SavedBuild) => {
-    const newS: any = {};
-    let missing = false;
-    b.components.forEach(c => {
-      const step = steps.find(s => s.title === c.stepTitle);
-      const option = step?.options.find(o => o.name === c.name);
-      if (option) newS[step!.id] = option.id; else missing = true;
-    });
-    if (missing) alert("Sorry, some components are no longer available. You need to restart the build process.");
-    setSelections(newS); setIsDashboardOpen(false); setIsFinished(false); setCurrentStepIndex(0);
-  };
-
-  if (isDashboardOpen) return <UserDashboard builds={savedBuilds} onClose={() => setIsDashboardOpen(false)} onLogout={() => { setUser(null); localStorage.removeItem('adicto_user'); setIsDashboardOpen(false); }} onDelete={(id: string) => { const upd = savedBuilds.filter(x => x.id !== id); setSavedBuilds(upd); localStorage.setItem('adicto_saved_builds', JSON.stringify(upd)); }} onEdit={handleEditFromGarage} onPDF={(b: any) => {
+  if (isAdminMode && !isAdminLoggedIn) return <AdminLogin onLogin={() => setIsAdminLoggedIn(true)} />;
+  if (isDashboardOpen) return <UserDashboard builds={savedBuilds} onClose={() => setIsDashboardOpen(false)} onLogout={() => { setUser(null); localStorage.removeItem('adicto_user'); setIsDashboardOpen(false); }} onDelete={(id: string) => { const upd = savedBuilds.filter(x => x.id !== id); setSavedBuilds(upd); localStorage.setItem('adicto_saved_builds', JSON.stringify(upd)); }} onPDF={(b: any) => {
     const doc = new jsPDF(); autoTable(doc, { head: [['Section', 'Brand', 'Weight', 'Price']], body: b.components.map((c:any) => [c.stepTitle, c.brand, `${c.weight}g`, `€${c.price}`]) });
     doc.save(`${b.name}.pdf`);
   }} />;
@@ -236,7 +314,7 @@ export default function BikeConfigurator() {
   if (isFinished) return <SummaryView selections={selectedComponents} onReset={() => window.location.reload()} user={user} onLogin={() => setIsAuthModalOpen(true)} onDashboard={() => setIsDashboardOpen(true)} onSaveBuild={() => {
     if (!user) { setIsAuthModalOpen(true); return; }
     const newB = { id: Date.now().toString(), name: `${selectedComponents[0]?.brand || 'Machine'} Build`, date: new Date().toLocaleDateString(), components: selectedComponents, totalPrice: selectedComponents.reduce((acc,c)=>acc+c.price,0), totalWeight: selectedComponents.reduce((acc,c)=>acc+c.weight,0) };
-    const upd = [...savedBuilds, newB]; setSavedBuilds(upd); localStorage.setItem('adicto_saved_builds', JSON.stringify(upd)); alert("Saved to Garage!");
+    const upd = [...savedBuilds, newB]; setSavedBuilds(upd); localStorage.setItem('adicto_saved_builds', JSON.stringify(upd)); alert("Saved!");
   }} />;
 
   return (
@@ -247,6 +325,9 @@ export default function BikeConfigurator() {
         @keyframes bounce-x { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(5px); } }
         .animate-bounce-x { animation: bounce-x 1s infinite; }
       `}</style>
+      
+      {isAdminLoggedIn && <AdminPanel categories={INITIAL_STEPS.map(s => s.title)} offsets={offsets} setOffsets={setOffsets} onLogout={() => setIsAdminLoggedIn(false)} />}
+      
       <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} onLogin={(u: any) => { setUser(u); localStorage.setItem('adicto_user', JSON.stringify(u)); setIsAuthModalOpen(false); }} />
 
       <nav className="border-b border-white/5 px-4 lg:px-8 py-3 flex justify-between items-center bg-black/80 backdrop-blur-2xl sticky top-0 z-50">
@@ -259,7 +340,7 @@ export default function BikeConfigurator() {
             <UserIcon size={12} className="text-red-600"/> <span className="text-[9px] font-black uppercase italic">{user.name}</span>
           </button>
         ) : (
-          <button onClick={() => setIsAuthModalOpen(true)} className="flex items-center gap-2 bg-red-600 px-4 py-1.5 rounded-full text-[9px] font-black uppercase italic"><LogIn size={12}/> Login</button>
+          <button onClick={() => setIsAuthModalOpen(true)} className="flex items-center gap-2 bg-red-600 px-4 py-1.5 rounded-full text-[9px] font-black uppercase italic tracking-widest"><LogIn size={12}/> Login</button>
         )}
       </nav>
 
@@ -268,11 +349,12 @@ export default function BikeConfigurator() {
           <div className="lg:col-span-9 flex flex-col gap-1">
             <div ref={stepsNavRef} className="flex overflow-x-auto no-scrollbar gap-x-6 pb-1 border-b border-white/5">
               {steps.map((step, idx) => (
-                <button key={step.id} onClick={() => setCurrentStepIndex(idx)} className={cn("transition-all text-[9px] font-black italic uppercase tracking-widest pb-1 border-b-2 whitespace-nowrap", idx === currentStepIndex ? "text-red-600 border-red-600" : "text-white opacity-20 border-transparent")}>{step.title}</button>
+                <button key={step.id} onClick={() => setCurrentStepIndex(idx)} className={cn("transition-all text-[9px] font-black italic uppercase tracking-widest pb-1 border-b-2 whitespace-nowrap", idx === currentStepIndex ? "text-red-600 border-red-600" : "text-white opacity-20 border-transparent hover:opacity-100")}>{step.title}</button>
               ))}
             </div>
             <div className="h-[250px] md:h-[400px] lg:flex-1 relative"><Visualizer selectedComponents={selectedComponents} offsets={offsets} /></div>
           </div>
+
           <div className="lg:col-span-3 flex flex-col bg-zinc-900/40 rounded-[2rem] border border-white/5 p-4 relative order-2 overflow-hidden shadow-2xl">
             <div className="flex-1 overflow-x-auto lg:overflow-y-auto custom-scroll-container pb-2">
                 <div className="flex flex-row lg:flex-col gap-3 min-w-full">
@@ -293,18 +375,20 @@ export default function BikeConfigurator() {
         </div>
       </main>
 
-      <div className="fixed bottom-0 left-0 right-0 bg-black/90 backdrop-blur-3xl border-t border-white/5 z-50 py-4 px-6 text-white">
+      <div className="fixed bottom-0 left-0 right-0 bg-black/90 backdrop-blur-3xl border-t border-white/5 z-50 py-4 px-6 text-white shadow-2xl">
         <div className="max-w-[1500px] mx-auto flex items-center justify-between">
           <button onClick={() => currentStepIndex > 0 && setCurrentStepIndex(currentStepIndex - 1)} className="text-zinc-500 hover:text-white transition-all font-black uppercase text-[10px] italic flex items-center gap-1 w-20">
             <ChevronLeft size={18} /> <span className="hidden sm:inline">Back</span>
           </button>
+          
           <div className="flex gap-6 items-center justify-center flex-1">
-            <div className="text-center"><p className="text-[6px] text-zinc-600 uppercase font-black italic">Weight</p><p className="font-mono text-xs">{selectedComponents.reduce((acc, c) => acc + c.weight, 0)}g</p></div>
+            <div className="text-center"><p className="text-[6px] text-zinc-600 uppercase font-black italic tracking-tighter">Weight</p><p className="font-mono text-xs">{selectedComponents.reduce((acc, c) => acc + c.weight, 0)}g</p></div>
             <div className="h-6 w-px bg-white/10" />
-            <div className="text-center"><p className="text-[6px] text-zinc-600 uppercase font-black italic">Price</p><p className="font-mono text-xs text-red-600">€{selectedComponents.reduce((acc, c) => acc + c.price, 0).toLocaleString()}</p></div>
+            <div className="text-center"><p className="text-[6px] text-zinc-600 uppercase font-black italic tracking-tighter">Price</p><p className="font-mono text-xs text-red-600 font-bold">€{selectedComponents.reduce((acc, c) => acc + c.price, 0).toLocaleString()}</p></div>
           </div>
+
           <div className="w-20 flex justify-end">
-            <button onClick={() => currentStepIndex < steps.length - 1 ? setCurrentStepIndex(currentStepIndex + 1) : setIsFinished(true)} className="bg-red-600 text-white p-2.5 rounded-xl font-black active:scale-95 shadow-lg shadow-red-600/20">
+            <button onClick={() => currentStepIndex < steps.length - 1 ? setCurrentStepIndex(currentStepIndex + 1) : setIsFinished(true)} className="bg-red-600 text-white p-2.5 rounded-xl font-black active:scale-95 transition-all shadow-lg shadow-red-600/30">
               <ChevronRight size={18} />
             </button>
           </div>
@@ -314,7 +398,7 @@ export default function BikeConfigurator() {
   );
 }
 
-// --- SUMMARY VIEW ---
+// --- SUMMARY VIEW (FINAL SCREEN) ---
 function SummaryView({ selections, onReset, user, onSaveBuild, onLogin, onDashboard }: any) {
   const [isExp, setIsExp] = useState(false);
   const [prog, setProg] = useState(0);
@@ -350,9 +434,9 @@ function SummaryView({ selections, onReset, user, onSaveBuild, onLogin, onDashbo
         <img src="/design/Logo.png" alt="Logo" className="w-10 h-10 mx-auto mb-10 object-contain" />
         <h2 className="text-[26px] font-black uppercase italic tracking-tighter mb-4 leading-none">your bike is <br/> <span className="text-red-600 uppercase">Ready</span></h2>
         <div className="flex justify-center gap-10 my-10 bg-zinc-900/40 p-6 rounded-[2.5rem] border border-white/5 shadow-2xl">
-          <div><p className="text-zinc-600 text-[8px] uppercase font-black italic mb-1">Price</p><p className="text-lg font-mono text-red-600 tracking-tighter font-black">€{totalP.toLocaleString()}</p></div>
+          <div><p className="text-zinc-600 text-[8px] uppercase font-black italic mb-1">Price</p><p className="text-lg font-mono text-red-600 tracking-tighter italic font-black">€{totalP.toLocaleString()}</p></div>
           <div className="w-px bg-white/5" />
-          <div><p className="text-zinc-600 text-[8px] uppercase font-black italic mb-1">Weight</p><p className="text-lg font-mono text-white/80 tracking-tighter font-black">{totalW}g</p></div>
+          <div><p className="text-zinc-600 text-[8px] uppercase font-black italic mb-1">Weight</p><p className="text-lg font-mono text-white/80 tracking-tighter italic font-black">{totalW}g</p></div>
         </div>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <button onClick={doPDF} disabled={isExp} style={{ background: isExp ? `linear-gradient(to right, #ef4444 ${prog}%, #18181b ${prog}%)` : '' }} className={cn("px-8 py-4 rounded-xl font-black uppercase text-[10px] italic transition-all flex items-center justify-center gap-2 relative overflow-hidden", isExp ? "border border-red-600/30" : "bg-red-600 hover:bg-red-700")}>
