@@ -323,10 +323,10 @@ export default function BikeConfigurator() {
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-red-600 pb-28 lg:pb-24 overflow-x-hidden">
       <style>{`
-        .custom-scroll-container::-webkit-scrollbar { width: 4px; height: 4px; }
-        .custom-scroll-container::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); border-radius: 10px; }
+        .custom-scroll-container::-webkit-scrollbar { width: 3px; height: 3px; }
+        .custom-scroll-container::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.02); border-radius: 10px; }
         .custom-scroll-container::-webkit-scrollbar-thumb { background: #ef4444; border-radius: 10px; }
-        .custom-scroll-container { scrollbar-width: thin; scrollbar-color: #ef4444 rgba(255, 255, 255, 0.05); }
+        .custom-scroll-container { scrollbar-width: thin; scrollbar-color: #dc2626 rgba(255, 255, 255, 0.02); }
       `}</style>
 
       {isLoggedIn ? (
