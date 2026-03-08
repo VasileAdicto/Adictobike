@@ -346,6 +346,13 @@ export default function BikeConfigurator() {
 
   .no-scrollbar::-webkit-scrollbar { display: none; }
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+  /* АНІМАЦІЯ: для напису Scroll >> */
+  @keyframes slideHint { 
+    0%, 100% { transform: translateX(0); opacity: 0.5; } 
+    50% { transform: translateX(5px); opacity: 1; } 
+  }
+  .animate-slide-hint { animation: slideHint 1.5s infinite; }
 `}</style>
 
       {isLoggedIn ? (
