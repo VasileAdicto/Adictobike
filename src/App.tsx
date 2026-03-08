@@ -438,37 +438,60 @@ export default function BikeConfigurator() {
   </div> {/* КІНЕЦЬ FLEX/GRID КОНТЕЙНЕРА */}
 </main> {/* КІНЕЦЬ MAIN */}
 
-      <div className="col-span-3 flex justify-end items-center">
-  <button 
-    type="button"
-    onClick={(e) => {
-      e.preventDefault();
-      if (filteredOptions.length > 0 && !selections[currentStep.id]) { 
-        setError("Select!"); 
-        return; 
-      }
-      setError(null);
-      currentStepIndex < steps.length - 1 ? setCurrentStepIndex(currentStepIndex + 1) : setIsFinished(true);
-    }} 
-    className={cn(
-      // ЗАГАЛЬНІ СТИЛІ
-      "flex items-center gap-2 font-black uppercase text-[10px] italic transition-all active:scale-95",
-      
-      // МОБІЛЬНА ВЕРСІЯ (Base)
-      "bg-transparent text-red-600 px-0 shadow-none border-none outline-none",
-      
-      // ДЕСКТОПНА ВЕРСІЯ (lg)
-      "lg:bg-red-600 lg:text-white lg:h-[32px] lg:px-6 lg:rounded-lg lg:hover:bg-red-700 lg:shadow-lg lg:shadow-red-600/20"
-    )}
-  >
-    <span>{currentStepIndex === steps.length - 1 ? 'Finish' : 'Next'}</span>
-    <ChevronRight size={14} strokeWidth={3} className="shrink-0" />
-  </button>
-</div>
-        </div>
-      </div>
-    </div>
-  );
+      {/* --- FOOTER --- */}
+      <div className="fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur-2xl border-t border-white/5 z-40">
+        <div className="max-w-[1500px] mx-auto px-4 lg:px-6 py-6 grid grid-cols-12 gap-2 items-center">
+          
+          {/* BACK BUTTON */}
+          <button 
+            type="button"
+            onClick={() => currentStepIndex > 0 && setCurrentStepIndex(currentStepIndex - 1)} 
+            className="col-span-3 lg:col-span-2 flex items-center gap-1 text-zinc-500 hover:text-white transition-all font-black uppercase text-[10px] italic"
+          >
+            <ChevronLeft size={20} /> Back
+          </button>
+
+          {/* STATS (WEIGHT & PRICE) */}
+          <div className="col-span-6 lg:col-span-7 flex justify-center lg:justify-end items-center gap-4 lg:gap-10">
+            <div className="text-center lg:text-right text-zinc-300">
+              <p className="text-[7px] text-zinc-600 uppercase font-black mb-0.5 italic">Weight</p>
+              <p className="font-mono text-xs">{selectedComponents.reduce((acc, c) => acc + c.weight, 0)}g</p>
+            </div>
+            <div className="h-8 w-px bg-white/10" />
+            <div className="text-center lg:text-right text-zinc-300">
+              <p className="text-[7px] text-zinc-600 uppercase font-black mb-0.5 italic">Price</p>
+              <p className="font-mono text-xs text-red-600">€{selectedComponents.reduce((acc, c) => acc + c.price, 0).toLocaleString()}</p>
+            </div>
+          </div>
+
+          {/* NEXT / FINISH BUTTON */}
+          <div className="col-span-3 flex justify-end items-center">
+            <button 
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                if (filteredOptions.length > 0 && !selections[currentStep.id]) { 
+                  setError("Select!"); 
+                  return; 
+                }
+                setError(null);
+                currentStepIndex < steps.length - 1 ? setCurrentStepIndex(currentStepIndex + 1) : setIsFinished(true);
+              }} 
+              className={cn(
+                "flex items-center gap-2 font-black uppercase text-[10px] italic transition-all active:scale-95",
+                "bg-transparent text-red-600 px-0 shadow-none border-none outline-none",
+                "lg:bg-red-600 lg:text-white lg:h-[32px] lg:px-6 lg:rounded-lg lg:hover:bg-red-700 lg:shadow-lg lg:shadow-red-600/20"
+              )}
+            >
+              <span>{currentStepIndex === steps.length - 1 ? 'Finish' : 'Next'}</span>
+              <ChevronRight size={14} strokeWidth={3} className="shrink-0" />
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function SummaryView({ selections, onReset }: any) {
