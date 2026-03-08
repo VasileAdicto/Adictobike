@@ -375,44 +375,55 @@ export default function BikeConfigurator() {
       )}
 
       <main className="max-w-[1500px] mx-auto px-4 lg:px-6 pt-2 lg:pt-3">
-        <div className="flex flex-col lg:grid lg:grid-cols-12 gap-6 lg:gap-10 lg:h-[550px] items-stretch">
-          <div className="lg:col-span-9 flex flex-col gap-2 order-1">
-            <div className="flex overflow-x-auto no-scrollbar gap-x-6 gap-y-2 pb-2">
-              {steps.map((step, idx) => (
-                <button key={step.id} onClick={() => setCurrentStepIndex(idx)} className={cn("transition-all duration-300 text-[10px] font-black italic uppercase tracking-widest pb-1 border-b-2 whitespace-nowrap", idx === currentStepIndex ? "text-red-600 border-red-600 drop-shadow-[0_0_9px_rgba(255,0,0,0.3)]" : "text-white opacity-20 border-transparent hover:opacity-100")}>{step.title}</button>
-              ))}
-            </div>
-            <div className="h-[280px] md:h-[400px] lg:flex-1 relative"><Visualizer selectedComponents={selectedComponents} offsets={offsets} showGrid={showGrid} gridSize={gridSize} isZoomed={isZoomed} zoomScale={zoomScale} /></div>
-          </div>
-          <div className="lg:col-span-3 flex flex-col bg-zinc-900/40 rounded-[2.5rem] border border-white/5 p-4 lg:p-6 relative overflow-hidden order-2 shadow-2xl">
-  <div className="flex-1 overflow-x-auto lg:overflow-y-auto lg:overflow-x-hidden custom-scroll-container pb-2 lg:pb-0" style={{ display: 'flex', flexDirection: 'column' }}>
-    <div className="flex flex-row lg:flex-col gap-3 min-w-full">
-      <AnimatePresence mode="popLayout">
-        {filteredOptions.map((option) => (
-          <div key={option.id} className="w-[31%] min-w-[31%] lg:w-full lg:min-w-0 shrink-0">
-            <OptionCard 
-              component={option} 
-              isSelected={selections[currentStep.id] === option.id} 
-              onClick={() => setSelections(prev => ({...prev, [currentStep.id]: option.id}))} 
-            />
-          </div>
+  <div className="flex flex-col lg:grid lg:grid-cols-12 gap-6 lg:gap-10 lg:h-[550px] items-stretch">
+    
+    {/* ЛІВА ЧАСТИНА: ВІЗУАЛІЗАТОР */}
+    <div className="lg:col-span-9 flex flex-col gap-2 order-1">
+      <div className="flex overflow-x-auto no-scrollbar gap-x-6 gap-y-2 pb-2">
+        {steps.map((step, idx) => (
+          <button 
+            key={step.id} 
+            onClick={() => setCurrentStepIndex(idx)} 
+            className={cn("transition-all duration-300 text-[10px] font-black italic uppercase tracking-widest pb-1 border-b-2 whitespace-nowrap", idx === currentStepIndex ? "text-red-600 border-red-600 drop-shadow-[0_0_9px_rgba(255,0,0,0.3)]" : "text-white opacity-20 border-transparent hover:opacity-100")}
+          >
+            {step.title}
+          </button>
         ))}
-      </AnimatePresence>
+      </div>
+      <div className="h-[280px] md:h-[400px] lg:flex-1 relative">
+        <Visualizer selectedComponents={selectedComponents} offsets={offsets} showGrid={showGrid} gridSize={gridSize} isZoomed={isZoomed} zoomScale={zoomScale} />
+      </div>
     </div>
-  </div>
 
-  {/* ТУТ ВСТАВЛЯЄМО ПІДКАЗКУ (ПІСЛЯ ЗАКРИТТЯ СКРОЛ-КОНТЕЙНЕРА) */}
-  {filteredOptions.length > 3 && (
-    <div className="lg:hidden mt-3 flex items-center justify-center gap-1.5 text-zinc-500 opacity-60 animate-slide-hint">
-      <span className="text-[8px] font-black uppercase tracking-[0.2em] italic text-zinc-400">Scroll</span>
-      <ChevronsRight size={10} strokeWidth={3} className="text-zinc-400" />
-    </div>
-  )}
-</div> 
-{/* КІНЕЦЬ ПРАВОЇ ПАНЕЛІ */}
-          </div>
-        </div>
-      </main>
+    {/* ПРАВА ЧАСТИНА: КАРТКИ ТОВАРІВ */}
+    <div className="lg:col-span-3 flex flex-col bg-zinc-900/40 rounded-[2.5rem] border border-white/5 p-4 lg:p-6 relative overflow-hidden order-2 shadow-2xl">
+      <div className="flex-1 overflow-x-auto lg:overflow-y-auto lg:overflow-x-hidden custom-scroll-container pb-2 lg:pb-0" style={{ display: 'flex', flexDirection: 'column' }}>
+        <div className="flex flex-row lg:flex-col gap-3 min-w-full">
+          <AnimatePresence mode="popLayout">
+            {filteredOptions.map((option) => (
+              <div key={option.id} className="w-[31%] min-w-[31%] lg:w-full lg:min-w-0 shrink-0">
+                <OptionCard 
+                  component={option} 
+                  isSelected={selections[currentStep.id] === option.id} 
+                  onClick={() => setSelections(prev => ({...prev, [currentStep.id]: option.id}))} 
+                />
+              </div>
+            ))}
+          </AnimatePresence>
+        </div>
+      </div>
+
+      {/* ПІДКАЗКА Scroll >> */}
+      {filteredOptions.length > 3 && (
+        <div className="lg:hidden mt-3 flex items-center justify-center gap-1.5 text-zinc-500 opacity-60 animate-slide-hint">
+          <span className="text-[8px] font-black uppercase tracking-[0.2em] italic text-zinc-400">Scroll</span>
+          <ChevronRight size={10} strokeWidth={3} className="text-zinc-400" />
+        </div>
+      )}
+    </div> {/* КІНЕЦЬ ПРАВОЇ ПАНЕЛІ */}
+
+  </div> {/* КІНЕЦЬ FLEX/GRID КОНТЕЙНЕРА */}
+</main> {/* КІНЕЦЬ MAIN */}
 
       <div className="fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur-2xl border-t border-white/5 z-40">
         <div className="max-w-[1500px] mx-auto px-4 lg:px-6 py-6 grid grid-cols-12 gap-2 items-center">
