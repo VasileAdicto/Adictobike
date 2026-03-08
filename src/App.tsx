@@ -41,8 +41,11 @@ const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
   const [rememberMe, setRememberMe] = useState(true);
   const [error, setError] = useState('');
 
+  // Автоматичний вхід, якщо збережено "Remember Me"
   useEffect(() => {
-    if (localStorage.getItem('adicto_auth') === 'true') onLogin();
+    if (localStorage.getItem('adicto_auth') === 'true') {
+      onLogin();
+    }
   }, [onLogin]);
 
   const handleLogin = (e: React.FormEvent) => {
@@ -70,19 +73,15 @@ const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
         </div>
 
         <div className="space-y-4">
+          <input 
+            type="email" placeholder="Email"
+            className="w-full bg-black border border-white/10 p-4 rounded-2xl text-white outline-none focus:border-red-600 transition-all text-sm font-mono"
+            value={email} onChange={(e) => setEmail(e.target.value)}
+          />
           <div className="relative">
-            <User className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
-            <input 
-              type="email" placeholder="Email"
-              className="w-full bg-black border border-white/10 p-4 pl-12 rounded-2xl text-white outline-none focus:border-red-600 transition-all text-sm font-mono"
-              value={email} onChange={(e) => setEmail(e.target.value)}
-            />
-          </div>
-          <div className="relative">
-            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
             <input 
               type={showPass ? "text" : "password"} placeholder="Password"
-              className="w-full bg-black border border-white/10 p-4 pl-12 rounded-2xl text-white outline-none focus:border-red-600 transition-all text-sm font-mono"
+              className="w-full bg-black border border-white/10 p-4 rounded-2xl text-white outline-none focus:border-red-600 transition-all text-sm font-mono"
               value={pass} onChange={(e) => setPass(e.target.value)}
             />
             <button 
@@ -156,6 +155,8 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent }: any) =
     }));
   };
 
+  const currentTune = activeComponent ? (offsets[activeComponent.id] || { s: 1, x: 0, y: 0 }) : { s: 1, x: 0, y: 0 };
+
   return (
     <div className="z-[100] sticky top-0 shadow-2xl">
       <motion.div initial={{ y: -50 }} animate={{ y: 0 }} className="bg-zinc-900 border-b border-red-600/50 p-3 flex flex-wrap gap-4 items-center justify-center backdrop-blur-md">
@@ -187,40 +188,40 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent }: any) =
             {/* Scale Control */}
             <div className="flex flex-col gap-3 min-w-[300px] flex-1">
               <div className="flex justify-between items-center">
-                <label className="text-[9px] uppercase text-zinc-500 font-black tracking-widest">Size (Scale)</label>
+                <label className="text-[9px] uppercase text-zinc-500 font-black tracking-widest">Size (0.8 - 1.2)</label>
                 <input 
-                  type="number" step="0.01" value={offsets[activeComponent.id]?.s || 1}
+                  type="number" step="0.001" value={currentTune.s}
                   onChange={e => updateTune('s', parseFloat(e.target.value))}
-                  className="bg-zinc-800 text-white text-[10px] w-14 text-center p-1 rounded font-mono border border-white/10"
+                  className="bg-zinc-800 text-white text-[10px] w-16 text-center p-1 rounded font-mono border border-white/10 outline-none focus:border-red-600"
                 />
               </div>
-              <input type="range" min="0.8" max="1.2" step="0.001" value={offsets[activeComponent.id]?.s || 1} onChange={e => updateTune('s', parseFloat(e.target.value))} className="w-full h-1.5 bg-zinc-800 rounded-lg appearance-none accent-red-600 cursor-pointer" />
+              <input type="range" min="0.8" max="1.2" step="0.001" value={currentTune.s} onChange={e => updateTune('s', parseFloat(e.target.value))} className="w-full h-1.5 bg-zinc-800 rounded-lg appearance-none accent-red-600 cursor-pointer" />
             </div>
 
             {/* Pos X Control */}
             <div className="flex flex-col gap-3 min-w-[300px] flex-1">
               <div className="flex justify-between items-center">
-                <label className="text-[9px] uppercase text-zinc-500 font-black tracking-widest">Position X (Horizontal)</label>
+                <label className="text-[9px] uppercase text-zinc-500 font-black tracking-widest">Pos X (-40 / +40)</label>
                 <input 
-                  type="number" value={offsets[activeComponent.id]?.x || 0}
+                  type="number" value={currentTune.x}
                   onChange={e => updateTune('x', parseInt(e.target.value))}
-                  className="bg-zinc-800 text-white text-[10px] w-14 text-center p-1 rounded font-mono border border-white/10"
+                  className="bg-zinc-800 text-white text-[10px] w-16 text-center p-1 rounded font-mono border border-white/10 outline-none focus:border-red-600"
                 />
               </div>
-              <input type="range" min="-40" max="40" step="1" value={offsets[activeComponent.id]?.x || 0} onChange={e => updateTune('x', parseInt(e.target.value))} className="w-full h-1.5 bg-zinc-800 rounded-lg appearance-none accent-red-600 cursor-pointer" />
+              <input type="range" min="-40" max="40" step="1" value={currentTune.x} onChange={e => updateTune('x', parseInt(e.target.value))} className="w-full h-1.5 bg-zinc-800 rounded-lg appearance-none accent-red-600 cursor-pointer" />
             </div>
 
             {/* Pos Y Control */}
             <div className="flex flex-col gap-3 min-w-[300px] flex-1">
               <div className="flex justify-between items-center">
-                <label className="text-[9px] uppercase text-zinc-500 font-black tracking-widest">Position Y (Vertical)</label>
+                <label className="text-[9px] uppercase text-zinc-500 font-black tracking-widest">Pos Y (-40 / +40)</label>
                 <input 
-                  type="number" value={offsets[activeComponent.id]?.y || 0}
+                  type="number" value={currentTune.y}
                   onChange={e => updateTune('y', parseInt(e.target.value))}
-                  className="bg-zinc-800 text-white text-[10px] w-14 text-center p-1 rounded font-mono border border-white/10"
+                  className="bg-zinc-800 text-white text-[10px] w-16 text-center p-1 rounded font-mono border border-white/10 outline-none focus:border-red-600"
                 />
               </div>
-              <input type="range" min="-40" max="40" step="1" value={offsets[activeComponent.id]?.y || 0} onChange={e => updateTune('y', parseInt(e.target.value))} className="w-full h-1.5 bg-zinc-800 rounded-lg appearance-none accent-red-600 cursor-pointer" />
+              <input type="range" min="-40" max="40" step="1" value={currentTune.y} onChange={e => updateTune('y', parseInt(e.target.value))} className="w-full h-1.5 bg-zinc-800 rounded-lg appearance-none accent-red-600 cursor-pointer" />
             </div>
           </div>
         </motion.div>
@@ -274,6 +275,16 @@ const OptionCard = ({ component, isSelected, onClick }: { component: Component, 
   </motion.button>
 );
 
+// --- MAIN CONFIGURATOR ---
+const INITIAL_STEPS: Step[] = [
+  { id: 'frame', title: 'Frame', options: [] }, { id: 'wheelset', title: 'Wheelset', options: [] },
+  { id: 'tyres', title: 'Tyres', options: [] }, { id: 'cockpit', title: 'Cockpit', options: [] },
+  { id: 'tape', title: 'Tape', options: [] }, { id: 'saddle', title: 'Saddle', options: [] },
+  { id: 'shifters', title: 'Shifters', options: [] }, { id: 'crankset', title: 'Crankset', options: [] },
+  { id: 'derailleurs', title: 'Derailleurs', options: [] }, { id: 'cassette', title: 'Cassette', options: [] },
+  { id: 'discs', title: 'Discs', options: [] }
+];
+
 export default function BikeConfigurator() {
   const [isAdminMode, setIsAdminMode] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -285,7 +296,8 @@ export default function BikeConfigurator() {
     if (path === '/admin' || urlParams.get('admin') === 'true') {
       setIsAdminMode(true);
     }
-    fetch('/offsets.json').then(r => r.json()).then(data => setOffsets(data)).catch(() => {});
+    // Load offsets from file
+    fetch('/offsets.json').then(r => r.ok ? r.json() : {}).then(data => setOffsets(data)).catch(() => setOffsets({}));
   }, []);
 
   const [steps, setSteps] = useState<Step[]>(INITIAL_STEPS);
@@ -368,6 +380,12 @@ export default function BikeConfigurator() {
     return currentStep.options.find(o => o.id === selections[currentStep.id]);
   }, [selections, currentStep]);
 
+  const jumpToStep = (index: number) => {
+    if (index === 0 || !!selections[steps[index - 1]?.id] || index < currentStepIndex) {
+      setCurrentStepIndex(index); setError(null);
+    }
+  };
+
   if (isAdminMode && !isLoggedIn) return <AdminLogin onLogin={() => setIsLoggedIn(true)} />;
   if (isFinished) return <SummaryView selections={selectedComponents} onReset={() => window.location.reload()} />;
 
@@ -387,7 +405,7 @@ export default function BikeConfigurator() {
           <div className="lg:col-span-9 flex flex-col gap-2 order-1">
             <div className="flex overflow-x-auto no-scrollbar lg:overflow-visible lg:flex-wrap justify-start items-center px-4 gap-x-6 gap-y-2 pb-2">
               {steps.map((step, idx) => (
-                <button key={step.id} ref={el => stepRefs.current[idx] = el} onClick={() => { setCurrentStepIndex(idx); setError(null); }} 
+                <button key={step.id} ref={el => stepRefs.current[idx] = el} onClick={() => jumpToStep(idx)} 
                   className={cn("transition-all duration-300 text-[10px] font-black italic uppercase tracking-widest pb-1 border-b-2 whitespace-nowrap", 
                   idx === currentStepIndex ? "text-red-600 border-red-600 drop-shadow-[0_0_9px_rgba(255,0,0,0.3)]" : "text-white opacity-20 border-transparent hover:opacity-100")}
                 >{step.title}</button>
@@ -395,6 +413,7 @@ export default function BikeConfigurator() {
             </div>
             <div className="h-[280px] md:h-[400px] lg:flex-1"><Visualizer selectedComponents={selectedComponents} offsets={offsets} /></div>
           </div>
+
           <div className="lg:col-span-3 flex flex-col bg-zinc-900/40 rounded-[2.5rem] border border-white/5 p-4 lg:p-6 relative overflow-hidden order-2">
             <style>{`.custom-scroll-container::-webkit-scrollbar {height: 3px;}.custom-scroll-container::-webkit-scrollbar-track {background: rgba(255, 255, 255, 0.05);}.custom-scroll-container::-webkit-scrollbar-thumb {background: #ef4444;border-radius: 10px;}.custom-scroll-container {scrollbar-width: thin;scrollbar-color: #ef4444 rgba(255, 255, 255, 0.05);}`}</style>
             <div ref={listRef} className="flex-1 overflow-x-auto lg:overflow-y-auto lg:overflow-x-hidden custom-scroll-container pb-2 lg:pb-0" style={{ display: 'flex', flexDirection: 'column' }}>
