@@ -131,7 +131,7 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
         <div className="h-4 w-px bg-white/10 mx-2" />
 
         <button onClick={() => setShowGrid(!showGrid)} className={cn("px-3 py-1 rounded text-[9px] font-bold uppercase transition-all flex items-center gap-2", showGrid ? "bg-red-600 text-white" : "bg-zinc-800 text-zinc-400")}>
-          <Grid3X3 size={10}/> Grid
+          <Grid3X3 size={10}/> Grid 2.5px
         </button>
 
         <button onClick={() => setIsZoomed(!isZoomed)} className={cn("px-3 py-1 rounded text-[9px] font-bold uppercase transition-all flex items-center gap-2", isZoomed ? "bg-red-600 text-white" : "bg-zinc-800 text-zinc-400")}>
@@ -182,17 +182,23 @@ const Visualizer = ({ selectedComponents, offsets, showGrid, isZoomed }: any) =>
   return (
     <div id="bike-visualizer" className="relative w-full h-full bg-zinc-950 rounded-[1.5rem] lg:rounded-[2.5rem] overflow-hidden border border-white/5 shadow-[0_0_100px_rgba(0,0,0,0.5)] flex items-center justify-center cursor-crosshair">
       
-      {/* 5px Grid Overlay */}
+      {/* 2.5px Grid Overlay */}
       {showGrid && (
         <div className="absolute inset-0 z-[60] pointer-events-none opacity-20" 
-             style={{ backgroundImage: 'linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)', backgroundSize: '5px 5px' }} />
+             style={{ backgroundImage: 'linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)', backgroundSize: '2.5px 2.5px' }} />
       )}
 
+      {/* Контейнер для зуму та перетягування */}
       <motion.div 
         drag={isZoomed}
-        dragConstraints={{ left: -1000, right: 1000, top: -1000, bottom: 1000 }}
-        animate={{ scale: isZoomed ? 5 : 1 }}
-        transition={{ type: 'spring', damping: 20, stiffness: 100 }}
+        dragMomentum={false}
+        dragConstraints={{ left: -1500, right: 1500, top: -1500, bottom: 1500 }}
+        animate={{ 
+          scale: isZoomed ? 5 : 1,
+          x: isZoomed ? undefined : 0, // Повернення в центр по X
+          y: isZoomed ? undefined : 0  // Повернення в центр по Y
+        }}
+        transition={{ type: 'spring', damping: 25, stiffness: 150 }}
         className="relative w-full h-full flex items-center justify-center"
       >
         <AnimatePresence mode="popLayout">
@@ -214,7 +220,7 @@ const Visualizer = ({ selectedComponents, offsets, showGrid, isZoomed }: any) =>
 
       {isZoomed && (
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-red-600 text-white px-4 py-1 rounded-full text-[8px] font-black uppercase flex items-center gap-2 z-[70] shadow-2xl">
-          <Move size={10}/> Drag to Move
+          <Move size={10}/> Drag to Explore
         </div>
       )}
     </div>
