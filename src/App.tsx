@@ -385,17 +385,31 @@ export default function BikeConfigurator() {
             <div className="h-[280px] md:h-[400px] lg:flex-1 relative"><Visualizer selectedComponents={selectedComponents} offsets={offsets} showGrid={showGrid} gridSize={gridSize} isZoomed={isZoomed} zoomScale={zoomScale} /></div>
           </div>
           <div className="lg:col-span-3 flex flex-col bg-zinc-900/40 rounded-[2.5rem] border border-white/5 p-4 lg:p-6 relative overflow-hidden order-2 shadow-2xl">
-            <div className="flex-1 overflow-x-auto lg:overflow-y-auto lg:overflow-x-hidden custom-scroll-container pb-2 lg:pb-0" style={{ display: 'flex', flexDirection: 'column' }}>
-                <div className="flex flex-row lg:flex-col gap-3 min-w-full">
-                  <AnimatePresence mode="popLayout">
-                    {filteredOptions.map((option) => (
-                      <div key={option.id} className="w-[31%] min-w-[31%] lg:w-full lg:min-w-0 shrink-0">
-                        <OptionCard component={option} isSelected={selections[currentStep.id] === option.id} onClick={() => setSelections(prev => ({...prev, [currentStep.id]: option.id}))} />
-                      </div>
-                    ))}
-                  </AnimatePresence>
-                </div>
-            </div>
+  <div className="flex-1 overflow-x-auto lg:overflow-y-auto lg:overflow-x-hidden custom-scroll-container pb-2 lg:pb-0" style={{ display: 'flex', flexDirection: 'column' }}>
+    <div className="flex flex-row lg:flex-col gap-3 min-w-full">
+      <AnimatePresence mode="popLayout">
+        {filteredOptions.map((option) => (
+          <div key={option.id} className="w-[31%] min-w-[31%] lg:w-full lg:min-w-0 shrink-0">
+            <OptionCard 
+              component={option} 
+              isSelected={selections[currentStep.id] === option.id} 
+              onClick={() => setSelections(prev => ({...prev, [currentStep.id]: option.id}))} 
+            />
+          </div>
+        ))}
+      </AnimatePresence>
+    </div>
+  </div>
+
+  {/* ТУТ ВСТАВЛЯЄМО ПІДКАЗКУ (ПІСЛЯ ЗАКРИТТЯ СКРОЛ-КОНТЕЙНЕРА) */}
+  {filteredOptions.length > 3 && (
+    <div className="lg:hidden mt-3 flex items-center justify-center gap-1.5 text-zinc-500 opacity-60 animate-slide-hint">
+      <span className="text-[8px] font-black uppercase tracking-[0.2em] italic text-zinc-400">Scroll</span>
+      <ChevronsRight size={10} strokeWidth={3} className="text-zinc-400" />
+    </div>
+  )}
+</div> 
+{/* КІНЕЦЬ ПРАВОЇ ПАНЕЛІ */}
           </div>
         </div>
       </main>
