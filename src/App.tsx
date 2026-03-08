@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Download, CheckCircle2, Upload, Database, Lock, User, Settings2, Save, RotateCcw, Grid3X3, Search, Move, FolderOpen, Key } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Download, CheckCircle2, Upload, Database, Lock, User, Settings2, Save, RotateCcw, Grid3X3, Search, Move, FolderOpen, Key, Eye, EyeOff, LogOut } from 'lucide-react';
 import { cn } from './lib/utils';
 
 import jsPDF from 'jspdf';
@@ -81,9 +81,10 @@ const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
 };
 
 // --- ADMIN PANEL COMPONENT ---
-const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid, setShowGrid, gridSize, setGridSize, isZoomed, setIsZoomed, zoomScale, setZoomScale }: any) => {
+const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid, setShowGrid, gridSize, setGridSize, isZoomed, setIsZoomed, zoomScale, setZoomScale, onLogout }: any) => {
   const [selectedCat, setSelectedCat] = useState('excel');
   const [status, setStatus] = useState('');
+  const [showToken, setShowToken] = useState(false);
   const [token, setToken] = useState(localStorage.getItem('adicto_github_token') || ''); 
   const REPO = "VasileAdicto/Adictobike";
   const BRANCH = "main";
@@ -125,20 +126,41 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
     setOffsets((prev: any) => ({ ...prev, [activeComponent.id]: { ...(prev[activeComponent.id] || { s: 1, x: 0, y: 0 }), [key]: val } }));
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, isFolder: boolean) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      Array.from(files).forEach((file: any) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => {
+          const content = (reader.result as string).split(',')[1];
+          const fileName = isFolder ? file.webkitRelativePath : file.name;
+          const path = selectedCat === 'excel' ? "public/data.xlsx" : `public/parts/${selectedCat}/${fileName}`;
+          saveToGithub(path, content);
+        };
+      });
+      // ВАЖЛИВО: Скидаємо інпут, щоб можна було завантажити той самий файл або наступний без оновлення
+      e.target.value = "";
+    }
+  };
+
   return (
     <div className="z-[100] sticky top-0 shadow-2xl font-sans text-white">
       <motion.div initial={{ y: -50 }} animate={{ y: 0 }} className="bg-zinc-900 border-b border-white/5 p-2 flex gap-3 items-center justify-center backdrop-blur-md">
         
-        {/* ВІДОБРАЖЕННЯ ПОЛЯ ТОКЕНА */}
-        <div className="flex items-center gap-2 bg-black/40 px-2 py-1 rounded-lg border border-white/10 focus-within:border-red-600 transition-all">
+        {/* TOKEN FIELD WITH EYE ICON */}
+        <div className="flex items-center gap-2 bg-black/40 px-2 py-1 rounded-lg border border-white/10 focus-within:border-red-600 transition-all group relative">
           <Key size={10} className={token ? "text-red-600" : "text-zinc-500"} />
           <input 
-            type="password" 
+            type={showToken ? "text" : "password"} 
             placeholder="TOKEN" 
             value={token}
             onChange={(e) => setToken(e.target.value)}
             className="bg-transparent text-[9px] w-20 outline-none font-mono uppercase"
           />
+          <button onClick={() => setShowToken(!showToken)} className="text-zinc-600 hover:text-white transition-colors">
+            {showToken ? <EyeOff size={10} /> : <Eye size={10} />}
+          </button>
         </div>
 
         <select value={selectedCat} onChange={(e) => setSelectedCat(e.target.value)} className="bg-black border border-white/10 text-[9px] px-2 py-1 rounded uppercase font-bold outline-none focus:border-red-600 transition-all">
@@ -149,23 +171,11 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
         <div className="flex gap-1">
           <label className="cursor-pointer bg-zinc-800 text-zinc-300 px-2 py-1 rounded text-[9px] font-bold uppercase hover:bg-zinc-700 flex items-center gap-1 italic">
             <Upload size={10}/> Files
-            <input type="file" className="hidden" multiple onChange={(e) => {
-                const files = e.target.files;
-                if (files) Array.from(files).forEach(file => {
-                  const reader = new FileReader(); reader.readAsDataURL(file);
-                  reader.onload = () => saveToGithub(selectedCat === 'excel' ? "public/data.xlsx" : `public/parts/${selectedCat}/${file.name}`, (reader.result as string).split(',')[1]);
-                });
-            }} />
+            <input type="file" className="hidden" multiple onChange={(e) => handleFileChange(e, false)} />
           </label>
           <label className="cursor-pointer bg-zinc-800 text-zinc-300 px-2 py-1 rounded text-[9px] font-bold uppercase hover:bg-zinc-700 flex items-center gap-1 italic">
             <FolderOpen size={10}/> Folder
-            <input type="file" className="hidden" webkitdirectory="" onChange={(e: any) => {
-                const files = e.target.files;
-                if (files) Array.from(files).forEach((file: any) => {
-                  const reader = new FileReader(); reader.readAsDataURL(file);
-                  reader.onload = () => saveToGithub(`public/parts/${selectedCat}/${file.webkitRelativePath}`, (reader.result as string).split(',')[1]);
-                });
-            }} />
+            <input type="file" className="hidden" webkitdirectory="" onChange={(e: any) => handleFileChange(e, true)} />
           </label>
         </div>
 
@@ -190,6 +200,11 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
             </div>
           )}
         </div>
+
+        {/* LOGOUT BUTTON */}
+        <button onClick={onLogout} className="text-zinc-500 hover:text-red-600 transition-colors p-1" title="Logout">
+          <LogOut size={14} />
+        </button>
 
         {status && <span className="text-[8px] font-mono uppercase text-red-600 animate-pulse ml-1">{status}</span>}
       </motion.div>
@@ -256,17 +271,22 @@ export default function BikeConfigurator() {
   const [isAdminMode, setIsAdminMode] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [offsets, setOffsets] = useState<Record<string, OffsetData>>({});
-  
   const [showGrid, setShowGrid] = useState(false);
   const [gridSize, setGridSize] = useState(20);
   const [zoomScale, setZoomScale] = useState(5);
   const [isZoomed, setIsZoomed] = useState(false);
-
   const [steps, setSteps] = useState<Step[]>(INITIAL_STEPS);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [selections, setSelections] = useState<Record<string, string>>({});
   const [isFinished, setIsFinished] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const handleLogout = () => {
+    localStorage.removeItem('adicto_auth');
+    localStorage.removeItem('adicto_github_token');
+    setIsLoggedIn(false);
+    window.location.reload();
+  };
 
   useEffect(() => {
     const path = window.location.pathname; 
@@ -331,7 +351,7 @@ export default function BikeConfigurator() {
       `}</style>
 
       {isLoggedIn ? (
-        <AdminPanel categories={INITIAL_STEPS.map(s => s.title)} offsets={offsets} setOffsets={setOffsets} activeComponent={activeComponentForTuning} showGrid={showGrid} setShowGrid={setShowGrid} gridSize={gridSize} setGridSize={setGridSize} isZoomed={isZoomed} setIsZoomed={setIsZoomed} zoomScale={zoomScale} setZoomScale={setZoomScale} />
+        <AdminPanel categories={INITIAL_STEPS.map(s => s.title)} offsets={offsets} setOffsets={setOffsets} activeComponent={activeComponentForTuning} showGrid={showGrid} setShowGrid={setShowGrid} gridSize={gridSize} setGridSize={setGridSize} isZoomed={isZoomed} setIsZoomed={setIsZoomed} zoomScale={zoomScale} setZoomScale={setZoomScale} onLogout={handleLogout} />
       ) : (
         <nav className="border-b border-white/5 px-4 lg:px-8 py-2 flex justify-between items-center bg-black/80 backdrop-blur-2xl sticky top-0 z-50"><div className="flex items-center gap-4 pl-2"><img src="/design/Logo.png" alt="Logo" className="h-4 lg:h-6 w-auto object-contain" /></div><div className="text-zinc-400 font-mono text-[7px] pr-2 opacity-70 uppercase tracking-widest italic">Build by Vasile & AI</div></nav>
       )}
