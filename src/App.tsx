@@ -84,24 +84,53 @@ const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
 const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid, setShowGrid, gridSize, setGridSize, isZoomed, setIsZoomed, zoomScale, setZoomScale }: any) => {
   const [selectedCat, setSelectedCat] = useState('excel');
   const [status, setStatus] = useState('');
-  const GITHUB_TOKEN = "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"; 
+  const [token, setToken] = useState(localStorage.getItem('adicto_github_token') || ''); 
   const REPO = "VasileAdicto/Adictobike";
   const BRANCH = "main";
 
   const saveToGithub = async (path: string, content: string, isJson = false) => {
+    if (!token) {
+        setStatus("❌ No Token Provided");
+        return;
+    }
     setStatus("Saving...");
     try {
       let sha = "";
-      const getRes = await fetch(`https://api.github.com/repos/${REPO}/contents/${path}`, { headers: { Authorization: `token ${GITHUB_TOKEN}` } });
+      const getRes = await fetch(`https://api.github.com/repos/${REPO}/contents/${path}`, { 
+        headers: { Authorization: `token ${token}` } 
+      });
       if (getRes.ok) { const data = await getRes.json(); sha = data.sha; }
+      
       const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${path}`, {
         method: "PUT",
-        headers: { Authorization: `token ${GITHUB_TOKEN}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ message: `Admin update: ${path}`, content: isJson ? btoa(unescape(encodeURIComponent(content))) : content, sha: sha || undefined, branch: BRANCH }),
+        headers: { Authorization: `token ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          message: `Admin update: ${path}`, 
+          content: isJson ? btoa(unescape(encodeURIComponent(content))) : content, 
+          sha: sha || undefined, 
+          branch: BRANCH 
+        }),
       });
-      if (res.ok) setStatus("✅ Success!"); else setStatus("❌ Error");
+      if (res.ok) {
+          setStatus("✅ Success!");
+          localStorage.setItem('adicto_github_token', token); // Зберігаємо тільки у ВАС в браузері
+      } else {
+          setStatus("❌ Auth Error");
+      }
     } catch (err) { setStatus("❌ Failed"); }
-  };
+};
+
+// В UI адмінки додаємо поле для токена (показувати тільки якщо він порожній або за бажанням)
+// ... у блоці return адмінки:
+{!localStorage.getItem('adicto_github_token') && (
+    <input 
+      type="password" 
+      placeholder="Enter GitHub Token" 
+      className="bg-black border border-red-600/50 text-[10px] p-1 rounded w-32"
+      value={token}
+      onChange={(e) => setToken(e.target.value)}
+    />
+)}
 
   const updateTune = (key: keyof OffsetData, val: number) => {
     if (!activeComponent) return;
