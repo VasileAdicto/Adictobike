@@ -139,8 +139,7 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
           saveToGithub(path, content);
         };
       });
-      // ВАЖЛИВО: Скидаємо інпут, щоб можна було завантажити той самий файл або наступний без оновлення
-      e.target.value = "";
+      e.target.value = ""; // Скидання інпуту для наступного завантаження
     }
   };
 
@@ -148,8 +147,8 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
     <div className="z-[100] sticky top-0 shadow-2xl font-sans text-white">
       <motion.div initial={{ y: -50 }} animate={{ y: 0 }} className="bg-zinc-900 border-b border-white/5 p-2 flex gap-3 items-center justify-center backdrop-blur-md">
         
-        {/* TOKEN FIELD WITH EYE ICON */}
-        <div className="flex items-center gap-2 bg-black/40 px-2 py-1 rounded-lg border border-white/10 focus-within:border-red-600 transition-all group relative">
+        {/* TOKEN FIELD WITH EYE AND LOGOUT */}
+        <div className="flex items-center gap-2 bg-black/40 px-2 py-1 rounded-lg border border-white/10 focus-within:border-red-600 transition-all">
           <Key size={10} className={token ? "text-red-600" : "text-zinc-500"} />
           <input 
             type={showToken ? "text" : "password"} 
@@ -158,7 +157,7 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
             onChange={(e) => setToken(e.target.value)}
             className="bg-transparent text-[9px] w-20 outline-none font-mono uppercase"
           />
-          <button onClick={() => setShowToken(!showToken)} className="text-zinc-600 hover:text-white transition-colors">
+          <button onClick={() => setShowToken(!showToken)} className="text-zinc-500 hover:text-white transition-colors">
             {showToken ? <EyeOff size={10} /> : <Eye size={10} />}
           </button>
         </div>
@@ -201,9 +200,8 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
           )}
         </div>
 
-        {/* LOGOUT BUTTON */}
         <button onClick={onLogout} className="text-zinc-500 hover:text-red-600 transition-colors p-1" title="Logout">
-          <LogOut size={14} />
+          <LogOut size={12} />
         </button>
 
         {status && <span className="text-[8px] font-mono uppercase text-red-600 animate-pulse ml-1">{status}</span>}
@@ -212,11 +210,23 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
       {activeComponent && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-black/80 border-b border-white/5 p-2 flex justify-between items-center px-6 backdrop-blur-xl gap-10">
           <div className="flex flex-col gap-1 flex-1">
-            {[ { key: 's', label: 'Size', min: 0.8, max: 1.2, step: 0.001, reset: 1 }, { key: 'x', label: 'Pos X', min: -40, max: 40, step: 1, reset: 0 }, { key: 'y', label: 'Pos Y', min: -40, max: 40, step: 1, reset: 0 } ].map((item) => (
+            {[
+              { key: 's', label: 'Size', min: 0.8, max: 1.2, step: 0.001, reset: 1 },
+              { key: 'x', label: 'Pos X', min: -40, max: 40, step: 1, reset: 0 },
+              { key: 'y', label: 'Pos Y', min: -40, max: 40, step: 1, reset: 0 }
+            ].map((item) => (
               <div key={item.key} className="flex items-center gap-3">
                 <span className="text-[8px] text-zinc-500 font-black w-8 uppercase">{item.label}</span>
-                <input type="range" min={item.min} max={item.max} step={item.step} value={offsets[activeComponent.id]?.[item.key as keyof OffsetData] ?? item.reset} onChange={e => updateTune(item.key as keyof OffsetData, parseFloat(e.target.value))} className="flex-1 h-1 bg-zinc-800 rounded-lg appearance-none accent-red-600 cursor-pointer" />
-                <input type="number" step={item.step} value={offsets[activeComponent.id]?.[item.key as keyof OffsetData] ?? item.reset} onChange={e => updateTune(item.key as keyof OffsetData, parseFloat(e.target.value))} className="bg-transparent text-white text-[9px] w-10 text-right font-mono border-b border-white/5 focus:border-red-600 outline-none" />
+                <input type="range" min={item.min} max={item.max} step={item.step} 
+                  value={offsets[activeComponent.id]?.[item.key as keyof OffsetData] ?? item.reset} 
+                  onChange={e => updateTune(item.key as keyof OffsetData, parseFloat(e.target.value))} 
+                  className="flex-1 h-1 bg-zinc-800 rounded-lg appearance-none accent-red-600 cursor-pointer" 
+                />
+                <input type="number" step={item.step} 
+                  value={offsets[activeComponent.id]?.[item.key as keyof OffsetData] ?? item.reset}
+                  onChange={e => updateTune(item.key as keyof OffsetData, parseFloat(e.target.value))}
+                  className="bg-transparent text-white text-[9px] w-10 text-right font-mono border-b border-white/5 focus:border-red-600 outline-none" 
+                />
                 <button onClick={() => updateTune(item.key as keyof OffsetData, item.reset)} className="text-zinc-600 hover:text-red-600 transition-colors"><RotateCcw size={10}/></button>
               </div>
             ))}
@@ -251,7 +261,7 @@ const Visualizer = ({ selectedComponents, offsets, showGrid, gridSize, isZoomed,
           })}
         </AnimatePresence>
       </motion.div>
-      {isZoomed && <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-red-600 text-white px-4 py-1 rounded-full text-[8px] font-black uppercase flex items-center gap-2 z-[70] shadow-2xl"><Move size={10}/> {zoomScale.toFixed(1)}X - Drag to Move</div>}
+      {isZoomed && <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-red-600 text-white px-4 py-1 rounded-full text-[8px] font-black uppercase flex items-center gap-2 z-[70] shadow-2xl"><Move size={10}/> {zoomScale}X - Drag to Move</div>}
     </div>
   );
 };
@@ -271,15 +281,19 @@ export default function BikeConfigurator() {
   const [isAdminMode, setIsAdminMode] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [offsets, setOffsets] = useState<Record<string, OffsetData>>({});
+  
   const [showGrid, setShowGrid] = useState(false);
   const [gridSize, setGridSize] = useState(20);
   const [zoomScale, setZoomScale] = useState(5);
   const [isZoomed, setIsZoomed] = useState(false);
+
   const [steps, setSteps] = useState<Step[]>(INITIAL_STEPS);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [selections, setSelections] = useState<Record<string, string>>({});
   const [isFinished, setIsFinished] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const currentStep = steps[currentStepIndex] || steps[0];
 
   const handleLogout = () => {
     localStorage.removeItem('adicto_auth');
@@ -323,20 +337,20 @@ export default function BikeConfigurator() {
   }, [selections, currentStepIndex, steps]);
 
   const filteredOptions = useMemo(() => {
-    const currentStep = steps[currentStepIndex] || steps[0];
+    if (!currentStep) return [];
     return currentStep.options.filter(opt => {
       if (!activeLogic) return true;
       if (!opt.logic || opt.logic.trim() === "") return true;
       return opt.logic.trim() === activeLogic;
     });
-  }, [steps, currentStepIndex, activeLogic]);
+  }, [currentStep, activeLogic]);
 
   const selectedComponents = useMemo(() => steps.map(s => {
     const opt = s.options.find(o => o.id === selections[s.id]);
     return opt ? { ...opt, stepTitle: s.title } : null;
   }).filter((c): c is Component => !!c), [selections, steps]);
 
-  const activeComponentForTuning = useMemo(() => steps[currentStepIndex]?.options.find(o => o.id === selections[steps[currentStepIndex]?.id]), [steps, currentStepIndex, selections]);
+  const activeComponentForTuning = useMemo(() => currentStep?.options.find(o => o.id === selections[currentStep?.id]), [currentStep, selections]);
 
   if (isAdminMode && !isLoggedIn) return <AdminLogin onLogin={() => setIsLoggedIn(true)} />;
   if (isFinished) return <SummaryView selections={selectedComponents} onReset={() => window.location.reload()} />;
@@ -372,7 +386,7 @@ export default function BikeConfigurator() {
                   <AnimatePresence mode="popLayout">
                     {filteredOptions.map((option) => (
                       <div key={option.id} className="w-[31%] min-w-[31%] lg:w-full lg:min-w-0 shrink-0">
-                        <OptionCard component={option} isSelected={selections[steps[currentStepIndex].id] === option.id} onClick={() => setSelections(prev => ({...prev, [steps[currentStepIndex].id]: option.id}))} />
+                        <OptionCard component={option} isSelected={selections[currentStep.id] === option.id} onClick={() => setSelections(prev => ({...prev, [currentStep.id]: option.id}))} />
                       </div>
                     ))}
                   </AnimatePresence>
@@ -392,7 +406,7 @@ export default function BikeConfigurator() {
           </div>
           <div className="col-span-3 flex justify-end">
             <button onClick={() => {
-                if (filteredOptions.length > 0 && !selections[steps[currentStepIndex].id]) { setError("Select!"); return; }
+                if (filteredOptions.length > 0 && !selections[currentStep.id]) { setError("Select!"); return; }
                 currentStepIndex < steps.length - 1 ? setCurrentStepIndex(currentStepIndex + 1) : setIsFinished(true);
               }} className="bg-red-600 hover:bg-red-700 text-white h-[32px] px-6 rounded-lg font-black uppercase text-[10px] italic flex items-center gap-2 active:scale-95 shadow-lg shadow-red-600/20">{currentStepIndex === steps.length - 1 ? 'Finish' : 'Next'} <ChevronRight size={14} /></button>
           </div>
