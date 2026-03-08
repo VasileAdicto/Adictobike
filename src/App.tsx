@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Download, CheckCircle2, Upload, Database, Lock, User, Settings2, Save, RotateCcw, Grid3X3, Search, Move, FolderOpen } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Download, CheckCircle2, Upload, Database, Lock, User, Settings2, Save, RotateCcw, Grid3X3, Search, Move, FolderOpen, Key } from 'lucide-react';
 import { cn } from './lib/utils';
 
 import jsPDF from 'jspdf';
@@ -90,7 +90,7 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
 
   const saveToGithub = async (path: string, content: string, isJson = false) => {
     if (!token) {
-        setStatus("❌ No Token Provided");
+        setStatus("❌ Token Required");
         return;
     }
     setStatus("Saving...");
@@ -113,24 +113,12 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
       });
       if (res.ok) {
           setStatus("✅ Success!");
-          localStorage.setItem('adicto_github_token', token); // Зберігаємо тільки у ВАС в браузері
+          localStorage.setItem('adicto_github_token', token);
       } else {
           setStatus("❌ Auth Error");
       }
     } catch (err) { setStatus("❌ Failed"); }
-};
-
-// В UI адмінки додаємо поле для токена (показувати тільки якщо він порожній або за бажанням)
-// ... у блоці return адмінки:
-{!localStorage.getItem('adicto_github_token') && (
-    <input 
-      type="password" 
-      placeholder="Enter GitHub Token" 
-      className="bg-black border border-red-600/50 text-[10px] p-1 rounded w-32"
-      value={token}
-      onChange={(e) => setToken(e.target.value)}
-    />
-)}
+  };
 
   const updateTune = (key: keyof OffsetData, val: number) => {
     if (!activeComponent) return;
@@ -140,13 +128,27 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
   return (
     <div className="z-[100] sticky top-0 shadow-2xl font-sans text-white">
       <motion.div initial={{ y: -50 }} animate={{ y: 0 }} className="bg-zinc-900 border-b border-white/5 p-2 flex gap-3 items-center justify-center backdrop-blur-md">
+        
+        {/* ВІДОБРАЖЕННЯ ПОЛЯ ТОКЕНА */}
+        <div className="flex items-center gap-2 bg-black/40 px-2 py-1 rounded-lg border border-white/10 focus-within:border-red-600 transition-all">
+          <Key size={10} className={token ? "text-red-600" : "text-zinc-500"} />
+          <input 
+            type="password" 
+            placeholder="TOKEN" 
+            value={token}
+            onChange={(e) => setToken(e.target.value)}
+            className="bg-transparent text-[9px] w-20 outline-none font-mono uppercase"
+          />
+        </div>
+
         <select value={selectedCat} onChange={(e) => setSelectedCat(e.target.value)} className="bg-black border border-white/10 text-[9px] px-2 py-1 rounded uppercase font-bold outline-none focus:border-red-600 transition-all">
           <option value="excel">📁 EXCEL</option>
           {categories?.map((cat: string) => <option key={cat} value={cat}>🖼️ {cat.toUpperCase()}</option>)}
         </select>
         
         <div className="flex gap-1">
-          <label className="cursor-pointer bg-zinc-800 text-zinc-300 px-2 py-1 rounded text-[9px] font-bold uppercase hover:bg-zinc-700 flex items-center gap-1 italic"><Upload size={10}/> Files
+          <label className="cursor-pointer bg-zinc-800 text-zinc-300 px-2 py-1 rounded text-[9px] font-bold uppercase hover:bg-zinc-700 flex items-center gap-1 italic">
+            <Upload size={10}/> Files
             <input type="file" className="hidden" multiple onChange={(e) => {
                 const files = e.target.files;
                 if (files) Array.from(files).forEach(file => {
@@ -155,7 +157,8 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
                 });
             }} />
           </label>
-          <label className="cursor-pointer bg-zinc-800 text-zinc-300 px-2 py-1 rounded text-[9px] font-bold uppercase hover:bg-zinc-700 flex items-center gap-1 italic"><FolderOpen size={10}/> Folder
+          <label className="cursor-pointer bg-zinc-800 text-zinc-300 px-2 py-1 rounded text-[9px] font-bold uppercase hover:bg-zinc-700 flex items-center gap-1 italic">
+            <FolderOpen size={10}/> Folder
             <input type="file" className="hidden" webkitdirectory="" onChange={(e: any) => {
                 const files = e.target.files;
                 if (files) Array.from(files).forEach((file: any) => {
@@ -194,23 +197,11 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
       {activeComponent && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-black/80 border-b border-white/5 p-2 flex justify-between items-center px-6 backdrop-blur-xl gap-10">
           <div className="flex flex-col gap-1 flex-1">
-            {[
-              { key: 's', label: 'Size', min: 0.8, max: 1.2, step: 0.001, reset: 1 },
-              { key: 'x', label: 'Pos X', min: -40, max: 40, step: 1, reset: 0 },
-              { key: 'y', label: 'Pos Y', min: -40, max: 40, step: 1, reset: 0 }
-            ].map((item) => (
+            {[ { key: 's', label: 'Size', min: 0.8, max: 1.2, step: 0.001, reset: 1 }, { key: 'x', label: 'Pos X', min: -40, max: 40, step: 1, reset: 0 }, { key: 'y', label: 'Pos Y', min: -40, max: 40, step: 1, reset: 0 } ].map((item) => (
               <div key={item.key} className="flex items-center gap-3">
                 <span className="text-[8px] text-zinc-500 font-black w-8 uppercase">{item.label}</span>
-                <input type="range" min={item.min} max={item.max} step={item.step} 
-                  value={offsets[activeComponent.id]?.[item.key as keyof OffsetData] ?? item.reset} 
-                  onChange={e => updateTune(item.key as keyof OffsetData, parseFloat(e.target.value))} 
-                  className="flex-1 h-1 bg-zinc-800 rounded-lg appearance-none accent-red-600 cursor-pointer" 
-                />
-                <input type="number" step={item.step} 
-                  value={offsets[activeComponent.id]?.[item.key as keyof OffsetData] ?? item.reset}
-                  onChange={e => updateTune(item.key as keyof OffsetData, parseFloat(e.target.value))}
-                  className="bg-transparent text-white text-[9px] w-10 text-right font-mono border-b border-white/5 focus:border-red-600 outline-none" 
-                />
+                <input type="range" min={item.min} max={item.max} step={item.step} value={offsets[activeComponent.id]?.[item.key as keyof OffsetData] ?? item.reset} onChange={e => updateTune(item.key as keyof OffsetData, parseFloat(e.target.value))} className="flex-1 h-1 bg-zinc-800 rounded-lg appearance-none accent-red-600 cursor-pointer" />
+                <input type="number" step={item.step} value={offsets[activeComponent.id]?.[item.key as keyof OffsetData] ?? item.reset} onChange={e => updateTune(item.key as keyof OffsetData, parseFloat(e.target.value))} className="bg-transparent text-white text-[9px] w-10 text-right font-mono border-b border-white/5 focus:border-red-600 outline-none" />
                 <button onClick={() => updateTune(item.key as keyof OffsetData, item.reset)} className="text-zinc-600 hover:text-red-600 transition-colors"><RotateCcw size={10}/></button>
               </div>
             ))}
@@ -245,7 +236,7 @@ const Visualizer = ({ selectedComponents, offsets, showGrid, gridSize, isZoomed,
           })}
         </AnimatePresence>
       </motion.div>
-      {isZoomed && <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-red-600 text-white px-4 py-1 rounded-full text-[8px] font-black uppercase flex items-center gap-2 z-[70] shadow-2xl"><Move size={10}/> {zoomScale}X - Drag to Move</div>}
+      {isZoomed && <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-red-600 text-white px-4 py-1 rounded-full text-[8px] font-black uppercase flex items-center gap-2 z-[70] shadow-2xl"><Move size={10}/> {zoomScale.toFixed(1)}X - Drag to Move</div>}
     </div>
   );
 };
@@ -332,24 +323,11 @@ export default function BikeConfigurator() {
 
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-red-600 pb-28 lg:pb-24 overflow-x-hidden">
-      {/* RESTORING SCROLLBAR DESIGN */}
       <style>{`
-        .custom-scroll-container::-webkit-scrollbar {
-          width: 4px;
-          height: 4px;
-        }
-        .custom-scroll-container::-webkit-scrollbar-track {
-          background: rgba(255, 255, 255, 0.05);
-          border-radius: 10px;
-        }
-        .custom-scroll-container::-webkit-scrollbar-thumb {
-          background: #ef4444;
-          border-radius: 10px;
-        }
-        .custom-scroll-container {
-          scrollbar-width: thin;
-          scrollbar-color: #ef4444 rgba(255, 255, 255, 0.05);
-        }
+        .custom-scroll-container::-webkit-scrollbar { width: 4px; height: 4px; }
+        .custom-scroll-container::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); border-radius: 10px; }
+        .custom-scroll-container::-webkit-scrollbar-thumb { background: #ef4444; border-radius: 10px; }
+        .custom-scroll-container { scrollbar-width: thin; scrollbar-color: #ef4444 rgba(255, 255, 255, 0.05); }
       `}</style>
 
       {isLoggedIn ? (
@@ -415,9 +393,7 @@ function SummaryView({ selections, onReset }: any) {
   };
 
   const handleExport = async () => {
-    const doc = new jsPDF(); 
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
+    const doc = new jsPDF(); const pageWidth = doc.internal.pageSize.getWidth(); const pageHeight = doc.internal.pageSize.getHeight();
     const cleanText = (text: string) => text ? String(text).replace(/[^\x00-\x7F]/g, "").toUpperCase() : "";
 
     try {
@@ -436,31 +412,19 @@ function SummaryView({ selections, onReset }: any) {
     } catch (e) {}
 
     autoTable(doc, { 
-      startY: 135, 
-      head: [['SECTION', 'COMPONENT', 'BRAND', 'WEIGHT', 'PRICE']],
-      body: selections.map((c: any) => [
-        cleanText(c.stepTitle || ""), 
-        cleanText(c.name), 
-        cleanText(c.brand), 
-        `${c.weight} g`, 
-        `${c.price.toLocaleString()} €`
-      ]),
-      styles: { font: "helvetica", fontSize: 6, cellPadding: 2 },
-      headStyles: { fillColor: [20, 20, 20], textColor: [255, 255, 255] },
-      columnStyles: { 0: { fontStyle: 'bold', cellWidth: 25 } },
-      foot: [['TOTAL', '', '', `${totalWeight} g`, `${totalPrice.toLocaleString()} €`]],
-      footStyles: { fillColor: [220, 38, 38], textColor: [255, 255, 255], fontSize: 8, fontStyle: 'bold' },
-      theme: 'grid'
+      startY: 135, head: [['SECTION', 'COMPONENT', 'BRAND', 'WEIGHT', 'PRICE']],
+      body: selections.map((c: any) => [cleanText(c.stepTitle || ""), cleanText(c.name), cleanText(c.brand), `${c.weight} g`, `${c.price.toLocaleString()} €`]),
+      styles: { font: "helvetica", fontSize: 6, cellPadding: 2 }, headStyles: { fillColor: [20, 20, 20], textColor: [255, 255, 255] },
+      columnStyles: { 0: { fontStyle: 'bold', cellWidth: 25 } }, foot: [['TOTAL', '', '', `${totalWeight} g`, `${totalPrice.toLocaleString()} €`]],
+      footStyles: { fillColor: [220, 38, 38], textColor: [255, 255, 255], fontSize: 8, fontStyle: 'bold' }, theme: 'grid'
     });
 
     const finalY = (doc as any).lastAutoTable.finalY + 10;
-    doc.setFontSize(6);
-    doc.setTextColor(100);
+    doc.setFontSize(6); doc.setTextColor(100);
     const disclaimer = "NOTICE: THE WEIGHT AND PRICE INDICATED ARE PRELIMINARY AND SUBJECT TO MINOR CHANGES BASED ON COMPONENT AVAILABILITY. ADICTO.BIKE RESERVES THE RIGHT TO MODIFY SPECIFICATIONS WITHOUT PRIOR NOTICE.";
     doc.text(doc.splitTextToSize(disclaimer, pageWidth - 30), 15, finalY);
 
-    doc.setFontSize(7);
-    doc.setTextColor(20);
+    doc.setFontSize(7); doc.setTextColor(20);
     doc.text("WWW.ADICTO.BIKE  |  @ADICTO.BIKE", pageWidth / 2, pageHeight - 15, { align: 'center' });
     
     try {
@@ -474,15 +438,15 @@ function SummaryView({ selections, onReset }: any) {
   return (
     <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-8 text-center font-sans">
       <CheckCircle2 size={32} className="text-red-600 mb-4" />
-      <h2 className="text-[27px] font-black italic uppercase tracking-tighter mb-4 leading-none">Configuration <br/> <span className="text-red-600">Complete</span></h2>
+      <h2 className="text-[27px] font-black italic uppercase tracking-tighter mb-4 leading-none text-white">Configuration <br/> <span className="text-red-600">Complete</span></h2>
       <div className="flex justify-center gap-10 my-8 bg-zinc-900/50 p-6 rounded-3xl border border-white/5">
         <div><p className="text-zinc-500 text-[9px] uppercase font-bold italic">Price</p><p className="text-[18px] font-mono text-red-600">€{totalPrice.toLocaleString()}</p></div>
         <div className="w-px bg-white/10" />
-        <div><p className="text-zinc-500 text-[9px] uppercase font-bold italic">Weight</p><p className="text-[18px] font-mono">{totalWeight}g</p></div>
+        <div><p className="text-zinc-500 text-[9px] uppercase font-bold italic">Weight</p><p className="text-[18px] font-mono text-white">{totalWeight}g</p></div>
       </div>
       <div className="flex gap-4 justify-center">
         <button onClick={handleExport} className="px-8 py-4 bg-red-600 text-white rounded-xl font-black uppercase text-[10px] italic shadow-lg shadow-red-600/20 flex items-center gap-2"><Download size={16} /> Export PDF</button>
-        <button onClick={onReset} className="px-8 py-4 border border-white/10 rounded-xl font-black uppercase text-[10px] italic hover:bg-white/5 transition-all">Start Over</button>
+        <button onClick={onReset} className="px-8 py-4 border border-white/10 rounded-xl font-black uppercase text-[10px] italic hover:bg-white/5 transition-all text-white">Start Over</button>
       </div>
     </div>
   );
