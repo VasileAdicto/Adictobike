@@ -28,9 +28,9 @@ interface Step {
 }
 
 interface OffsetData {
-  s: number; 
-  x: number; 
-  y: number; 
+  s: number; // scale
+  x: number; // offsetX
+  y: number; // offsetY
 }
 
 // --- ADMIN LOGIN COMPONENT ---
@@ -81,7 +81,7 @@ const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
 };
 
 // --- ADMIN PANEL COMPONENT ---
-const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid, setShowGrid, isZoomed, setIsZoomed }: any) => {
+const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid, setShowGrid, gridSize, setGridSize, isZoomed, setIsZoomed, zoomScale, setZoomScale }: any) => {
   const [selectedCat, setSelectedCat] = useState('excel');
   const [status, setStatus] = useState('');
 
@@ -111,13 +111,13 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
 
   return (
     <div className="z-[100] sticky top-0 shadow-2xl font-sans">
-      <motion.div initial={{ y: -50 }} animate={{ y: 0 }} className="bg-zinc-900 border-b border-white/5 p-2 flex gap-4 items-center justify-center backdrop-blur-md">
+      <motion.div initial={{ y: -50 }} animate={{ y: 0 }} className="bg-zinc-900 border-b border-white/5 p-2 flex gap-3 items-center justify-center backdrop-blur-md">
         <select value={selectedCat} onChange={(e) => setSelectedCat(e.target.value)} className="bg-black border border-white/10 text-[9px] px-2 py-1 rounded uppercase font-bold text-zinc-400 outline-none focus:border-red-600">
           <option value="excel">📁 EXCEL</option>
           {categories.map((cat: string) => <option key={cat} value={cat}>🖼️ {cat.toUpperCase()}</option>)}
         </select>
         
-        <label className="cursor-pointer bg-zinc-800 text-zinc-300 px-3 py-1 rounded text-[9px] font-bold uppercase hover:bg-zinc-700 transition-all flex items-center gap-2">
+        <label className="cursor-pointer bg-zinc-800 text-zinc-300 px-3 py-1 rounded text-[9px] font-bold uppercase hover:bg-zinc-700 transition-all flex items-center gap-2 italic">
           <Upload size={10}/> UPLOAD <input type="file" className="hidden" onChange={(e) => {
              const file = e.target.files?.[0];
              if (file) {
@@ -128,17 +128,35 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
           }} />
         </label>
 
-        <div className="h-4 w-px bg-white/10 mx-2" />
+        <div className="h-4 w-px bg-white/10 mx-1" />
 
-        <button onClick={() => setShowGrid(!showGrid)} className={cn("px-3 py-1 rounded text-[9px] font-bold uppercase transition-all flex items-center gap-2", showGrid ? "bg-red-600 text-white" : "bg-zinc-800 text-zinc-400")}>
-          <Grid3X3 size={10}/> Grid
-        </button>
+        {/* Grid Control Group */}
+        <div className="flex items-center gap-2 bg-black/40 p-1 rounded-lg border border-white/5">
+          <button onClick={() => setShowGrid(!showGrid)} className={cn("px-2 py-1 rounded text-[9px] font-bold uppercase transition-all", showGrid ? "bg-red-600 text-white" : "bg-zinc-800 text-zinc-400")}>
+            <Grid3X3 size={10}/>
+          </button>
+          {showGrid && (
+            <div className="flex items-center gap-2 px-1 border-r border-white/5 mr-1">
+              <span className="text-[7px] text-zinc-500 font-bold uppercase whitespace-nowrap">Step: {gridSize}px</span>
+              <input type="range" min="1" max="20" step="1" value={gridSize} onChange={(e) => setGridSize(parseInt(e.target.value))} className="w-16 h-1 bg-zinc-700 appearance-none accent-red-600" />
+            </div>
+          )}
+        </div>
 
-        <button onClick={() => setIsZoomed(!isZoomed)} className={cn("px-3 py-1 rounded text-[9px] font-bold uppercase transition-all flex items-center gap-2", isZoomed ? "bg-red-600 text-white" : "bg-zinc-800 text-zinc-400")}>
-          <Search size={10}/> Magnify 5X
-        </button>
+        {/* Zoom Control Group */}
+        <div className="flex items-center gap-2 bg-black/40 p-1 rounded-lg border border-white/5">
+          <button onClick={() => setIsZoomed(!isZoomed)} className={cn("px-2 py-1 rounded text-[9px] font-bold uppercase transition-all flex items-center gap-2", isZoomed ? "bg-red-600 text-white" : "bg-zinc-800 text-zinc-400")}>
+            <Search size={10}/> {isZoomed ? `${zoomScale.toFixed(1)}X` : 'Magnify'}
+          </button>
+          {isZoomed && (
+            <div className="flex items-center gap-2 px-1">
+              <span className="text-[7px] text-zinc-500 font-bold uppercase">Zoom</span>
+              <input type="range" min="2" max="10" step="0.1" value={zoomScale} onChange={(e) => setZoomScale(parseFloat(e.target.value))} className="w-20 h-1 bg-zinc-700 appearance-none accent-red-600" />
+            </div>
+          )}
+        </div>
 
-        {status && <span className="text-[8px] font-mono uppercase text-red-600 animate-pulse ml-2">{status}</span>}
+        {status && <span className="text-[8px] font-mono uppercase text-red-600 animate-pulse ml-1">{status}</span>}
       </motion.div>
 
       {activeComponent && (
@@ -159,7 +177,7 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
                 <input type="number" step={item.step} 
                   value={offsets[activeComponent.id]?.[item.key as keyof OffsetData] ?? item.reset}
                   onChange={e => updateTune(item.key as keyof OffsetData, parseFloat(e.target.value))}
-                  className="bg-transparent text-white text-[9px] w-10 text-right font-mono outline-none border-b border-white/5 focus:border-red-600" 
+                  className="bg-transparent text-white text-[9px] w-10 text-right font-mono border-b border-white/5 focus:border-red-600 outline-none" 
                 />
                 <button onClick={() => updateTune(item.key as keyof OffsetData, item.reset)} className="text-zinc-600 hover:text-red-600 transition-colors"><RotateCcw size={10}/></button>
               </div>
@@ -178,21 +196,29 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
 };
 
 // --- VISUALIZER ---
-const Visualizer = ({ selectedComponents, offsets, showGrid, isZoomed }: any) => {
+const Visualizer = ({ selectedComponents, offsets, showGrid, gridSize, isZoomed, zoomScale }: any) => {
   return (
     <div id="bike-visualizer" className="relative w-full h-full bg-zinc-950 rounded-[1.5rem] lg:rounded-[2.5rem] overflow-hidden border border-white/5 shadow-[0_0_100px_rgba(0,0,0,0.5)] flex items-center justify-center cursor-crosshair">
       
-      {/* 5px Grid Overlay */}
+      {/* Dynamic Grid Overlay */}
       {showGrid && (
-        <div className="absolute inset-0 z-[60] pointer-events-none opacity-20" 
-             style={{ backgroundImage: 'linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)', backgroundSize: '5px 5px' }} />
+        <div className="absolute inset-0 z-[60] pointer-events-none opacity-[0.15]" 
+             style={{ 
+               backgroundImage: `linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)`, 
+               backgroundSize: `${gridSize}px ${gridSize}px` 
+             }} />
       )}
 
       <motion.div 
         drag={isZoomed}
-        dragConstraints={{ left: -1000, right: 1000, top: -1000, bottom: 1000 }}
-        animate={{ scale: isZoomed ? 5 : 1 }}
-        transition={{ type: 'spring', damping: 20, stiffness: 100 }}
+        dragMomentum={false}
+        dragConstraints={{ left: -2500, right: 2500, top: -2500, bottom: 2500 }}
+        animate={{ 
+          scale: isZoomed ? zoomScale : 1,
+          x: isZoomed ? undefined : 0, 
+          y: isZoomed ? undefined : 0
+        }}
+        transition={{ type: 'spring', damping: 25, stiffness: 120 }}
         className="relative w-full h-full flex items-center justify-center"
       >
         <AnimatePresence mode="popLayout">
@@ -214,7 +240,7 @@ const Visualizer = ({ selectedComponents, offsets, showGrid, isZoomed }: any) =>
 
       {isZoomed && (
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-red-600 text-white px-4 py-1 rounded-full text-[8px] font-black uppercase flex items-center gap-2 z-[70] shadow-2xl">
-          <Move size={10}/> Drag to Move
+          <Move size={10}/> {zoomScale.toFixed(1)}X - Drag to Move
         </div>
       )}
     </div>
@@ -260,7 +286,8 @@ export default function BikeConfigurator() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [offsets, setOffsets] = useState<Record<string, OffsetData>>({});
   const [showGrid, setShowGrid] = useState(false);
-  const [isZoomed, setIsZoomed] = useState(false);
+  const [gridSize, setGridSize] = useState(5);
+  const [zoomScale, setZoomScale] = useState(5);
   
   useEffect(() => {
     const path = window.location.pathname; 
@@ -310,7 +337,7 @@ export default function BikeConfigurator() {
   }, []);
 
   const selectedComponents = useMemo(() => steps.map(s => s.options.find(o => o.id === selections[s.id]) || null).filter((c): c is Component => !!c), [selections, steps]);
-  const activeComponentForTuning = currentStep.options.find(o => o.id === selections[currentStep.id]);
+  const activeComponentForTuning = useMemo(() => steps[currentStepIndex]?.options.find(o => o.id === selections[steps[currentStepIndex]?.id]), [steps, currentStepIndex, selections]);
 
   if (isAdminMode && !isLoggedIn) return <AdminLogin onLogin={() => setIsLoggedIn(true)} />;
   if (isFinished) return <SummaryView selections={selectedComponents} onReset={() => window.location.reload()} />;
@@ -323,11 +350,13 @@ export default function BikeConfigurator() {
           offsets={offsets} setOffsets={setOffsets} 
           activeComponent={activeComponentForTuning}
           showGrid={showGrid} setShowGrid={setShowGrid}
+          gridSize={gridSize} setGridSize={setGridSize}
           isZoomed={isZoomed} setIsZoomed={setIsZoomed}
+          zoomScale={zoomScale} setZoomScale={setZoomScale}
         />
       ) : (
         <nav className="border-b border-white/5 px-4 lg:px-8 py-2 flex justify-between items-center bg-black/80 backdrop-blur-2xl sticky top-0 z-50">
-          <div className="flex items-center gap-4 pl-2"><img src="/design/Logo.png" alt="Logo" className="h-4 lg:h-6 w-auto" /></div>
+          <div className="flex items-center gap-4 pl-2"><img src="/design/Logo.png" alt="Logo" className="h-4 lg:h-6 w-auto object-contain" /></div>
           <div className="flex items-center gap-6"><div className="text-zinc-400 font-mono text-[7px] pr-2 opacity-70 uppercase tracking-widest italic">Build by Vasile & AI</div></div>
         </nav>
       )}
@@ -339,12 +368,12 @@ export default function BikeConfigurator() {
               {steps.map((step, idx) => (
                 <button key={step.id} onClick={() => { setCurrentStepIndex(idx); setError(null); }} 
                   className={cn("transition-all duration-300 text-[10px] font-black italic uppercase tracking-widest pb-1 border-b-2 whitespace-nowrap", 
-                  idx === currentStepIndex ? "text-red-600 border-red-600" : "text-white opacity-20 border-transparent hover:opacity-100")}
+                  idx === currentStepIndex ? "text-red-600 border-red-600 drop-shadow-[0_0_9px_rgba(255,0,0,0.3)]" : "text-white opacity-20 border-transparent hover:opacity-100")}
                 >{step.title}</button>
               ))}
             </div>
             <div className="h-[280px] md:h-[400px] lg:flex-1 relative">
-              <Visualizer selectedComponents={selectedComponents} offsets={offsets} showGrid={showGrid} isZoomed={isZoomed} />
+              <Visualizer selectedComponents={selectedComponents} offsets={offsets} showGrid={showGrid} gridSize={gridSize} isZoomed={isZoomed} zoomScale={zoomScale} />
             </div>
           </div>
           <div className="lg:col-span-3 flex flex-col bg-zinc-900/40 rounded-[2.5rem] border border-white/5 p-4 lg:p-6 relative overflow-hidden order-2 shadow-2xl">
@@ -368,12 +397,16 @@ export default function BikeConfigurator() {
         <div className="max-w-[1500px] mx-auto px-4 lg:px-6 py-6 grid grid-cols-12 gap-2 items-center">
           <button onClick={() => currentStepIndex > 0 && setCurrentStepIndex(currentStepIndex - 1)} className="col-span-3 lg:col-span-2 flex items-center gap-1 text-zinc-500 hover:text-white transition-all font-black uppercase text-[10px] tracking-widest italic"><ChevronLeft size={20} /> Back</button>
           <div className="col-span-6 lg:col-span-7 flex justify-center lg:justify-end items-center gap-4 lg:gap-10">
-            <div className="text-center lg:text-right"><p className="text-[7px] text-zinc-600 uppercase font-black mb-0.5">Weight</p><p className="font-mono text-xs">{selectedComponents.reduce((acc, c) => acc + c.weight, 0)}g</p></div>
+            <div className="text-center lg:text-right"><p className="text-[7px] text-zinc-600 uppercase font-black mb-0.5 italic">Weight</p><p className="font-mono text-xs">{selectedComponents.reduce((acc, c) => acc + c.weight, 0)}g</p></div>
             <div className="h-8 w-px bg-white/10" />
-            <div className="text-center lg:text-right"><p className="text-[7px] text-zinc-600 uppercase font-black mb-0.5">Price</p><p className="font-mono text-xs text-red-600">€{selectedComponents.reduce((acc, c) => acc + c.price, 0).toLocaleString()}</p></div>
+            <div className="text-center lg:text-right"><p className="text-[7px] text-zinc-600 uppercase font-black mb-0.5 italic">Price</p><p className="font-mono text-xs text-red-600">€{selectedComponents.reduce((acc, c) => acc + c.price, 0).toLocaleString()}</p></div>
           </div>
           <div className="col-span-3 flex justify-end">
-            <button onClick={() => currentStepIndex < steps.length - 1 ? setCurrentStepIndex(currentStepIndex + 1) : setIsFinished(true)} className="bg-red-600 text-white h-[32px] px-6 rounded-lg font-black uppercase text-[10px] tracking-widest flex items-center gap-2 active:scale-95 shadow-lg shadow-red-600/20 italic">{currentStepIndex === steps.length - 1 ? 'Finish' : 'Next'} <ChevronRight size={14} /></button>
+            <button onClick={() => {
+                if (currentStep.options.length > 0 && !selections[currentStep.id]) { setError("Select!"); return; }
+                currentStepIndex < steps.length - 1 ? setCurrentStepIndex(currentStepIndex + 1) : setIsFinished(true);
+              }} className="bg-red-600 hover:bg-red-700 text-white h-[32px] px-3 lg:px-[22px] rounded-lg font-black uppercase text-[10px] tracking-widest flex items-center gap-1 lg:gap-3 transition-all active:scale-95 shadow-lg shadow-red-600/20 italic"
+            >{currentStepIndex === steps.length - 1 ? 'Finish' : 'Next'} <ChevronRight size={14} /></button>
           </div>
         </div>
       </div>
@@ -384,19 +417,47 @@ export default function BikeConfigurator() {
 function SummaryView({ selections, onReset }: any) {
   const totalPrice = selections.reduce((acc: number, c: any) => acc + c.price, 0);
   const totalWeight = selections.reduce((acc: number, c: any) => acc + c.weight, 0);
+  const getBase64Image = async (url: string): Promise<string> => {
+    try { const res = await fetch(url); const blob = await res.blob();
+      return new Promise((resolve, reject) => { const reader = new FileReader(); reader.onloadend = () => resolve(reader.result as string); reader.onerror = reject; reader.readAsDataURL(blob); });
+    } catch (e) { return ""; }
+  };
   const handleExport = async () => {
-    const doc = new jsPDF();
-    autoTable(doc, { startY: 20, head: [['SECTION', 'COMPONENT', 'PRICE']], body: selections.map((c: any) => [c.stepTitle, c.name, `${c.price} €`]) });
+    const doc = new jsPDF(); const pageWidth = doc.internal.pageSize.getWidth(); const pageHeight = doc.internal.pageSize.getHeight();
+    const cleanText = (text: string) => text ? String(text).replace(/[^\x00-\x7F]/g, "").toUpperCase() : "";
+    try { const logoBase64 = await getBase64Image("/design/Logo.png");
+      if (logoBase64) { doc.saveGraphicsState(); (doc as any).setGState(new (doc as any).GState({ opacity: 0.8 })); doc.addImage(logoBase64, 'PNG', (pageWidth / 2) - 15, 8, 10, 10); doc.restoreGraphicsState(); }
+    } catch (e) {}
+    try { const sortedByZ = [...selections].sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
+      for (const comp of sortedByZ) { if (comp.imageUrl) { const imgBase64 = await getBase64Image(comp.imageUrl); if (imgBase64) doc.addImage(imgBase64, 'PNG', 15, 22, 180, 115, undefined, 'FAST'); } }
+    } catch (e) {}
+    autoTable(doc, { startY: 140, head: [['SECTION', 'COMPONENT', 'BRAND', 'WEIGHT', 'PRICE']],
+      body: selections.map((c: any) => [cleanText(c.stepTitle || ""), cleanText(c.name), cleanText(c.brand), `${c.weight} g`, `${c.price.toLocaleString()} €`]),
+      styles: { font: "helvetica", fontSize: 5.8, cellPadding: 2 }, headStyles: { fillColor: [20, 20, 20], textColor: [255, 255, 255] },
+      columnStyles: { 0: { fontStyle: 'bold', cellWidth: 25 } }, foot: [['TOTAL', '', '', `${totalWeight} g`, `${totalPrice.toLocaleString()} €`]],
+      footStyles: { fillColor: [220, 38, 38], textColor: [255, 255, 255], fontSize: 9, fontStyle: 'bold', cellPadding: 3 }, theme: 'grid'
+    });
+    const finalY = (doc as any).lastAutoTable.finalY + 10; doc.setFontSize(5.6); doc.setTextColor(140);
+    doc.text(doc.splitTextToSize("NOTICE: THE WEIGHT AND PRICE INDICATED ARE PRELIMINARY AND SUBJECT TO MINOR CHANGES BASED ON COMPONENT AVAILABILITY. ADICTO.BIKE RESERVES THE RIGHT TO MODIFY SPECIFICATIONS WITHOUT PRIOR NOTICE.", pageWidth - 28), 14, finalY);
+    doc.setFontSize(6.3); doc.setTextColor(100); doc.text("WWW.ADICTO.BIKE  |  @ADICTO.BIKE", pageWidth / 2, pageHeight - 20, { align: 'center' });
     doc.save(`ADICTO_BUILD.pdf`);
   };
+
   return (
     <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-8 text-center font-sans">
-      <CheckCircle2 size={32} className="text-red-600 mb-4" />
-      <h2 className="text-[27px] font-black italic uppercase tracking-tighter mb-8 leading-none">Configuration <span className="text-red-600">Complete</span></h2>
-      <div className="flex gap-4 justify-center">
-        <button onClick={handleExport} className="px-8 py-4 bg-red-600 text-white rounded-xl font-black uppercase text-[10px] italic shadow-lg shadow-red-600/20">Export PDF</button>
-        <button onClick={onReset} className="px-8 py-4 border border-white/10 rounded-xl font-black uppercase text-[10px] italic hover:bg-white/5">Start Over</button>
-      </div>
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-2xl w-full">
+        <CheckCircle2 size={32} className="text-red-600 mx-auto mb-4" /> 
+        <h2 className="text-[27px] font-black italic uppercase tracking-tighter mb-4 leading-none">Configuration <br/> <span className="text-red-600">Complete</span></h2>
+        <div className="flex justify-center gap-10 my-8 bg-zinc-900/50 p-6 rounded-3xl border border-white/5">
+          <div><p className="text-zinc-500 text-[9px] uppercase font-bold tracking-widest italic">Price</p><p className="text-[18px] font-mono text-red-600">€{totalPrice.toLocaleString()}</p></div>
+          <div className="w-px bg-white/10" />
+          <div><p className="text-zinc-500 text-[9px] uppercase font-bold tracking-widest italic">Weight</p><p className="text-[18px] font-mono">{totalWeight}g</p></div>
+        </div>
+        <div className="flex gap-4 justify-center">
+          <button onClick={handleExport} className="px-8 py-4 bg-red-600 text-white rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-red-700 transition-all flex items-center gap-2 italic shadow-lg shadow-red-600/20"><Download size={16} /> Export PDF</button>
+          <button onClick={onReset} className="px-8 py-4 border border-white/10 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-white/5 transition-all italic">Start Over</button>
+        </div>
+      </motion.div>
     </div>
   );
 }
