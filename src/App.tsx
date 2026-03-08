@@ -323,7 +323,7 @@ export default function BikeConfigurator() {
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-red-600 pb-28 lg:pb-24 overflow-x-hidden">
       <style>{`
-  /* Тонкий червоний скролбар для Chrome, Safari та Edge */
+  /* Тонкий червоний скролбар */
   .custom-scroll-container::-webkit-scrollbar { 
     width: 3px; 
     height: 3px; 
@@ -336,17 +336,14 @@ export default function BikeConfigurator() {
     background: #ef4444; 
     border-radius: 10px; 
   }
-  .custom-scroll-container::-webkit-scrollbar-thumb:hover { 
-    background: #dc2626; 
-  }
-
-  /* Для Firefox */
+  
+  /* ВІДСТУП: Щоб скролбар був трішки правіше від карток товарів */
   .custom-scroll-container { 
+    padding-right: 6px; 
     scrollbar-width: thin; 
     scrollbar-color: #ef4444 transparent; 
   }
 
-  /* Приховуємо стандартний скролбар для розділів, щоб не заважав */
   .no-scrollbar::-webkit-scrollbar { display: none; }
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 `}</style>
