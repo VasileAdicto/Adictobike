@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Download, CheckCircle2, Upload, Database, Lock, User, Settings2, Save } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Download, CheckCircle2, Upload, Database, Lock, User, Settings2, Save, RotateCcw } from 'lucide-react';
 import { cn } from './lib/utils';
 
 import jsPDF from 'jspdf';
@@ -41,11 +41,8 @@ const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
   const [rememberMe, setRememberMe] = useState(true);
   const [error, setError] = useState('');
 
-  // Автоматичний вхід, якщо збережено "Remember Me"
   useEffect(() => {
-    if (localStorage.getItem('adicto_auth') === 'true') {
-      onLogin();
-    }
+    if (localStorage.getItem('adicto_auth') === 'true') onLogin();
   }, [onLogin]);
 
   const handleLogin = (e: React.FormEvent) => {
@@ -71,42 +68,19 @@ const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
           </div>
           <h2 className="text-xl font-black uppercase tracking-widest text-white italic">Adicto Admin</h2>
         </div>
-
         <div className="space-y-4">
-          <input 
-            type="email" placeholder="Email"
-            className="w-full bg-black border border-white/10 p-4 rounded-2xl text-white outline-none focus:border-red-600 transition-all text-sm font-mono"
-            value={email} onChange={(e) => setEmail(e.target.value)}
-          />
+          <input type="email" placeholder="Email" className="w-full bg-black border border-white/10 p-4 rounded-2xl text-white outline-none focus:border-red-600 transition-all text-sm font-mono" value={email} onChange={(e) => setEmail(e.target.value)} />
           <div className="relative">
-            <input 
-              type={showPass ? "text" : "password"} placeholder="Password"
-              className="w-full bg-black border border-white/10 p-4 rounded-2xl text-white outline-none focus:border-red-600 transition-all text-sm font-mono"
-              value={pass} onChange={(e) => setPass(e.target.value)}
-            />
-            <button 
-              type="button" onClick={() => setShowPass(!showPass)}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white transition-colors text-[10px] font-bold uppercase"
-            >
-              {showPass ? "Hide" : "Show"}
-            </button>
+            <input type={showPass ? "text" : "password"} placeholder="Password" className="w-full bg-black border border-white/10 p-4 rounded-2xl text-white outline-none focus:border-red-600 transition-all text-sm font-mono" value={pass} onChange={(e) => setPass(e.target.value)} />
+            <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white transition-colors text-[10px] font-bold uppercase">{showPass ? "Hide" : "Show"}</button>
           </div>
         </div>
-
         <div className="flex items-center gap-2 mt-4 px-2">
-          <input 
-            type="checkbox" id="remember" checked={rememberMe} 
-            onChange={() => setRememberMe(!rememberMe)}
-            className="accent-red-600 h-4 w-4 rounded border-white/10 bg-black"
-          />
+          <input type="checkbox" id="remember" checked={rememberMe} onChange={() => setRememberMe(!rememberMe)} className="accent-red-600 h-4 w-4 rounded border-white/10 bg-black" />
           <label htmlFor="remember" className="text-zinc-500 text-[10px] uppercase font-bold cursor-pointer select-none">Remember Me</label>
         </div>
-
         {error && <p className="text-red-600 text-[10px] text-center mt-4 uppercase font-black italic tracking-widest">{error}</p>}
-        
-        <button className="w-full bg-red-600 py-4 rounded-2xl font-black uppercase tracking-widest text-white mt-8 hover:bg-red-700 active:scale-95 transition-all shadow-lg shadow-red-600/20 text-sm italic">
-          Access Dashboard
-        </button>
+        <button className="w-full bg-red-600 py-4 rounded-2xl font-black uppercase tracking-widest text-white mt-8 hover:bg-red-700 active:scale-95 transition-all shadow-lg shadow-red-600/20 text-sm italic">Access Dashboard</button>
       </motion.form>
     </div>
   );
@@ -125,13 +99,8 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent }: any) =
     setStatus("Saving...");
     try {
       let sha = "";
-      const getRes = await fetch(`https://api.github.com/repos/${REPO}/contents/${path}`, {
-        headers: { Authorization: `token ${GITHUB_TOKEN}` }
-      });
-      if (getRes.ok) {
-        const data = await getRes.json();
-        sha = data.sha;
-      }
+      const getRes = await fetch(`https://api.github.com/repos/${REPO}/contents/${path}`, { headers: { Authorization: `token ${GITHUB_TOKEN}` } });
+      if (getRes.ok) { const data = await getRes.json(); sha = data.sha; }
       const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${path}`, {
         method: "PUT",
         headers: { Authorization: `token ${GITHUB_TOKEN}`, "Content-Type": "application/json" },
@@ -142,32 +111,24 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent }: any) =
           branch: BRANCH
         }),
       });
-      if (res.ok) setStatus("✅ Success!");
-      else setStatus("❌ Error");
+      if (res.ok) setStatus("✅ Success!"); else setStatus("❌ Error");
     } catch (err) { setStatus("❌ Failed"); }
   };
 
   const updateTune = (key: keyof OffsetData, val: number) => {
     if (!activeComponent) return;
-    setOffsets((prev: any) => ({
-      ...prev,
-      [activeComponent.id]: { ...(prev[activeComponent.id] || { s: 1, x: 0, y: 0 }), [key]: val }
-    }));
+    setOffsets((prev: any) => ({ ...prev, [activeComponent.id]: { ...(prev[activeComponent.id] || { s: 1, x: 0, y: 0 }), [key]: val } }));
   };
-
-  const currentTune = activeComponent ? (offsets[activeComponent.id] || { s: 1, x: 0, y: 0 }) : { s: 1, x: 0, y: 0 };
 
   return (
     <div className="z-[100] sticky top-0 shadow-2xl">
-      <motion.div initial={{ y: -50 }} animate={{ y: 0 }} className="bg-zinc-900 border-b border-red-600/50 p-3 flex flex-wrap gap-4 items-center justify-center backdrop-blur-md">
-        <div className="flex items-center gap-2 text-[10px] font-black uppercase text-red-600 tracking-tighter italic"><Database size={12}/> GitHub Admin</div>
-        <select value={selectedCat} onChange={(e) => setSelectedCat(e.target.value)} className="bg-black border border-white/10 text-[10px] p-1.5 rounded-lg uppercase font-bold text-white outline-none focus:border-red-600 transition-all">
-          <option value="excel">📁 Database (data.xlsx)</option>
-          {categories.map((cat: string) => <option key={cat} value={cat}>🖼️ Folder: {cat}</option>)}
+      <motion.div initial={{ y: -50 }} animate={{ y: 0 }} className="bg-zinc-900 border-b border-white/5 p-2 flex gap-4 items-center justify-center backdrop-blur-md">
+        <select value={selectedCat} onChange={(e) => setSelectedCat(e.target.value)} className="bg-black border border-white/10 text-[9px] px-2 py-1 rounded uppercase font-bold text-zinc-400 outline-none focus:border-red-600 transition-all">
+          <option value="excel">📁 EXCEL</option>
+          {categories.map((cat: string) => <option key={cat} value={cat}>🖼️ {cat.toUpperCase()}</option>)}
         </select>
-        <label className="cursor-pointer bg-white text-black px-4 py-1.5 rounded-lg text-[10px] font-black uppercase hover:bg-red-600 hover:text-white transition-all flex items-center gap-2 italic">
-          <Upload size={12}/> Upload File
-          <input type="file" className="hidden" onChange={(e) => {
+        <label className="cursor-pointer bg-zinc-800 text-zinc-300 px-3 py-1 rounded text-[9px] font-bold uppercase hover:bg-zinc-700 transition-all flex items-center gap-2">
+          <Upload size={10}/> UPLOAD <input type="file" className="hidden" onChange={(e) => {
              const file = e.target.files?.[0];
              if (file) {
                 const reader = new FileReader();
@@ -176,53 +137,38 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent }: any) =
              }
           }} />
         </label>
-        <button onClick={() => saveToGithub("public/offsets.json", JSON.stringify(offsets), true)} className="bg-zinc-800 text-white px-4 py-1.5 rounded-lg text-[10px] font-black uppercase hover:bg-zinc-700 transition-all flex items-center gap-2 italic border border-white/5"><Save size={12}/> Save Offsets</button>
-        {status && <span className="text-[9px] font-mono uppercase text-zinc-400 animate-pulse">{status}</span>}
+        {status && <span className="text-[8px] font-mono uppercase text-red-600 animate-pulse">{status}</span>}
       </motion.div>
 
       {activeComponent && (
-        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="bg-black/95 border-b border-white/5 p-6 flex flex-col items-center gap-6 backdrop-blur-xl">
-          <div className="flex items-center gap-2 text-[10px] font-bold text-zinc-500 italic uppercase"><Settings2 size={12}/> Tuning: <span className="text-white">{activeComponent.name}</span></div>
-          
-          <div className="flex flex-wrap justify-center gap-12 w-full max-w-5xl px-4">
-            {/* Scale Control */}
-            <div className="flex flex-col gap-3 min-w-[300px] flex-1">
-              <div className="flex justify-between items-center">
-                <label className="text-[9px] uppercase text-zinc-500 font-black tracking-widest">Size (0.8 - 1.2)</label>
-                <input 
-                  type="number" step="0.001" value={currentTune.s}
-                  onChange={e => updateTune('s', parseFloat(e.target.value))}
-                  className="bg-zinc-800 text-white text-[10px] w-16 text-center p-1 rounded font-mono border border-white/10 outline-none focus:border-red-600"
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-black/80 border-b border-white/5 p-2 flex justify-between items-center px-6 backdrop-blur-xl gap-10">
+          <div className="flex flex-col gap-1 flex-1">
+            {[
+              { key: 's', label: 'Size', min: 0.8, max: 1.2, step: 0.001, reset: 1 },
+              { key: 'x', label: 'Pos X', min: -40, max: 40, step: 1, reset: 0 },
+              { key: 'y', label: 'Pos Y', min: -40, max: 40, step: 1, reset: 0 }
+            ].map((item) => (
+              <div key={item.key} className="flex items-center gap-3">
+                <span className="text-[8px] text-zinc-500 font-black w-8 uppercase">{item.label}</span>
+                <input type="range" min={item.min} max={item.max} step={item.step} 
+                  value={offsets[activeComponent.id]?.[item.key as keyof OffsetData] ?? item.reset} 
+                  onChange={e => updateTune(item.key as keyof OffsetData, parseFloat(e.target.value))} 
+                  className="flex-1 h-1 bg-zinc-800 rounded-lg appearance-none accent-red-600 cursor-pointer" 
                 />
-              </div>
-              <input type="range" min="0.8" max="1.2" step="0.001" value={currentTune.s} onChange={e => updateTune('s', parseFloat(e.target.value))} className="w-full h-1.5 bg-zinc-800 rounded-lg appearance-none accent-red-600 cursor-pointer" />
-            </div>
-
-            {/* Pos X Control */}
-            <div className="flex flex-col gap-3 min-w-[300px] flex-1">
-              <div className="flex justify-between items-center">
-                <label className="text-[9px] uppercase text-zinc-500 font-black tracking-widest">Pos X (-40 / +40)</label>
-                <input 
-                  type="number" value={currentTune.x}
-                  onChange={e => updateTune('x', parseInt(e.target.value))}
-                  className="bg-zinc-800 text-white text-[10px] w-16 text-center p-1 rounded font-mono border border-white/10 outline-none focus:border-red-600"
+                <input type="number" step={item.step} 
+                  value={offsets[activeComponent.id]?.[item.key as keyof OffsetData] ?? item.reset}
+                  onChange={e => updateTune(item.key as keyof OffsetData, parseFloat(e.target.value))}
+                  className="bg-transparent text-white text-[9px] w-10 text-right font-mono outline-none border-b border-white/5 focus:border-red-600" 
                 />
+                <button onClick={() => updateTune(item.key as keyof OffsetData, item.reset)} className="text-zinc-600 hover:text-red-600 transition-colors"><RotateCcw size={10}/></button>
               </div>
-              <input type="range" min="-40" max="40" step="1" value={currentTune.x} onChange={e => updateTune('x', parseInt(e.target.value))} className="w-full h-1.5 bg-zinc-800 rounded-lg appearance-none accent-red-600 cursor-pointer" />
-            </div>
-
-            {/* Pos Y Control */}
-            <div className="flex flex-col gap-3 min-w-[300px] flex-1">
-              <div className="flex justify-between items-center">
-                <label className="text-[9px] uppercase text-zinc-500 font-black tracking-widest">Pos Y (-40 / +40)</label>
-                <input 
-                  type="number" value={currentTune.y}
-                  onChange={e => updateTune('y', parseInt(e.target.value))}
-                  className="bg-zinc-800 text-white text-[10px] w-16 text-center p-1 rounded font-mono border border-white/10 outline-none focus:border-red-600"
-                />
-              </div>
-              <input type="range" min="-40" max="40" step="1" value={currentTune.y} onChange={e => updateTune('y', parseInt(e.target.value))} className="w-full h-1.5 bg-zinc-800 rounded-lg appearance-none accent-red-600 cursor-pointer" />
-            </div>
+            ))}
+          </div>
+          <div className="flex flex-col items-end gap-1 shrink-0">
+            <div className="text-[9px] font-black text-red-600 italic uppercase tracking-widest leading-none mb-1">{activeComponent.name}</div>
+            <button onClick={() => saveToGithub("public/offsets.json", JSON.stringify(offsets), true)} className="bg-red-600 text-white px-5 py-2 rounded-lg text-[10px] font-black uppercase hover:bg-red-700 transition-all flex items-center gap-2 italic shadow-lg shadow-red-600/20">
+              <Save size={12}/> Save Offsets
+            </button>
           </div>
         </motion.div>
       )}
@@ -240,9 +186,7 @@ const Visualizer = ({ selectedComponents, offsets }: { selectedComponents: Compo
         return (
           <motion.img
             key={comp.id} src={comp.imageUrl} crossOrigin="anonymous" loading="eager" alt={comp.name}
-            initial={{ opacity: 0 }} 
-            animate={{ opacity: 1, scale: tune.s, x: tune.x, y: tune.y }} 
-            exit={{ opacity: 0 }}
+            initial={{ opacity: 0 }} animate={{ opacity: 1, scale: tune.s, x: tune.x, y: tune.y }} exit={{ opacity: 0 }}
             transition={{ duration: 0.4 }} className="absolute inset-0 w-full h-full object-contain pointer-events-none"
             style={{ zIndex: Number(comp.zIndex) }}
           />
@@ -293,10 +237,7 @@ export default function BikeConfigurator() {
   useEffect(() => {
     const path = window.location.pathname; 
     const urlParams = new URLSearchParams(window.location.search);
-    if (path === '/admin' || urlParams.get('admin') === 'true') {
-      setIsAdminMode(true);
-    }
-    // Load offsets from file
+    if (path === '/admin' || urlParams.get('admin') === 'true') setIsAdminMode(true);
     fetch('/offsets.json').then(r => r.ok ? r.json() : {}).then(data => setOffsets(data)).catch(() => setOffsets({}));
   }, []);
 
@@ -321,16 +262,8 @@ export default function BikeConfigurator() {
 
   const filteredOptions = useMemo(() => {
     if (!currentStep) return [];
-    return currentStep.options.filter(opt => {
-      if (!activeLogic) return true;
-      if (!opt.logic || opt.logic.trim() === "") return true;
-      return opt.logic.trim() === activeLogic;
-    });
+    return currentStep.options.filter(opt => !activeLogic || !opt.logic || opt.logic.trim() === "" || opt.logic.trim() === activeLogic);
   }, [currentStep, activeLogic]);
-
-  useEffect(() => {
-    stepRefs.current[currentStepIndex]?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-  }, [currentStepIndex]);
 
   useEffect(() => {
     const autoLoadExcel = async () => {
@@ -351,7 +284,7 @@ export default function BikeConfigurator() {
                 const findKey = (name: string) => Object.keys(row).find(k => k.toLowerCase().trim() === name.toLowerCase());
                 return {
                   id: `${step.id}-${idx}`,
-                  name: row.Name || row.NAME || 'Unknown', brand: row.Brand || row.BRAND || '',
+                  name: row.Name || 'Unknown', brand: row.Brand || '',
                   price: Number(row.Price || row.PRICE) || 0, weight: Number(row.Weight || row.WEIGHT) || 0,
                   imageUrl: row[findKey('imageurl') || 'image'] || "",
                   cardImageUrl: row[findKey('cardimg') || 'cardimage'] || row[findKey('imageurl') || 'image'] || "",
@@ -368,44 +301,29 @@ export default function BikeConfigurator() {
     autoLoadExcel();
   }, []);
 
-  const selectedComponents = useMemo(() => {
-    return steps.map(step => {
-        const opt = step.options.find(o => o.id === selections[step.id]);
-        if (opt) return { ...opt, stepTitle: step.title };
-        return null;
-    }).filter((c): c is Component => !!c);
-  }, [selections, steps]);
-
-  const activeComponentForTuning = useMemo(() => {
-    return currentStep.options.find(o => o.id === selections[currentStep.id]);
-  }, [selections, currentStep]);
-
-  const jumpToStep = (index: number) => {
-    if (index === 0 || !!selections[steps[index - 1]?.id] || index < currentStepIndex) {
-      setCurrentStepIndex(index); setError(null);
-    }
-  };
+  const selectedComponents = useMemo(() => steps.map(s => s.options.find(o => o.id === selections[s.id]) || null).filter((c): c is Component => !!c), [selections, steps]);
+  const activeComponentForTuning = currentStep.options.find(o => o.id === selections[currentStep.id]);
 
   if (isAdminMode && !isLoggedIn) return <AdminLogin onLogin={() => setIsLoggedIn(true)} />;
   if (isFinished) return <SummaryView selections={selectedComponents} onReset={() => window.location.reload()} />;
 
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-red-600 pb-28 lg:pb-24 overflow-x-hidden">
-      {isLoggedIn && <AdminPanel categories={INITIAL_STEPS.map(s => s.title)} offsets={offsets} setOffsets={setOffsets} activeComponent={activeComponentForTuning} />}
-      
-      <nav className="border-b border-white/5 px-4 lg:px-8 py-2 flex justify-between items-center bg-black/80 backdrop-blur-2xl sticky top-0 z-50">
-        <div className="flex items-center gap-4 pl-2">
-          <img src="/design/Logo.png" alt="Logo" className="h-4 lg:h-6 w-auto object-contain" />
-        </div>
-        <div className="flex items-center gap-6"><div className="text-zinc-400 font-mono text-[7px] pr-2 opacity-70 uppercase tracking-widest italic">Build by Vasile & AI</div></div>
-      </nav>
+      {isLoggedIn ? (
+        <AdminPanel categories={INITIAL_STEPS.map(s => s.title)} offsets={offsets} setOffsets={setOffsets} activeComponent={activeComponentForTuning} />
+      ) : (
+        <nav className="border-b border-white/5 px-4 lg:px-8 py-2 flex justify-between items-center bg-black/80 backdrop-blur-2xl sticky top-0 z-50">
+          <div className="flex items-center gap-4 pl-2"><img src="/design/Logo.png" alt="Logo" className="h-4 lg:h-6 w-auto object-contain" /></div>
+          <div className="flex items-center gap-6"><div className="text-zinc-400 font-mono text-[7px] pr-2 opacity-70 uppercase tracking-widest italic">Build by Vasile & AI</div></div>
+        </nav>
+      )}
 
       <main className="max-w-[1500px] mx-auto px-4 lg:px-6 pt-2 lg:pt-3">
         <div className="flex flex-col lg:grid lg:grid-cols-12 gap-6 lg:gap-10 lg:h-[550px] items-stretch">
           <div className="lg:col-span-9 flex flex-col gap-2 order-1">
             <div className="flex overflow-x-auto no-scrollbar lg:overflow-visible lg:flex-wrap justify-start items-center px-4 gap-x-6 gap-y-2 pb-2">
               {steps.map((step, idx) => (
-                <button key={step.id} ref={el => stepRefs.current[idx] = el} onClick={() => jumpToStep(idx)} 
+                <button key={step.id} onClick={() => { setCurrentStepIndex(idx); setError(null); }} 
                   className={cn("transition-all duration-300 text-[10px] font-black italic uppercase tracking-widest pb-1 border-b-2 whitespace-nowrap", 
                   idx === currentStepIndex ? "text-red-600 border-red-600 drop-shadow-[0_0_9px_rgba(255,0,0,0.3)]" : "text-white opacity-20 border-transparent hover:opacity-100")}
                 >{step.title}</button>
@@ -413,16 +331,14 @@ export default function BikeConfigurator() {
             </div>
             <div className="h-[280px] md:h-[400px] lg:flex-1"><Visualizer selectedComponents={selectedComponents} offsets={offsets} /></div>
           </div>
-
-          <div className="lg:col-span-3 flex flex-col bg-zinc-900/40 rounded-[2.5rem] border border-white/5 p-4 lg:p-6 relative overflow-hidden order-2">
+          <div className="lg:col-span-3 flex flex-col bg-zinc-900/40 rounded-[2.5rem] border border-white/5 p-4 lg:p-6 relative overflow-hidden order-2 shadow-2xl">
             <style>{`.custom-scroll-container::-webkit-scrollbar {height: 3px;}.custom-scroll-container::-webkit-scrollbar-track {background: rgba(255, 255, 255, 0.05);}.custom-scroll-container::-webkit-scrollbar-thumb {background: #ef4444;border-radius: 10px;}.custom-scroll-container {scrollbar-width: thin;scrollbar-color: #ef4444 rgba(255, 255, 255, 0.05);}`}</style>
             <div ref={listRef} className="flex-1 overflow-x-auto lg:overflow-y-auto lg:overflow-x-hidden custom-scroll-container pb-2 lg:pb-0" style={{ display: 'flex', flexDirection: 'column' }}>
-                {error && <div className="mb-4 text-red-500 bg-red-600/10 p-2 rounded-lg text-[9px] font-bold uppercase">{error}</div>}
                 <div className="flex flex-row lg:flex-col gap-3 min-w-full">
                   <AnimatePresence mode="popLayout">
                     {filteredOptions.map((option) => (
                       <div key={option.id} className="w-[31%] min-w-[31%] lg:w-full lg:min-w-0 shrink-0">
-                        <OptionCard component={option} isSelected={selections[currentStep.id] === option.id} onClick={() => { setSelections(prev => ({...prev, [currentStep.id]: option.id})); setError(null); }} />
+                        <OptionCard component={option} isSelected={selections[currentStep.id] === option.id} onClick={() => setSelections(prev => ({...prev, [currentStep.id]: option.id}))} />
                       </div>
                     ))}
                   </AnimatePresence>
@@ -434,28 +350,14 @@ export default function BikeConfigurator() {
 
       <div className="fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur-2xl border-t border-white/5 z-40">
         <div className="max-w-[1500px] mx-auto px-4 lg:px-6 py-6 grid grid-cols-12 gap-2 items-center">
-          <div className="col-span-3 lg:col-span-2">
-            <button onClick={() => currentStepIndex > 0 && setCurrentStepIndex(currentStepIndex - 1)} className="flex items-center gap-1 lg:gap-3 text-zinc-500 hover:text-white transition-all font-black uppercase text-[10px] tracking-widest italic">
-              <ChevronLeft size={20} /> Back
-            </button>
-          </div>
+          <button onClick={() => currentStepIndex > 0 && setCurrentStepIndex(currentStepIndex - 1)} className="col-span-3 lg:col-span-2 flex items-center gap-1 text-zinc-500 hover:text-white transition-all font-black uppercase text-[10px] tracking-widest italic"><ChevronLeft size={20} /> Back</button>
           <div className="col-span-6 lg:col-span-7 flex justify-center lg:justify-end items-center gap-4 lg:gap-10">
-            <div className="text-center lg:text-right">
-              <p className="text-[7px] lg:text-[8px] text-zinc-600 uppercase font-black mb-0.5 italic">Weight</p>
-              <p className="font-mono text-xs lg:text-sm tracking-tighter">{selectedComponents.reduce((acc, c) => acc + c.weight, 0)}g</p>
-            </div>
+            <div className="text-center lg:text-right"><p className="text-[7px] text-zinc-600 uppercase font-black mb-0.5 italic">Weight</p><p className="font-mono text-xs">{selectedComponents.reduce((acc, c) => acc + c.weight, 0)}g</p></div>
             <div className="h-8 w-px bg-white/10" />
-            <div className="text-center lg:text-right">
-              <p className="text-[7px] lg:text-[8px] text-zinc-600 uppercase font-black mb-0.5 italic">Price</p>
-              <p className="font-mono text-xs lg:text-sm text-red-600 tracking-tighter">€{selectedComponents.reduce((acc, c) => acc + c.price, 0).toLocaleString()}</p>
-            </div>
+            <div className="text-center lg:text-right"><p className="text-[7px] text-zinc-600 uppercase font-black mb-0.5 italic">Price</p><p className="font-mono text-xs text-red-600">€{selectedComponents.reduce((acc, c) => acc + c.price, 0).toLocaleString()}</p></div>
           </div>
           <div className="col-span-3 flex justify-end">
-            <button onClick={() => {
-                if (currentStep.options.length > 0 && !selections[currentStep.id]) { setError("Select!"); return; }
-                currentStepIndex < steps.length - 1 ? setCurrentStepIndex(currentStepIndex + 1) : setIsFinished(true);
-              }} className="bg-red-600 hover:bg-red-700 text-white h-[32px] px-3 lg:px-[22px] rounded-lg font-black uppercase text-[10px] tracking-widest flex items-center gap-1 lg:gap-3 transition-all active:scale-95 shadow-lg shadow-red-600/20 italic"
-            >{currentStepIndex === steps.length - 1 ? 'Finish' : 'Next'} <ChevronRight size={14} /></button>
+            <button onClick={() => currentStepIndex < steps.length - 1 ? setCurrentStepIndex(currentStepIndex + 1) : setIsFinished(true)} className="bg-red-600 text-white h-[32px] px-6 rounded-lg font-black uppercase text-[10px] tracking-widest flex items-center gap-2 active:scale-95 shadow-lg shadow-red-600/20 italic">{currentStepIndex === steps.length - 1 ? 'Finish' : 'Next'} <ChevronRight size={14} /></button>
           </div>
         </div>
       </div>
@@ -486,27 +388,22 @@ function SummaryView({ selections, onReset }: any) {
       columnStyles: { 0: { fontStyle: 'bold', cellWidth: 25 } }, foot: [['TOTAL', '', '', `${totalWeight} g`, `${totalPrice.toLocaleString()} €`]],
       footStyles: { fillColor: [220, 38, 38], textColor: [255, 255, 255], fontSize: 9, fontStyle: 'bold', cellPadding: 3 }, theme: 'grid'
     });
-    const finalY = (doc as any).lastAutoTable.finalY + 10; doc.setFontSize(5.6); doc.setTextColor(140);
-    doc.text(doc.splitTextToSize("NOTICE: THE WEIGHT AND PRICE INDICATED ARE PRELIMINARY AND SUBJECT TO MINOR CHANGES BASED ON COMPONENT AVAILABILITY. ADICTO.BIKE RESERVES THE RIGHT TO MODIFY SPECIFICATIONS WITHOUT PRIOR NOTICE.", pageWidth - 28), 14, finalY);
-    doc.setFontSize(6.3); doc.setTextColor(100); doc.text("WWW.ADICTO.BIKE  |  @ADICTO.BIKE", pageWidth / 2, pageHeight - 20, { align: 'center' });
     doc.save(`ADICTO_BUILD.pdf`);
   };
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-8 text-center font-sans">
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-2xl w-full">
-        <CheckCircle2 size={32} className="text-red-600 mx-auto mb-4" /> 
-        <h2 className="text-[27px] font-black italic uppercase tracking-tighter mb-4 leading-none">Configuration <br/> <span className="text-red-600">Complete</span></h2>
-        <div className="flex justify-center gap-10 my-8 bg-zinc-900/50 p-6 rounded-3xl border border-white/5">
-          <div><p className="text-zinc-500 text-[9px] uppercase font-bold tracking-widest italic">Price</p><p className="text-[18px] font-mono text-red-600">€{totalPrice.toLocaleString()}</p></div>
-          <div className="w-px bg-white/10" />
-          <div><p className="text-zinc-500 text-[9px] uppercase font-bold tracking-widest italic">Weight</p><p className="text-[18px] font-mono">{totalWeight}g</p></div>
-        </div>
-        <div className="flex gap-4 justify-center">
-          <button onClick={handleExport} className="px-8 py-4 bg-red-600 text-white rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-red-700 transition-all flex items-center gap-2 italic shadow-lg shadow-red-600/20"><Download size={16} /> Export PDF</button>
-          <button onClick={onReset} className="px-8 py-4 border border-white/10 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-white/5 transition-all italic">Start Over</button>
-        </div>
-      </motion.div>
+      <CheckCircle2 size={32} className="text-red-600 mb-4" />
+      <h2 className="text-[27px] font-black italic uppercase tracking-tighter mb-4 leading-none">Configuration <br/> <span className="text-red-600">Complete</span></h2>
+      <div className="flex justify-center gap-10 my-8 bg-zinc-900/50 p-6 rounded-3xl border border-white/5">
+        <div><p className="text-zinc-500 text-[9px] uppercase font-bold italic">Price</p><p className="text-[18px] font-mono text-red-600">€{totalPrice.toLocaleString()}</p></div>
+        <div className="w-px bg-white/10" />
+        <div><p className="text-zinc-500 text-[9px] uppercase font-bold italic">Weight</p><p className="text-[18px] font-mono">{totalWeight}g</p></div>
+      </div>
+      <div className="flex gap-4 justify-center">
+        <button onClick={handleExport} className="px-8 py-4 bg-red-600 text-white rounded-xl font-black uppercase text-[10px] italic shadow-lg shadow-red-600/20"><Download size={16} /> Export PDF</button>
+        <button onClick={onReset} className="px-8 py-4 border border-white/10 rounded-xl font-black uppercase text-[10px] italic hover:bg-white/5">Start Over</button>
+      </div>
     </div>
   );
 }
