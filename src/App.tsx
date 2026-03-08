@@ -28,9 +28,9 @@ interface Step {
 }
 
 interface OffsetData {
-  s: number; // scale
-  x: number; // offsetX
-  y: number; // offsetY
+  s: number; 
+  x: number; 
+  y: number; 
 }
 
 // --- ADMIN LOGIN COMPONENT ---
@@ -62,7 +62,7 @@ const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
           <div className="w-12 h-12 bg-red-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-red-600/20"><Lock className="text-white" size={24} /></div>
           <h2 className="text-xl font-black uppercase tracking-widest text-white italic">Adicto Admin</h2>
         </div>
-        <div className="space-y-4">
+        <div className="space-y-4 text-black">
           <input type="email" placeholder="Email" className="w-full bg-black border border-white/10 p-4 rounded-2xl text-white outline-none focus:border-red-600 transition-all text-sm font-mono" value={email} onChange={(e) => setEmail(e.target.value)} />
           <div className="relative">
             <input type={showPass ? "text" : "password"} placeholder="Password" className="w-full bg-black border border-white/10 p-4 rounded-2xl text-white outline-none focus:border-red-600 transition-all text-sm font-mono" value={pass} onChange={(e) => setPass(e.target.value)} />
@@ -112,12 +112,12 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
   return (
     <div className="z-[100] sticky top-0 shadow-2xl font-sans">
       <motion.div initial={{ y: -50 }} animate={{ y: 0 }} className="bg-zinc-900 border-b border-white/5 p-2 flex gap-3 items-center justify-center backdrop-blur-md">
-        <select value={selectedCat} onChange={(e) => setSelectedCat(e.target.value)} className="bg-black border border-white/10 text-[9px] px-2 py-1 rounded uppercase font-bold text-zinc-400 outline-none focus:border-red-600">
+        <select value={selectedCat} onChange={(e) => setSelectedCat(e.target.value)} className="bg-black border border-white/10 text-[9px] px-2 py-1 rounded uppercase font-bold text-zinc-400 outline-none focus:border-red-600 transition-all">
           <option value="excel">📁 EXCEL</option>
           {categories.map((cat: string) => <option key={cat} value={cat}>🖼️ {cat.toUpperCase()}</option>)}
         </select>
         
-        <label className="cursor-pointer bg-zinc-800 text-zinc-300 px-3 py-1 rounded text-[9px] font-bold uppercase hover:bg-zinc-700 transition-all flex items-center gap-2 italic">
+        <label className="cursor-pointer bg-zinc-800 text-zinc-300 px-3 py-1 rounded text-[9px] font-bold uppercase hover:bg-zinc-700 transition-all flex items-center gap-2">
           <Upload size={10}/> UPLOAD <input type="file" className="hidden" onChange={(e) => {
              const file = e.target.files?.[0];
              if (file) {
@@ -130,27 +130,27 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
 
         <div className="h-4 w-px bg-white/10 mx-1" />
 
-        {/* Grid Control Group */}
+        {/* Grid Control */}
         <div className="flex items-center gap-2 bg-black/40 p-1 rounded-lg border border-white/5">
           <button onClick={() => setShowGrid(!showGrid)} className={cn("px-2 py-1 rounded text-[9px] font-bold uppercase transition-all", showGrid ? "bg-red-600 text-white" : "bg-zinc-800 text-zinc-400")}>
             <Grid3X3 size={10}/>
           </button>
           {showGrid && (
             <div className="flex items-center gap-2 px-1 border-r border-white/5 mr-1">
-              <span className="text-[7px] text-zinc-500 font-bold uppercase whitespace-nowrap">Step: {gridSize}px</span>
+              <span className="text-[7px] text-zinc-500 font-bold uppercase">Grid: {gridSize}px</span>
               <input type="range" min="1" max="20" step="1" value={gridSize} onChange={(e) => setGridSize(parseInt(e.target.value))} className="w-16 h-1 bg-zinc-700 appearance-none accent-red-600" />
             </div>
           )}
         </div>
 
-        {/* Zoom Control Group */}
+        {/* Zoom Control */}
         <div className="flex items-center gap-2 bg-black/40 p-1 rounded-lg border border-white/5">
           <button onClick={() => setIsZoomed(!isZoomed)} className={cn("px-2 py-1 rounded text-[9px] font-bold uppercase transition-all flex items-center gap-2", isZoomed ? "bg-red-600 text-white" : "bg-zinc-800 text-zinc-400")}>
-            <Search size={10}/> {isZoomed ? `${zoomScale.toFixed(1)}X` : 'Magnify'}
+            <Search size={10}/> {isZoomed ? `${zoomScale}X` : 'Magnify'}
           </button>
           {isZoomed && (
-            <div className="flex items-center gap-2 px-1">
-              <span className="text-[7px] text-zinc-500 font-bold uppercase">Zoom</span>
+            <div className="flex items-center gap-2 px-1 animate-in fade-in slide-in-from-left-2">
+              <span className="text-[7px] text-zinc-500 font-bold uppercase">Scale</span>
               <input type="range" min="2" max="10" step="0.1" value={zoomScale} onChange={(e) => setZoomScale(parseFloat(e.target.value))} className="w-20 h-1 bg-zinc-700 appearance-none accent-red-600" />
             </div>
           )}
@@ -161,7 +161,7 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
 
       {activeComponent && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-black/80 border-b border-white/5 p-2 flex justify-between items-center px-6 backdrop-blur-xl gap-10">
-          <div className="flex flex-col gap-1 flex-1">
+          <div className="flex flex-col gap-1 flex-1 text-white">
             {[
               { key: 's', label: 'Size', min: 0.8, max: 1.2, step: 0.001, reset: 1 },
               { key: 'x', label: 'Pos X', min: -40, max: 40, step: 1, reset: 0 },
@@ -195,12 +195,11 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
   );
 };
 
-// --- VISUALIZER ---
+// --- VISUALIZER COMPONENT ---
 const Visualizer = ({ selectedComponents, offsets, showGrid, gridSize, isZoomed, zoomScale }: any) => {
   return (
     <div id="bike-visualizer" className="relative w-full h-full bg-zinc-950 rounded-[1.5rem] lg:rounded-[2.5rem] overflow-hidden border border-white/5 shadow-[0_0_100px_rgba(0,0,0,0.5)] flex items-center justify-center cursor-crosshair">
       
-      {/* Dynamic Grid Overlay */}
       {showGrid && (
         <div className="absolute inset-0 z-[60] pointer-events-none opacity-[0.15]" 
              style={{ 
@@ -215,7 +214,7 @@ const Visualizer = ({ selectedComponents, offsets, showGrid, gridSize, isZoomed,
         dragConstraints={{ left: -2500, right: 2500, top: -2500, bottom: 2500 }}
         animate={{ 
           scale: isZoomed ? zoomScale : 1,
-          x: isZoomed ? undefined : 0, 
+          x: isZoomed ? undefined : 0,
           y: isZoomed ? undefined : 0
         }}
         transition={{ type: 'spring', damping: 25, stiffness: 120 }}
@@ -240,7 +239,7 @@ const Visualizer = ({ selectedComponents, offsets, showGrid, gridSize, isZoomed,
 
       {isZoomed && (
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-red-600 text-white px-4 py-1 rounded-full text-[8px] font-black uppercase flex items-center gap-2 z-[70] shadow-2xl">
-          <Move size={10}/> {zoomScale.toFixed(1)}X - Drag to Move
+          <Move size={10}/> {zoomScale}X - Drag to Move
         </div>
       )}
     </div>
@@ -285,10 +284,13 @@ export default function BikeConfigurator() {
   const [isAdminMode, setIsAdminMode] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [offsets, setOffsets] = useState<Record<string, OffsetData>>({});
+  
+  // ДОДАНО ЦІ ТРИ СТЕЙТИ, ЩОБ НЕ БУЛО БІЛОГО ЕКРАНУ
   const [showGrid, setShowGrid] = useState(false);
   const [gridSize, setGridSize] = useState(5);
   const [zoomScale, setZoomScale] = useState(5);
-  
+  const [isZoomed, setIsZoomed] = useState(false);
+
   useEffect(() => {
     const path = window.location.pathname; 
     const urlParams = new URLSearchParams(window.location.search);
@@ -301,8 +303,6 @@ export default function BikeConfigurator() {
   const [selections, setSelections] = useState<Record<string, string>>({});
   const [isFinished, setIsFinished] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const currentStep = steps[currentStepIndex] || steps[0];
 
   useEffect(() => {
     const autoLoadExcel = async () => {
@@ -356,7 +356,7 @@ export default function BikeConfigurator() {
         />
       ) : (
         <nav className="border-b border-white/5 px-4 lg:px-8 py-2 flex justify-between items-center bg-black/80 backdrop-blur-2xl sticky top-0 z-50">
-          <div className="flex items-center gap-4 pl-2"><img src="/design/Logo.png" alt="Logo" className="h-4 lg:h-6 w-auto object-contain" /></div>
+          <div className="flex items-center gap-4 pl-2"><img src="/design/Logo.png" alt="Logo" className="h-4 lg:h-6 w-auto" /></div>
           <div className="flex items-center gap-6"><div className="text-zinc-400 font-mono text-[7px] pr-2 opacity-70 uppercase tracking-widest italic">Build by Vasile & AI</div></div>
         </nav>
       )}
@@ -381,9 +381,9 @@ export default function BikeConfigurator() {
             <div className="flex-1 overflow-x-auto lg:overflow-y-auto lg:overflow-x-hidden custom-scroll-container pb-2 lg:pb-0" style={{ display: 'flex', flexDirection: 'column' }}>
                 <div className="flex flex-row lg:flex-col gap-3 min-w-full">
                   <AnimatePresence mode="popLayout">
-                    {currentStep.options.map((option) => (
+                    {steps[currentStepIndex]?.options.map((option) => (
                       <div key={option.id} className="w-[31%] min-w-[31%] lg:w-full lg:min-w-0 shrink-0">
-                        <OptionCard component={option} isSelected={selections[currentStep.id] === option.id} onClick={() => setSelections(prev => ({...prev, [currentStep.id]: option.id}))} />
+                        <OptionCard component={option} isSelected={selections[steps[currentStepIndex].id] === option.id} onClick={() => setSelections(prev => ({...prev, [steps[currentStepIndex].id]: option.id}))} />
                       </div>
                     ))}
                   </AnimatePresence>
@@ -403,7 +403,7 @@ export default function BikeConfigurator() {
           </div>
           <div className="col-span-3 flex justify-end">
             <button onClick={() => {
-                if (currentStep.options.length > 0 && !selections[currentStep.id]) { setError("Select!"); return; }
+                if (steps[currentStepIndex]?.options.length > 0 && !selections[steps[currentStepIndex].id]) { setError("Select!"); return; }
                 currentStepIndex < steps.length - 1 ? setCurrentStepIndex(currentStepIndex + 1) : setIsFinished(true);
               }} className="bg-red-600 hover:bg-red-700 text-white h-[32px] px-3 lg:px-[22px] rounded-lg font-black uppercase text-[10px] tracking-widest flex items-center gap-1 lg:gap-3 transition-all active:scale-95 shadow-lg shadow-red-600/20 italic"
             >{currentStepIndex === steps.length - 1 ? 'Finish' : 'Next'} <ChevronRight size={14} /></button>
@@ -437,9 +437,6 @@ function SummaryView({ selections, onReset }: any) {
       columnStyles: { 0: { fontStyle: 'bold', cellWidth: 25 } }, foot: [['TOTAL', '', '', `${totalWeight} g`, `${totalPrice.toLocaleString()} €`]],
       footStyles: { fillColor: [220, 38, 38], textColor: [255, 255, 255], fontSize: 9, fontStyle: 'bold', cellPadding: 3 }, theme: 'grid'
     });
-    const finalY = (doc as any).lastAutoTable.finalY + 10; doc.setFontSize(5.6); doc.setTextColor(140);
-    doc.text(doc.splitTextToSize("NOTICE: THE WEIGHT AND PRICE INDICATED ARE PRELIMINARY AND SUBJECT TO MINOR CHANGES BASED ON COMPONENT AVAILABILITY. ADICTO.BIKE RESERVES THE RIGHT TO MODIFY SPECIFICATIONS WITHOUT PRIOR NOTICE.", pageWidth - 28), 14, finalY);
-    doc.setFontSize(6.3); doc.setTextColor(100); doc.text("WWW.ADICTO.BIKE  |  @ADICTO.BIKE", pageWidth / 2, pageHeight - 20, { align: 'center' });
     doc.save(`ADICTO_BUILD.pdf`);
   };
 
