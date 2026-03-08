@@ -115,32 +115,42 @@ export default function BikeConfigurator() {
   const listRef = useRef<HTMLDivElement>(null);
   const stepRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
-  // --- ЛОГІКА СУМІСНОСТІ ---
+  // --- ЛІНІЙНА ЛОГІКА СУМІСНОСТІ (Тільки попередній крок) ---
   const activeLogic = useMemo(() => {
-    // Шукаємо останню задану логіку серед вже обраних компонентів
-    for (let i = currentStepIndex - 1; i >= 0; i--) {
-      const stepId = steps[i].id;
-      const selectedId = selections[stepId];
-      const component = steps[i].options.find(o => o.id === selectedId);
-      if (component?.logic && component.logic.trim() !== "") {
-        return component.logic.trim();
-      }
-    }
-    return null;
+    // Якщо це перший крок, логіки ще немає
+    if (currentStepIndex === 0) return null;
+
+    // Беремо ID попереднього кроку
+    const prevStepId = steps[currentStepIndex - 1].id;
+    // Знаходимо, який товар там обрано
+    const selectedIdInPrevStep = selections[prevStepId];
+    
+    if (!selectedIdInPrevStep) return null;
+
+    // Знаходимо сам об'єкт обраного товару
+    const prevComponent = steps[currentStepIndex - 1].options.find(o => o.id === selectedIdInPrevStep);
+    
+    // Повертаємо логіку ТІЛЬКИ цього товару (навіть якщо вона порожня)
+    return prevComponent?.logic?.trim() || null;
   }, [selections, currentStepIndex, steps]);
 
   const filteredOptions = useMemo(() => {
     if (!currentStep) return [];
+
     return currentStep.options.filter(option => {
-      // Якщо логіка в конфігурації ще не задана (activeLogic === null), показуємо все
+      // 1. Якщо в ПОПЕРЕДНЬОМУ кроці була порожня комірка (activeLogic === null) 
+      //    — показуємо абсолютно всі товари на поточному кроці
       if (!activeLogic) return true;
-      // Якщо у товара поле Logic порожнє, він сумісний з усім
+      
+      // 2. Якщо у ПОТОЧНОГО товару в Excel порожня комірка 
+      //    — він універсальний і показується завжди
       if (!option.logic || option.logic.trim() === "") return true;
-      // Показуємо тільки ті, що співпадають
+      
+      // 3. Якщо логіка співпадає з ПОПЕРЕДНІМ кроком
       return option.logic.trim() === activeLogic;
     });
   }, [currentStep, activeLogic]);
-
+  
   useEffect(() => {
     stepRefs.current[currentStepIndex]?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
   }, [currentStepIndex]);
