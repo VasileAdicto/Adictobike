@@ -98,7 +98,12 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
       const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${path}`, {
         method: "PUT",
         headers: { Authorization: `token ${GITHUB_TOKEN}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ message: `Admin update: ${path}`, content: isJson ? btoa(unescape(encodeURIComponent(content))) : content, sha: sha || undefined, branch: BRANCH }),
+        body: JSON.stringify({
+          message: `Admin update: ${path}`,
+          content: isJson ? btoa(unescape(encodeURIComponent(content))) : content,
+          sha: sha || undefined,
+          branch: BRANCH
+        }),
       });
       if (res.ok) setStatus("✅ Success!"); else setStatus("❌ Error");
     } catch (err) { setStatus("❌ Failed"); }
@@ -130,7 +135,6 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
 
         <div className="h-4 w-px bg-white/10 mx-1" />
 
-        {/* Grid Control */}
         <div className="flex items-center gap-2 bg-black/40 p-1 rounded-lg border border-white/5">
           <button onClick={() => setShowGrid(!showGrid)} className={cn("px-2 py-1 rounded text-[9px] font-bold uppercase transition-all", showGrid ? "bg-red-600 text-white" : "bg-zinc-800 text-zinc-400")}>
             <Grid3X3 size={10}/>
@@ -143,20 +147,19 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
           )}
         </div>
 
-        {/* Zoom Control */}
         <div className="flex items-center gap-2 bg-black/40 p-1 rounded-lg border border-white/5">
           <button onClick={() => setIsZoomed(!isZoomed)} className={cn("px-2 py-1 rounded text-[9px] font-bold uppercase transition-all flex items-center gap-2", isZoomed ? "bg-red-600 text-white" : "bg-zinc-800 text-zinc-400")}>
             <Search size={10}/> {isZoomed ? `${zoomScale.toFixed(1)}X` : 'Magnify'}
           </button>
           {isZoomed && (
             <div className="flex items-center gap-2 px-1 animate-in fade-in slide-in-from-left-2">
-              <span className="text-[7px] text-zinc-500 font-bold uppercase">Scale</span>
+              <span className="text-[7px] text-zinc-500 font-bold uppercase">Zoom</span>
               <input type="range" min="2" max="10" step="0.1" value={zoomScale} onChange={(e) => setZoomScale(parseFloat(e.target.value))} className="w-20 h-1 bg-zinc-700 appearance-none accent-red-600" />
             </div>
           )}
         </div>
 
-        {status && <span className="text-[8px] font-mono uppercase text-red-600 animate-pulse ml-2">{status}</span>}
+        {status && <span className="text-[8px] font-mono uppercase text-red-600 animate-pulse ml-1">{status}</span>}
       </motion.div>
 
       {activeComponent && (
@@ -239,14 +242,14 @@ const Visualizer = ({ selectedComponents, offsets, showGrid, gridSize, isZoomed,
 
       {isZoomed && (
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-red-600 text-white px-4 py-1 rounded-full text-[8px] font-black uppercase flex items-center gap-2 z-[70] shadow-2xl">
-          <Move size={10}/> {zoomScale.toFixed(1)}X - Drag to Move
+          <Move size={10}/> Drag to Move
         </div>
       )}
     </div>
   );
 };
 
-// --- OPTION CARD & MAIN CONFIGURATOR (REMAINING CODE) ---
+// --- OPTION CARD & MAIN CONFIGURATOR ---
 const OptionCard = ({ component, isSelected, onClick }: { component: Component, isSelected: boolean, onClick: () => void }) => (
   <motion.button
     layout onClick={(e) => { e.preventDefault(); onClick(); }}
@@ -333,7 +336,7 @@ export default function BikeConfigurator() {
   }, []);
 
   const selectedComponents = useMemo(() => steps.map(s => s.options.find(o => o.id === selections[s.id]) || null).filter((c): c is Component => !!c), [selections, steps]);
-  const activeComponentForTuning = (steps[currentStepIndex] || steps[0]).options.find(o => o.id === selections[(steps[currentStepIndex] || steps[0]).id]);
+  const activeComponentForTuning = steps[currentStepIndex]?.options.find(o => o.id === selections[steps[currentStepIndex].id]);
 
   if (isAdminMode && !isLoggedIn) return <AdminLogin onLogin={() => setIsLoggedIn(true)} />;
   if (isFinished) return <SummaryView selections={selectedComponents} onReset={() => window.location.reload()} />;
@@ -341,15 +344,7 @@ export default function BikeConfigurator() {
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-red-600 pb-28 lg:pb-24 overflow-x-hidden">
       {isLoggedIn ? (
-        <AdminPanel 
-          categories={INITIAL_STEPS.map(s => s.title)} 
-          offsets={offsets} setOffsets={setOffsets} 
-          activeComponent={activeComponentForTuning}
-          showGrid={showGrid} setShowGrid={setShowGrid}
-          gridSize={gridSize} setGridSize={setGridSize}
-          isZoomed={isZoomed} setIsZoomed={setIsZoomed}
-          zoomScale={zoomScale} setZoomScale={setZoomScale}
-        />
+        <AdminPanel categories={INITIAL_STEPS.map(s => s.title)} offsets={offsets} setOffsets={setOffsets} activeComponent={activeComponentForTuning} showGrid={showGrid} setShowGrid={setShowGrid} gridSize={gridSize} setGridSize={setGridSize} isZoomed={isZoomed} setIsZoomed={setIsZoomed} zoomScale={zoomScale} setZoomScale={setZoomScale} />
       ) : (
         <nav className="border-b border-white/5 px-4 lg:px-8 py-2 flex justify-between items-center bg-black/80 backdrop-blur-2xl sticky top-0 z-50">
           <div className="flex items-center gap-4 pl-2"><img src="/design/Logo.png" alt="Logo" className="h-4 lg:h-6 w-auto" /></div>
@@ -362,10 +357,7 @@ export default function BikeConfigurator() {
           <div className="lg:col-span-9 flex flex-col gap-2 order-1">
             <div className="flex overflow-x-auto no-scrollbar lg:overflow-visible lg:flex-wrap justify-start items-center px-4 gap-x-6 gap-y-2 pb-2">
               {steps.map((step, idx) => (
-                <button key={step.id} onClick={() => { setCurrentStepIndex(idx); setError(null); }} 
-                  className={cn("transition-all duration-300 text-[10px] font-black italic uppercase tracking-widest pb-1 border-b-2 whitespace-nowrap", 
-                  idx === currentStepIndex ? "text-red-600 border-red-600" : "text-white opacity-20 border-transparent hover:opacity-100")}
-                >{step.title}</button>
+                <button key={step.id} onClick={() => setCurrentStepIndex(idx)} className={cn("transition-all duration-300 text-[10px] font-black italic uppercase tracking-widest pb-1 border-b-2 whitespace-nowrap", idx === currentStepIndex ? "text-red-600 border-red-600 drop-shadow-[0_0_9px_rgba(255,0,0,0.3)]" : "text-white opacity-20 border-transparent hover:opacity-100")}>{step.title}</button>
               ))}
             </div>
             <div className="h-[280px] md:h-[400px] lg:flex-1 relative">
@@ -376,9 +368,13 @@ export default function BikeConfigurator() {
             <div className="flex-1 overflow-x-auto lg:overflow-y-auto lg:overflow-x-hidden custom-scroll-container pb-2 lg:pb-0" style={{ display: 'flex', flexDirection: 'column' }}>
                 <div className="flex flex-row lg:flex-col gap-3 min-w-full">
                   <AnimatePresence mode="popLayout">
-                    {(steps[currentStepIndex] || steps[0]).options.map((option) => (
+                    {steps[currentStepIndex]?.options.map((option) => (
                       <div key={option.id} className="w-[31%] min-w-[31%] lg:w-full lg:min-w-0 shrink-0">
-                        <OptionCard component={option} isSelected={selections[(steps[currentStepIndex] || steps[0]).id] === option.id} onClick={() => setSelections(prev => ({...prev, [(steps[currentStepIndex] || steps[0]).id]: option.id}))} />
+                        <button onClick={() => setSelections(prev => ({...prev, [steps[currentStepIndex].id]: option.id}))} className={cn("relative flex flex-col p-2 lg:p-3 rounded-xl lg:rounded-2xl border text-left transition-all w-full", selections[steps[currentStepIndex].id] === option.id ? "border-red-600 bg-red-600/5 shadow-[0_0_20px_rgba(255,0,0,0.1)]" : "border-white/5 bg-zinc-900/50")}>
+                          <div className="aspect-square w-full rounded-lg bg-black/40 mb-2 relative overflow-hidden"><img src={option.cardImageUrl} className="w-full h-full object-contain p-1" />{selections[steps[currentStepIndex].id] === option.id && <div className="absolute top-1 right-1 bg-red-600 p-1 rounded-full"><CheckCircle2 size={10} className="text-white" /></div>}</div>
+                          <h3 className="text-[6.5px] lg:text-[11px] font-bold line-clamp-2 text-zinc-300 uppercase leading-tight">{option.name}</h3>
+                          <p className="text-[10px] text-red-600 font-mono mt-1">€{option.price.toLocaleString()}</p>
+                        </button>
                       </div>
                     ))}
                   </AnimatePresence>
@@ -392,9 +388,9 @@ export default function BikeConfigurator() {
         <div className="max-w-[1500px] mx-auto px-4 lg:px-6 py-6 grid grid-cols-12 gap-2 items-center">
           <button onClick={() => currentStepIndex > 0 && setCurrentStepIndex(currentStepIndex - 1)} className="col-span-3 lg:col-span-2 flex items-center gap-1 text-zinc-500 hover:text-white transition-all font-black uppercase text-[10px] tracking-widest italic"><ChevronLeft size={20} /> Back</button>
           <div className="col-span-6 lg:col-span-7 flex justify-center lg:justify-end items-center gap-4 lg:gap-10">
-            <div className="text-center lg:text-right"><p className="text-[7px] text-zinc-600 uppercase font-black mb-0.5">Weight</p><p className="font-mono text-xs">{selectedComponents.reduce((acc, c) => acc + c.weight, 0)}g</p></div>
+            <div className="text-center lg:text-right"><p className="text-[7px] text-zinc-600 uppercase font-black mb-0.5 italic">Weight</p><p className="font-mono text-xs">{selectedComponents.reduce((acc, c) => acc + c.weight, 0)}g</p></div>
             <div className="h-8 w-px bg-white/10" />
-            <div className="text-center lg:text-right"><p className="text-[7px] text-zinc-600 uppercase font-black mb-0.5">Price</p><p className="font-mono text-xs text-red-600">€{selectedComponents.reduce((acc, c) => acc + c.price, 0).toLocaleString()}</p></div>
+            <div className="text-center lg:text-right"><p className="text-[7px] text-zinc-600 uppercase font-black mb-0.5 italic">Price</p><p className="font-mono text-xs text-red-600">€{selectedComponents.reduce((acc, c) => acc + c.price, 0).toLocaleString()}</p></div>
           </div>
           <div className="col-span-3 flex justify-end">
             <button onClick={() => currentStepIndex < steps.length - 1 ? setCurrentStepIndex(currentStepIndex + 1) : setIsFinished(true)} className="bg-red-600 text-white h-[32px] px-6 rounded-lg font-black uppercase text-[10px] tracking-widest flex items-center gap-2 active:scale-95 shadow-lg shadow-red-600/20 italic">{currentStepIndex === steps.length - 1 ? 'Finish' : 'Next'} <ChevronRight size={14} /></button>
@@ -410,19 +406,10 @@ function SummaryView({ selections, onReset }: any) {
   const totalWeight = selections.reduce((acc: number, c: any) => acc + c.weight, 0);
   const handleExport = async () => {
     const doc = new jsPDF();
-    autoTable(doc, { startY: 140, head: [['SECTION', 'COMPONENT', 'BRAND', 'WEIGHT', 'PRICE']],
-      body: selections.map((c: any) => [c.stepTitle || "", c.name, c.brand, `${c.weight} g`, `${c.price.toLocaleString()} €`]), theme: 'grid'
-    });
+    autoTable(doc, { startY: 140, head: [['SECTION', 'COMPONENT', 'BRAND', 'WEIGHT', 'PRICE']], body: selections.map((c: any) => [c.stepTitle || "", c.name, c.brand, `${c.weight} g`, `${c.price.toLocaleString()} €`]), theme: 'grid' });
     doc.save(`ADICTO_BUILD.pdf`);
   };
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-8 text-center font-sans">
-      <CheckCircle2 size={32} className="text-red-600 mb-4" />
-      <h2 className="text-[27px] font-black italic uppercase tracking-tighter mb-8 leading-none">Configuration <span className="text-red-600">Complete</span></h2>
-      <div className="flex gap-4 justify-center">
-        <button onClick={handleExport} className="px-8 py-4 bg-red-600 text-white rounded-xl font-black uppercase text-[10px] italic shadow-lg shadow-red-600/20">Export PDF</button>
-        <button onClick={onReset} className="px-8 py-4 border border-white/10 rounded-xl font-black uppercase text-[10px] italic hover:bg-white/5 transition-all">Start Over</button>
-      </div>
-    </div>
+    <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-8 text-center font-sans"><CheckCircle2 size={32} className="text-red-600 mb-4" /><h2 className="text-[27px] font-black italic uppercase tracking-tighter mb-4 leading-none">Configuration <br/> <span className="text-red-600">Complete</span></h2><div className="flex justify-center gap-10 my-8 bg-zinc-900/50 p-6 rounded-3xl border border-white/5"><div><p className="text-zinc-500 text-[9px] uppercase font-bold italic">Price</p><p className="text-[18px] font-mono text-red-600">€{totalPrice.toLocaleString()}</p></div><div className="w-px bg-white/10" /><div><p className="text-zinc-500 text-[9px] uppercase font-bold italic">Weight</p><p className="text-[18px] font-mono">{totalWeight}g</p></div></div><div className="flex gap-4 justify-center"><button onClick={handleExport} className="px-8 py-4 bg-red-600 text-white rounded-xl font-black uppercase text-[10px] italic shadow-lg shadow-red-600/20"><Download size={16} /> Export PDF</button><button onClick={onReset} className="px-8 py-4 border border-white/10 rounded-xl font-black uppercase text-[10px] italic hover:bg-white/5 transition-all">Start Over</button></div></div>
   );
 }
