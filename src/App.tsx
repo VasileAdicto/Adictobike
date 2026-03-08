@@ -1,6 +1,11 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Download, CheckCircle2, Upload, Database, Lock, User, Settings2, Save, RotateCcw, Grid3X3, Search, Move, FolderOpen, Key, Eye, EyeOff, LogOut } from 'lucide-react';
+import { 
+  ChevronLeft, ChevronRight, Download, CheckCircle2, Upload, Database, 
+  Lock, User as UserIcon, Settings2, Save, RotateCcw, Grid3X3, Search, 
+  Move, FolderOpen, Key, Eye, EyeOff, LogOut, ArrowRight, ChevronsRight,
+  LogIn, Trash2, Edit3, Scale, X, Smartphone, Mail, FileText
+} from 'lucide-react';
 import { cn } from './lib/utils';
 
 import jsPDF from 'jspdf';
@@ -8,30 +13,127 @@ import autoTable from 'jspdf-autotable';
 
 // --- TYPES ---
 interface Component {
-  id: string;
-  name: string;
-  brand: string;
-  price: number;
-  weight: number;
-  description: string;
-  imageUrl: string;      
-  cardImageUrl: string;  
-  zIndex: number;
-  stepTitle?: string; 
-  logic: string; 
+  id: string; name: string; brand: string; price: number; weight: number;
+  description: string; imageUrl: string; cardImageUrl: string;
+  zIndex: number; stepTitle?: string; logic: string;
 }
 
-interface Step {
-  id: string;
-  title: string;
-  options: Component[];
+interface Step { id: string; title: string; options: Component[]; }
+interface OffsetData { s: number; x: number; y: number; }
+interface SavedBuild {
+  id: string; name: string; date: string; components: Component[];
+  totalPrice: number; totalWeight: number;
 }
 
-interface OffsetData {
-  s: number; 
-  x: number; 
-  y: number; 
-}
+// --- CONSTANTS ---
+const INITIAL_STEPS: Step[] = [ { id: 'frame', title: 'Frame', options: [] }, { id: 'wheelset', title: 'Wheelset', options: [] }, { id: 'tyres', title: 'Tyres', options: [] }, { id: 'cockpit', title: 'Cockpit', options: [] }, { id: 'tape', title: 'Tape', options: [] }, { id: 'saddle', title: 'Saddle', options: [] }, { id: 'shifters', title: 'Shifters', options: [] }, { id: 'crankset', title: 'Crankset', options: [] }, { id: 'derailleurs', title: 'Derailleurs', options: [] }, { id: 'cassette', title: 'Cassette', options: [] }, { id: 'discs', title: 'Discs', options: [] } ];
+
+// --- LUXE AUTH MODAL ---
+const AuthModal = ({ isOpen, onClose, onLogin }: any) => {
+  const [step, setStep] = useState('email'); 
+  const [email, setEmail] = useState('');
+  const [otp, setOtp] = useState(['', '', '', '']);
+
+  if (!isOpen) return null;
+
+  const handleNext = () => {
+    if (step === 'email' && email.includes('@')) setStep('otp');
+    else if (step === 'otp') onLogin({ email, name: email.split('@')[0] });
+  };
+
+  return (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xl font-sans">
+      <motion.div initial={{ scale: 0.98, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-zinc-900 border border-white/5 p-10 rounded-[2.5rem] max-w-sm w-full relative shadow-2xl">
+        <button onClick={onClose} className="absolute top-8 right-8 text-zinc-600 hover:text-white transition-colors"><X size={16}/></button>
+        <div className="text-center mb-10">
+          <h2 className="text-lg font-black uppercase italic text-white tracking-widest mb-1">Identification</h2>
+          <p className="text-zinc-500 text-[9px] uppercase font-bold tracking-[0.3em]">{step === 'email' ? 'Access your adicto garage' : `Sent to ${email}`}</p>
+        </div>
+        {step === 'email' ? (
+          <div className="space-y-6">
+            <input type="email" placeholder="EMAIL ADDRESS" value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-black/50 border border-white/5 p-4 rounded-xl text-white outline-none focus:border-red-600/50 transition-all font-mono text-[11px]" />
+            <div className="grid grid-cols-2 gap-2 text-white">
+              <button className="flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 py-3 rounded-xl transition-all text-[8px] font-black uppercase tracking-tighter"><Smartphone size={12}/> Apple ID</button>
+              <button className="flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 py-3 rounded-xl transition-all text-[8px] font-black uppercase tracking-tighter"><Mail size={12}/> Google</button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex justify-center gap-3 mb-10">
+            {otp.map((digit, i) => (
+              <input key={i} type="text" maxLength={1} value={digit} onChange={e => {
+                const newOtp = [...otp]; newOtp[i] = e.target.value; setOtp(newOtp);
+                if (e.target.nextSibling && e.target.value) (e.target.nextSibling as HTMLElement).focus();
+              }} className="w-10 h-14 bg-black border border-white/5 rounded-xl text-center text-sm font-mono font-bold text-red-600 outline-none focus:border-red-600 shadow-inner" />
+            ))}
+          </div>
+        )}
+        <button onClick={handleNext} className="w-full bg-red-600 py-4 rounded-xl font-black uppercase text-white mt-4 text-[10px] tracking-[0.2em] italic hover:bg-red-700 transition-all">Continue</button>
+      </motion.div>
+    </div>
+  );
+};
+
+// --- USER GARAGE ---
+const UserDashboard = ({ builds, onEdit, onDelete, onClose, onLogout, onPDF }: any) => {
+  const [selected, setSelected] = useState<string[]>([]);
+  const buildsToCompare = builds.filter((b: any) => selected.includes(b.id));
+
+  return (
+    <div className="fixed inset-0 z-[150] bg-black text-white flex flex-col font-sans overflow-hidden">
+      <div className="flex-1 overflow-y-auto p-6 lg:p-12 selection:bg-red-600">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex justify-between items-start mb-16">
+            <div className="leading-tight">
+              <h2 className="text-sm font-black uppercase tracking-widest text-white">My Adicto</h2>
+              <h1 className="text-sm font-black uppercase tracking-widest text-red-600">Garage</h1>
+            </div>
+            <div className="flex gap-4 items-center">
+              <button onClick={onLogout} className="text-zinc-500 hover:text-red-600 transition-colors uppercase text-[9px] font-black flex items-center gap-2">Logout <LogOut size={14}/></button>
+              <button onClick={onClose} className="bg-zinc-900 p-2 rounded-full hover:bg-zinc-800 transition-colors"><X size={18}/></button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {builds.map((b: SavedBuild) => (
+              <div key={b.id} className="bg-zinc-900/50 border border-white/5 rounded-[2rem] p-6 hover:border-white/10 transition-all relative group">
+                <div className="flex justify-between items-start mb-4">
+                  <div className="flex items-center gap-2">
+                    <div onClick={() => setSelected(s => s.includes(b.id) ? s.filter(x => x !== b.id) : [...s, b.id])} className={cn("w-4 h-4 rounded-full border flex items-center justify-center cursor-pointer transition-all", selected.includes(b.id) ? "bg-red-600 border-red-600" : "border-white/20")} />
+                    <span className="text-[8px] font-bold text-zinc-600 uppercase tracking-tighter">Choose to compare</span>
+                  </div>
+                  <span className="text-[8px] font-mono text-zinc-600 uppercase tracking-tighter">{b.date}</span>
+                </div>
+                
+                <button onClick={() => onEdit(b)} className="text-lg font-black uppercase italic mb-1 hover:text-red-600 transition-colors text-left block leading-tight text-white">
+                  {b.name.replace(/adicto_/gi, '')}
+                </button>
+                
+                <div className="mb-6">
+                  <p className="text-[7px] text-zinc-600 uppercase font-black mb-1 italic tracking-widest">Configuration:</p>
+                  <p className="text-[8px] text-zinc-500 uppercase leading-tight line-clamp-3 italic font-medium">
+                    {b.components.map(c => `${c.brand}`).join(' • ')}
+                  </p>
+                </div>
+
+                <div className="flex justify-between items-end border-t border-white/5 pt-4 mt-auto">
+                  <div><p className="text-[7px] font-black uppercase text-zinc-600 tracking-tighter">Price</p><p className="font-mono text-xs text-red-600 font-bold">€{b.totalPrice.toLocaleString()}</p></div>
+                  <div className="flex gap-4">
+                    <button onClick={() => onPDF(b)} className="text-zinc-600 hover:text-white transition-colors"><FileText size={14}/></button>
+                    <button onClick={() => onDelete(b.id)} className="text-zinc-600 hover:text-red-600 transition-colors"><Trash2 size={14}/></button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+      <div className="p-10 border-t border-white/5 text-center bg-black text-zinc-600">
+        <p className="text-[8px] font-bold uppercase tracking-[0.3em] mb-2 text-zinc-700">Powered by Adicto.Bike All Right Reserved</p>
+        <p className="text-[8px] font-bold uppercase tracking-[0.1em]">Please contact us if you have any questions or bugs (баг) — hello@adicto.bike</p>
+      </div>
+    </div>
+  );
+};
 
 // --- ADMIN LOGIN ---
 const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
@@ -57,7 +159,7 @@ const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
     <div className="min-h-screen bg-black flex items-center justify-center p-6 selection:bg-red-600 font-sans">
       <motion.form initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} onSubmit={handleLogin} className="bg-zinc-900/50 p-10 rounded-[2.5rem] border border-white/5 w-full max-w-md backdrop-blur-xl shadow-2xl">
         <div className="flex flex-col items-center mb-8">
-          <div className="w-12 h-12 bg-red-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-red-600/20"><Lock size={24} /></div>
+          <div className="w-12 h-12 bg-red-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-red-600/20"><Lock size={24} className="text-white"/></div>
           <h2 className="text-xl font-black uppercase tracking-widest italic text-center text-white">Adicto Admin</h2>
         </div>
         <div className="space-y-4 text-black">
@@ -93,7 +195,6 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
       let sha = "";
       const getRes = await fetch(`https://api.github.com/repos/${REPO}/contents/${path}`, { headers: { Authorization: `token ${token}` } });
       if (getRes.ok) { const data = await getRes.json(); sha = data.sha; }
-      
       const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${path}`, {
         method: "PUT",
         headers: { Authorization: `token ${token}`, "Content-Type": "application/json" },
@@ -115,13 +216,10 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>, isFolder: boolean) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
-
     const fileArray = Array.from(files);
     setStatus(`⏳ Loading 0/${fileArray.length}...`);
-
     for (let i = 0; i < fileArray.length; i++) {
       const file = fileArray[i];
-      setStatus(`⏳ Sending ${i + 1}/${fileArray.length}...`);
       const contentBase64 = await new Promise<string>((resolve) => {
         const reader = new FileReader();
         reader.readAsDataURL(file);
@@ -132,22 +230,16 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
       const success = await saveToGithub(path, contentBase64);
       if (!success) { setStatus(`❌ Error at ${file.name}`); return; }
     }
-
     setStatus("✅ Success!");
-    setTimeout(() => setStatus(''), 3000); // ОЧИЩЕННЯ СТАТУСУ ЧЕРЕЗ 3 СЕКУНДИ
+    setTimeout(() => setStatus(''), 3000);
     e.target.value = ""; 
   };
 
   const handleSaveOffsets = async () => {
     setStatus("Saving...");
     const success = await saveToGithub("public/offsets.json", JSON.stringify(offsets), true);
-    if (success) {
-      setStatus("✅ Saved!");
-      setTimeout(() => setStatus(''), 3000); // ОЧИЩЕННЯ СТАТУСУ ЧЕРЕЗ 3 СЕКУНДИ
-    } else {
-      setStatus("❌ Error");
-      setTimeout(() => setStatus(''), 3000);
-    }
+    if (success) { setStatus("✅ Saved!"); setTimeout(() => setStatus(''), 3000); }
+    else { setStatus("❌ Error"); setTimeout(() => setStatus(''), 3000); }
   };
 
   return (
@@ -179,8 +271,8 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
         <div className="flex items-center gap-2 bg-black/40 p-1 rounded-lg border border-white/5">
           <button onClick={() => setIsZoomed(!isZoomed)} className={cn("px-2 py-1 rounded text-[9px] font-bold uppercase transition-all flex items-center gap-2", isZoomed ? "bg-red-600 text-white" : "bg-zinc-800 text-zinc-400")}><Search size={10}/> {isZoomed ? `${zoomScale}X` : 'Magnify'}</button>
           {isZoomed && (
-            <div className="flex items-center gap-2 px-1 animate-in fade-in slide-in-from-left-2">
-              <span className="text-[7px] text-zinc-500 font-bold uppercase text-white">Scale</span>
+            <div className="flex items-center gap-2 px-1 animate-in fade-in slide-in-from-left-2 text-white">
+              <span className="text-[7px] text-zinc-500 font-bold uppercase">Scale</span>
               <input type="range" min="2" max="10" step="0.1" value={zoomScale} onChange={(e) => setZoomScale(parseFloat(e.target.value))} className="w-20 h-1 bg-zinc-700 appearance-none accent-red-600" />
             </div>
           )}
@@ -210,43 +302,11 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
   );
 };
 
-// --- VISUALIZER ---
-const Visualizer = ({ selectedComponents, offsets, showGrid, gridSize, isZoomed, zoomScale }: any) => {
-  return (
-    <div id="bike-visualizer" className="relative w-full h-full bg-zinc-950 rounded-[1.5rem] lg:rounded-[2.5rem] overflow-hidden border border-white/5 shadow-[0_0_100px_rgba(0,0,0,0.5)] flex items-center justify-center cursor-crosshair">
-      {showGrid && (
-        <div className="absolute inset-0 z-[60] pointer-events-none opacity-[0.2]" 
-             style={{ backgroundImage: `linear-gradient(to right, rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.5) 1px, transparent 1px)`, backgroundSize: `${gridSize}px ${gridSize}px` }} />
-      )}
-      <motion.div drag={isZoomed} dragMomentum={false} dragConstraints={{ left: -2500, right: 2500, top: -2500, bottom: 2500 }}
-        animate={{ scale: isZoomed ? (zoomScale || 5) : 1, x: isZoomed ? undefined : 0, y: isZoomed ? undefined : 0 }}
-        transition={{ type: 'spring', damping: 25, stiffness: 120 }} className="relative w-full h-full flex items-center justify-center">
-        <AnimatePresence mode="popLayout">
-          {selectedComponents?.map((comp: any) => {
-            const tune = (offsets && offsets[comp.id]) || { s: 1, x: 0, y: 0 };
-            return <motion.img key={comp.id} src={comp.imageUrl} crossOrigin="anonymous" loading="eager" alt={comp.name} initial={{ opacity: 0 }} animate={{ opacity: 1, scale: tune.s, x: tune.x, y: tune.y }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }} className="absolute inset-0 w-full h-full object-contain pointer-events-none" style={{ zIndex: Number(comp.zIndex) }} />;
-          })}
-        </AnimatePresence>
-      </motion.div>
-      {isZoomed && <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-red-600 text-white px-4 py-1 rounded-full text-[8px] font-black uppercase flex items-center gap-2 z-[70] shadow-2xl"><Move size={10}/> {zoomScale.toFixed(1)}X - Drag to Move</div>}
-    </div>
-  );
-};
-
-// --- OPTION CARD ---
-const OptionCard = ({ component, isSelected, onClick }: { component: Component, isSelected: boolean, onClick: () => void }) => (
-  <motion.button layout onClick={(e) => { e.preventDefault(); onClick(); }} className={cn("relative flex flex-col p-2 lg:p-3 rounded-xl lg:rounded-2xl border text-left transition-all group w-full shrink-0", isSelected ? "border-red-600 bg-red-600/5 ring-1 ring-red-600/20 shadow-[0_0_20px_rgba(255,0,0,0.1)]" : "border-white/5 bg-zinc-900/50 hover:border-white/20 hover:bg-zinc-900")}>
-    <div className="aspect-square w-full rounded-lg lg:rounded-xl bg-black/40 mb-2 lg:mb-3 overflow-hidden relative"><img src={component.cardImageUrl} alt={component.name} className="w-full h-full object-contain p-1 lg:p-2 group-hover:scale-110 transition duration-500" />{isSelected && <div className="absolute top-1 lg:top-2 right-1 lg:right-2 bg-red-600 p-1 lg:p-1.5 rounded-full shadow-lg z-10"><CheckCircle2 size={10} className="text-white" /></div>}</div>
-    <div className="flex-1 flex flex-col justify-between overflow-hidden"><div><h3 className="text-[6.5px] lg:text-[11px] font-bold leading-tight tracking-tighter line-clamp-2 text-zinc-300 uppercase text-zinc-300">{component.name}</h3><p className="text-[6px] lg:text-[9px] text-zinc-500 uppercase font-black">{component.brand}</p></div><div className="flex justify-between items-end mt-1 lg:mt-2"><p className="font-mono text-[10px] lg:text-sm text-red-600 tracking-tighter">€{component.price.toLocaleString()}</p><p className="text-[9px] lg:text-sm text-zinc-600 font-mono italic">{component.weight}g</p></div></div>
-  </motion.button>
-);
-
 // --- MAIN CONFIGURATOR ---
-const INITIAL_STEPS: Step[] = [ { id: 'frame', title: 'Frame', options: [] }, { id: 'wheelset', title: 'Wheelset', options: [] }, { id: 'tyres', title: 'Tyres', options: [] }, { id: 'cockpit', title: 'Cockpit', options: [] }, { id: 'tape', title: 'Tape', options: [] }, { id: 'saddle', title: 'Saddle', options: [] }, { id: 'shifters', title: 'Shifters', options: [] }, { id: 'crankset', title: 'Crankset', options: [] }, { id: 'derailleurs', title: 'Derailleurs', options: [] }, { id: 'cassette', title: 'Cassette', options: [] }, { id: 'discs', title: 'Discs', options: [] } ];
 
 export default function BikeConfigurator() {
   const [isAdminMode, setIsAdminMode] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
   const [offsets, setOffsets] = useState<Record<string, OffsetData>>({});
   const [showGrid, setShowGrid] = useState(false);
   const [gridSize, setGridSize] = useState(20);
@@ -256,21 +316,18 @@ export default function BikeConfigurator() {
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [selections, setSelections] = useState<Record<string, string>>({});
   const [isFinished, setIsFinished] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
+  const [user, setUser] = useState<any>(JSON.parse(localStorage.getItem('adicto_user') || 'null'));
+  const [savedBuilds, setSavedBuilds] = useState<SavedBuild[]>(JSON.parse(localStorage.getItem('adicto_saved_builds') || '[]'));
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isDashboardOpen, setIsDashboardOpen] = useState(false);
+
+  const stepsNavRef = useRef<HTMLDivElement>(null);
   const currentStep = steps[currentStepIndex] || steps[0];
-
-  const handleLogout = () => {
-    localStorage.removeItem('adicto_auth');
-    localStorage.removeItem('adicto_github_token');
-    setIsLoggedIn(false);
-    window.location.reload();
-  };
 
   useEffect(() => {
     const path = window.location.pathname; 
-    const urlParams = new URLSearchParams(window.location.search);
-    if (path === '/admin' || urlParams.get('admin') === 'true') setIsAdminMode(true);
+    if (path === '/admin') setIsAdminMode(true);
     fetch('/offsets.json').then(r => r.ok ? r.json() : {}).then(data => setOffsets(data)).catch(() => {});
     
     const autoLoadExcel = async () => {
@@ -292,88 +349,124 @@ export default function BikeConfigurator() {
     }; autoLoadExcel();
   }, []);
 
+  useEffect(() => {
+    if (stepsNavRef.current) {
+      const activeBtn = stepsNavRef.current.children[currentStepIndex] as HTMLElement;
+      if (activeBtn) stepsNavRef.current.scrollTo({ left: activeBtn.offsetLeft - 20, behavior: 'smooth' });
+    }
+  }, [currentStepIndex]);
+
   const activeLogic = useMemo(() => {
     if (currentStepIndex === 0) return null;
-    const prevStepId = steps[currentStepIndex - 1]?.id;
-    const selectedId = selections[prevStepId];
-    if (!selectedId) return null;
-    const prevComp = steps[currentStepIndex - 1].options.find(o => o.id === selectedId);
-    return prevComp?.logic?.trim() || null;
+    const prevStep = steps[currentStepIndex - 1];
+    return prevStep.options.find(o => o.id === selections[prevStep.id])?.logic || null;
   }, [selections, currentStepIndex, steps]);
 
-  const filteredOptions = useMemo(() => {
-    if (!currentStep) return [];
-    return currentStep.options.filter(option => {
-      if (!activeLogic) return true;
-      if (!option.logic || option.logic.trim() === "") return true;
-      return option.logic.trim() === activeLogic;
-    });
-  }, [currentStep, activeLogic]);
+  const filteredOptions = useMemo(() => 
+    currentStep.options.filter(opt => !activeLogic || !opt.logic || opt.logic === activeLogic)
+  , [currentStep, activeLogic]);
 
   const selectedComponents = useMemo(() => steps.map(s => {
     const opt = s.options.find(o => o.id === selections[s.id]);
     return opt ? { ...opt, stepTitle: s.title } : null;
   }).filter((c): c is Component => !!c), [selections, steps]);
 
-  const activeComponentForTuning = useMemo(() => currentStep?.options.find(o => o.id === selections[currentStep?.id]), [currentStep, selections]);
+  const handleEditFromGarage = (b: SavedBuild) => {
+    const newS: any = {};
+    let missing = false;
+    b.components.forEach(c => {
+      const step = steps.find(s => s.title === c.stepTitle);
+      const option = step?.options.find(o => o.name === c.name);
+      if (option) newS[step!.id] = option.id; else missing = true;
+    });
+    if (missing) alert("Sorry, some components are no longer available. You need to restart the build process.");
+    setSelections(newS); setIsDashboardOpen(false); setIsFinished(false); setCurrentStepIndex(0);
+  };
 
-  if (isAdminMode && !isLoggedIn) return <AdminLogin onLogin={() => setIsLoggedIn(true)} />;
-  if (isFinished) return <SummaryView selections={selectedComponents} onReset={() => window.location.reload()} />;
+  const handleLogout = () => {
+    localStorage.removeItem('adicto_user');
+    setUser(null);
+    window.location.reload();
+  };
+
+  if (isAdminMode && !isAdminLoggedIn) return <AdminLogin onLogin={() => setIsAdminLoggedIn(true)} />;
+  
+  if (isDashboardOpen) return <UserDashboard builds={savedBuilds} onClose={() => setIsDashboardOpen(false)} onLogout={handleLogout} onDelete={(id: string) => { const upd = savedBuilds.filter(x => x.id !== id); setSavedBuilds(upd); localStorage.setItem('adicto_saved_builds', JSON.stringify(upd)); }} onEdit={handleEditFromGarage} onPDF={(b: any) => {
+    const doc = new jsPDF(); doc.text(`ADICTO CONFIGURATION: ${b.name}`, 10, 10);
+    autoTable(doc, { startY: 20, head: [['Section', 'Brand', 'Weight', 'Price']], body: b.components.map((c:any) => [c.stepTitle, c.brand, `${c.weight}g`, `€${c.price}`]) });
+    doc.save(`${b.name}.pdf`);
+  }} />;
+
+  if (isFinished) return <SummaryView selections={selectedComponents} onReset={() => window.location.reload()} user={user} onLogin={() => setIsAuthModalOpen(true)} onDashboard={() => setIsDashboardOpen(true)} onSaveBuild={() => {
+    if (!user) { setIsAuthModalOpen(true); return; }
+    const newB = { id: Date.now().toString(), name: `${selectedComponents[0]?.brand || 'Machine'} Build`, date: new Date().toLocaleDateString(), components: selectedComponents, totalPrice: selectedComponents.reduce((acc,c)=>acc+c.price,0), totalWeight: selectedComponents.reduce((acc,c)=>acc+c.weight,0) };
+    const upd = [...savedBuilds, newB]; setSavedBuilds(upd); localStorage.setItem('adicto_saved_builds', JSON.stringify(upd)); alert("Saved!");
+  }} />;
 
   return (
-    <div className="min-h-screen bg-black text-white font-sans selection:bg-red-600 pb-28 lg:pb-24 overflow-x-hidden">
+    <div className="min-h-screen bg-black text-white font-sans selection:bg-red-600 pb-24 overflow-x-hidden">
       <style>{`
-        .custom-scroll-container::-webkit-scrollbar { width: 4px; height: 4px; }
-        .custom-scroll-container::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); border-radius: 10px; }
+        .custom-scroll-container::-webkit-scrollbar, .steps-scroll-container::-webkit-scrollbar { height: 4px; display: block !important; }
         .custom-scroll-container::-webkit-scrollbar-thumb { background: #ef4444; border-radius: 10px; }
-        .custom-scroll-container { scrollbar-width: thin; scrollbar-color: #ef4444 rgba(255, 255, 255, 0.05); }
+        @keyframes bounce-x { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(5px); } }
+        .animate-bounce-x { animation: bounce-x 1s infinite; }
       `}</style>
+      
+      {isAdminLoggedIn && <AdminPanel categories={INITIAL_STEPS.map(s => s.title)} offsets={offsets} setOffsets={setOffsets} activeComponent={activeComponentForTuning} showGrid={showGrid} setShowGrid={setShowGrid} gridSize={gridSize} setGridSize={setGridSize} isZoomed={isZoomed} setIsZoomed={setIsZoomed} zoomScale={zoomScale} setZoomScale={setZoomScale} onLogout={() => setIsAdminLoggedIn(false)} />}
+      <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} onLogin={(u: any) => { setUser(u); localStorage.setItem('adicto_user', JSON.stringify(u)); setIsAuthModalOpen(false); }} />
 
-      {isLoggedIn ? (
-        <AdminPanel categories={INITIAL_STEPS.map(s => s.title)} offsets={offsets} setOffsets={setOffsets} activeComponent={activeComponentForTuning} showGrid={showGrid} setShowGrid={setShowGrid} gridSize={gridSize} setGridSize={setGridSize} isZoomed={isZoomed} setIsZoomed={setIsZoomed} zoomScale={zoomScale} setZoomScale={setZoomScale} onLogout={handleLogout} />
-      ) : (
-        <nav className="border-b border-white/5 px-4 lg:px-8 py-2 flex justify-between items-center bg-black/80 backdrop-blur-2xl sticky top-0 z-50"><div className="flex items-center gap-4 pl-2"><img src="/design/Logo.png" alt="Logo" className="h-4 lg:h-6 w-auto object-contain" /></div><div className="text-zinc-400 font-mono text-[7px] pr-2 opacity-70 uppercase tracking-widest italic">Build by Vasile & AI</div></nav>
-      )}
+      <nav className="border-b border-white/5 px-4 lg:px-8 py-3 flex justify-between items-center bg-black/80 backdrop-blur-2xl sticky top-0 z-50 text-white">
+        <div className="flex items-center gap-3">
+          <img src="/design/Logo.png" alt="Logo" className="h-4 lg:h-5 w-auto" />
+          <div className="text-zinc-600 font-mono text-[6px] uppercase tracking-widest italic border-l border-white/10 pl-3">Build by Vasile & AI</div>
+        </div>
+        {user ? (
+          <button onClick={() => setIsDashboardOpen(true)} className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full border border-white/5 transition-all hover:bg-white/10">
+            <UserIcon size={12} className="text-red-600"/> <span className="text-[9px] font-black uppercase italic">{user.name}</span>
+          </button>
+        ) : <button onClick={() => setIsAuthModalOpen(true)} className="flex items-center gap-2 bg-red-600 px-4 py-1.5 rounded-full text-[9px] font-black uppercase italic tracking-widest"><LogIn size={12}/> Login</button>}
+      </nav>
 
-      <main className="max-w-[1500px] mx-auto px-4 lg:px-6 pt-2 lg:pt-3">
-        <div className="flex flex-col lg:grid lg:grid-cols-12 gap-6 lg:gap-10 lg:h-[550px] items-stretch">
-          <div className="lg:col-span-9 flex flex-col gap-2 order-1">
-            <div className="flex overflow-x-auto no-scrollbar gap-x-6 gap-y-2 pb-2">
+      <main className="max-w-[1500px] mx-auto px-4 lg:px-6 pt-2">
+        <div className="flex flex-col lg:grid lg:grid-cols-12 gap-1 lg:h-[550px]">
+          <div className="lg:col-span-9 flex flex-col gap-1">
+            <div ref={stepsNavRef} className="flex overflow-x-auto no-scrollbar gap-x-6 pb-1 border-b border-white/5">
               {steps.map((step, idx) => (
-                <button key={step.id} onClick={() => setCurrentStepIndex(idx)} className={cn("transition-all duration-300 text-[10px] font-black italic uppercase tracking-widest pb-1 border-b-2 whitespace-nowrap", idx === currentStepIndex ? "text-red-600 border-red-600 drop-shadow-[0_0_9px_rgba(255,0,0,0.3)]" : "text-white opacity-20 border-transparent hover:opacity-100")}>{step.title}</button>
+                <button key={step.id} onClick={() => setCurrentStepIndex(idx)} className={cn("transition-all text-[9px] font-black italic uppercase tracking-widest pb-1 border-b-2 whitespace-nowrap", idx === currentStepIndex ? "text-red-600 border-red-600" : "text-white opacity-20 border-transparent hover:opacity-100")}>{step.title}</button>
               ))}
             </div>
-            <div className="h-[280px] md:h-[400px] lg:flex-1 relative"><Visualizer selectedComponents={selectedComponents} offsets={offsets} showGrid={showGrid} gridSize={gridSize} isZoomed={isZoomed} zoomScale={zoomScale} /></div>
+            <div className="h-[250px] md:h-[400px] lg:flex-1 relative"><Visualizer selectedComponents={selectedComponents} offsets={offsets} showGrid={showGrid} gridSize={gridSize} isZoomed={isZoomed} zoomScale={zoomScale} /></div>
           </div>
-          <div className="lg:col-span-3 flex flex-col bg-zinc-900/40 rounded-[2.5rem] border border-white/5 p-4 lg:p-6 relative overflow-hidden order-2 shadow-2xl">
-            <div className="flex-1 overflow-x-auto lg:overflow-y-auto lg:overflow-x-hidden custom-scroll-container pb-2 lg:pb-0" style={{ display: 'flex', flexDirection: 'column' }}>
+          <div className="lg:col-span-3 flex flex-col bg-zinc-900/40 rounded-[2rem] border border-white/5 p-4 relative order-2 overflow-hidden shadow-2xl">
+            <div className="flex-1 overflow-x-auto lg:overflow-y-auto custom-scroll-container pb-2">
                 <div className="flex flex-row lg:flex-col gap-3 min-w-full">
-                  <AnimatePresence mode="popLayout">
                     {filteredOptions.map((option) => (
-                      <div key={option.id} className="w-[31%] min-w-[31%] lg:w-full lg:min-w-0 shrink-0">
+                      <div key={option.id} className="w-[35%] min-w-[35%] lg:w-full shrink-0">
                         <OptionCard component={option} isSelected={selections[currentStep.id] === option.id} onClick={() => setSelections(prev => ({...prev, [currentStep.id]: option.id}))} />
                       </div>
                     ))}
-                  </AnimatePresence>
                 </div>
             </div>
+            {filteredOptions.length > 3 && (
+              <div className="lg:hidden mt-2 flex items-center justify-center gap-1.5 text-zinc-600 opacity-60">
+                <span className="text-[7px] font-black uppercase italic tracking-widest">Scroll for more</span>
+                <ChevronsRight size={8} className="animate-bounce-x" />
+              </div>
+            )}
           </div>
         </div>
       </main>
 
-      <div className="fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur-2xl border-t border-white/5 z-40">
-        <div className="max-w-[1500px] mx-auto px-4 lg:px-6 py-6 grid grid-cols-12 gap-2 items-center">
-          <button onClick={() => currentStepIndex > 0 && setCurrentStepIndex(currentStepIndex - 1)} className="col-span-3 lg:col-span-2 flex items-center gap-1 text-zinc-500 hover:text-white transition-all font-black uppercase text-[10px] italic"><ChevronLeft size={20} /> Back</button>
-          <div className="col-span-6 lg:col-span-7 flex justify-center lg:justify-end items-center gap-4 lg:gap-10">
-            <div className="text-center lg:text-right text-zinc-300"><p className="text-[7px] text-zinc-600 uppercase font-black mb-0.5 italic">Weight</p><p className="font-mono text-xs">{selectedComponents.reduce((acc, c) => acc + c.weight, 0)}g</p></div>
-            <div className="h-8 w-px bg-white/10" />
-            <div className="text-center lg:text-right text-zinc-300"><p className="text-[7px] text-zinc-600 uppercase font-black mb-0.5 italic">Price</p><p className="font-mono text-xs text-red-600">€{selectedComponents.reduce((acc, c) => acc + c.price, 0).toLocaleString()}</p></div>
+      <div className="fixed bottom-0 left-0 right-0 bg-black/90 backdrop-blur-3xl border-t border-white/5 z-50 py-4 px-6 text-white shadow-2xl">
+        <div className="max-w-[1500px] mx-auto flex items-center justify-between">
+          <button onClick={() => currentStepIndex > 0 && setCurrentStepIndex(currentStepIndex - 1)} className="text-zinc-500 hover:text-white transition-all font-black uppercase text-[10px] italic flex items-center gap-1 w-20 text-left"><ChevronLeft size={18} /> <span className="hidden sm:inline">Back</span></button>
+          <div className="flex gap-6 items-center justify-center flex-1">
+            <div className="text-center"><p className="text-[6px] text-zinc-600 uppercase font-black italic tracking-tighter">Weight</p><p className="font-mono text-xs">{selectedComponents.reduce((acc, c) => acc + c.weight, 0)}g</p></div>
+            <div className="h-6 w-px bg-white/10" />
+            <div className="text-center"><p className="text-[6px] text-zinc-600 uppercase font-black italic tracking-tighter">Price</p><p className="font-mono text-xs text-red-600 font-bold">€{selectedComponents.reduce((acc, c) => acc + c.price, 0).toLocaleString()}</p></div>
           </div>
-          <div className="col-span-3 flex justify-end">
-            <button onClick={() => {
-                if (filteredOptions.length > 0 && !selections[currentStep.id]) { setError("Select!"); return; }
-                currentStepIndex < steps.length - 1 ? setCurrentStepIndex(currentStepIndex + 1) : setIsFinished(true);
-              }} className="bg-red-600 hover:bg-red-700 text-white h-[32px] px-6 rounded-lg font-black uppercase text-[10px] italic flex items-center gap-2 active:scale-95 shadow-lg shadow-red-600/20">{currentStepIndex === steps.length - 1 ? 'Finish' : 'Next'} <ChevronRight size={14} /></button>
+          <div className="w-20 flex justify-end">
+            <button onClick={() => currentStepIndex < steps.length - 1 ? setCurrentStepIndex(currentStepIndex + 1) : setIsFinished(true)} className="bg-red-600 text-white p-2.5 rounded-xl font-black active:scale-95 shadow-lg shadow-red-600/30"><ChevronRight size={18} /></button>
           </div>
         </div>
       </div>
@@ -381,70 +474,58 @@ export default function BikeConfigurator() {
   );
 }
 
-function SummaryView({ selections, onReset }: any) {
-  const totalPrice = selections.reduce((acc: number, c: any) => acc + c.price, 0);
-  const totalWeight = selections.reduce((acc: number, c: any) => acc + c.weight, 0);
-  const getBase64Image = async (url: string): Promise<string> => {
-    try { const res = await fetch(url); const blob = await res.blob();
-      return new Promise((resolve, reject) => { const reader = new FileReader(); reader.onloadend = () => resolve(reader.result as string); reader.onerror = reject; reader.readAsDataURL(blob); });
-    } catch (e) { return ""; }
-  };
-  const handleExport = async () => {
-    const doc = new jsPDF(); const pageWidth = doc.internal.pageSize.getWidth(); const pageHeight = doc.internal.pageSize.getHeight();
-    const cleanText = (text: string) => text ? String(text).replace(/[^\x00-\x7F]/g, "").toUpperCase() : "";
+// --- SUMMARY VIEW ---
+function SummaryView({ selections, onReset, user, onSaveBuild, onLogin, onDashboard }: any) {
+  const [isExp, setIsExp] = useState(false);
+  const [prog, setProg] = useState(0);
+  const totalP = selections.reduce((a:any,c:any)=>a+c.price,0);
+  const totalW = selections.reduce((a:any,c:any)=>a+c.weight,0);
 
-    try {
-      const logoBase64 = await getBase64Image("/design/Logo.png");
-      if (logoBase64) doc.addImage(logoBase64, 'PNG', (pageWidth / 2) - 15, 8, 10, 10);
-    } catch (e) {}
-
-    try {
-      const sortedByZ = [...selections].sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
-      for (const comp of sortedByZ) {
-        if (comp.imageUrl) {
-          const imgBase64 = await getBase64Image(comp.imageUrl);
-          if (imgBase64) doc.addImage(imgBase64, 'PNG', 15, 20, 180, 110, undefined, 'FAST');
-        }
-      }
-    } catch (e) {}
-
-    autoTable(doc, { 
-      startY: 135, head: [['SECTION', 'COMPONENT', 'BRAND', 'WEIGHT', 'PRICE']],
-      body: selections.map((c: any) => [cleanText(c.stepTitle || ""), cleanText(c.name), cleanText(c.brand), `${c.weight} g`, `${c.price.toLocaleString()} €`]),
-      styles: { font: "helvetica", fontSize: 6, cellPadding: 2 }, headStyles: { fillColor: [20, 20, 20], textColor: [255, 255, 255] },
-      columnStyles: { 0: { fontStyle: 'bold', cellWidth: 25 } }, foot: [['TOTAL', '', '', `${totalWeight} g`, `${totalPrice.toLocaleString()} €`]],
-      footStyles: { fillColor: [220, 38, 38], textColor: [255, 255, 255], fontSize: 8, fontStyle: 'bold' }, theme: 'grid'
-    });
-
-    const finalY = (doc as any).lastAutoTable.finalY + 10;
-    doc.setFontSize(6); doc.setTextColor(100);
-    const disclaimer = "NOTICE: THE WEIGHT AND PRICE INDICATED ARE PRELIMINARY AND SUBJECT TO MINOR CHANGES BASED ON COMPONENT AVAILABILITY. ADICTO.BIKE RESERVES THE RIGHT TO MODIFY SPECIFICATIONS WITHOUT PRIOR NOTICE.";
-    doc.text(doc.splitTextToSize(disclaimer, pageWidth - 30), 15, finalY);
-
-    doc.setFontSize(7); doc.setTextColor(20);
-    doc.text("WWW.ADICTO.BIKE  |  @ADICTO.BIKE", pageWidth / 2, pageHeight - 15, { align: 'center' });
-    
-    try {
-      const qrBase64 = await getBase64Image("/design/qr-code.png");
-      if (qrBase64) doc.addImage(qrBase64, 'PNG', pageWidth - 50, pageHeight - 50, 35, 35);
-    } catch (e) {}
-
-    doc.save(`ADICTO_BUILD.pdf`);
+  const doPDF = async () => {
+    setIsExp(true); setProg(0);
+    const itv = setInterval(() => {
+      setProg(p => {
+        if (p >= 100) { 
+          clearInterval(itv); 
+          const doc = new jsPDF();
+          autoTable(doc, { 
+            startY: 135, head: [['SECTION', 'BRAND', 'WEIGHT', 'PRICE']],
+            body: selections.map((c: any) => [c.stepTitle, c.brand, `${c.weight}g`, `€${c.price}`]),
+            theme: 'grid'
+          });
+          doc.save('ADICTO_BIKE.pdf');
+          setTimeout(() => { setIsExp(false); setProg(0); }, 500);
+          return 100;
+        } return p + 10;
+      });
+    }, 100);
   };
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-8 text-center font-sans">
-      <CheckCircle2 size={32} className="text-red-600 mb-4" />
-      <h2 className="text-[27px] font-black italic uppercase tracking-tighter mb-4 leading-none text-white">Configuration <br/> <span className="text-red-600">Complete</span></h2>
-      <div className="flex justify-center gap-10 my-8 bg-zinc-900/50 p-6 rounded-3xl border border-white/5">
-        <div><p className="text-zinc-500 text-[9px] uppercase font-bold italic">Price</p><p className="text-[18px] font-mono text-red-600">€{totalPrice.toLocaleString()}</p></div>
-        <div className="w-px bg-white/10" />
-        <div><p className="text-zinc-500 text-[9px] uppercase font-bold italic">Weight</p><p className="text-[18px] font-mono text-white">{totalWeight}g</p></div>
+    <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-8 text-center font-sans overflow-y-auto">
+       <div className="absolute top-8 right-8 flex items-center gap-4">
+        {user ? (
+          <button onClick={onDashboard} className="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-full border border-white/10 text-[9px] font-black uppercase italic transition-all hover:bg-white/10">
+            <UserIcon size={12} className="text-red-600"/> Garage
+          </button>
+        ) : <button onClick={onLogin} className="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-full border border-white/10 text-[9px] font-black uppercase italic transition-all hover:bg-white/10"><LogIn size={12}/> Login</button>}
       </div>
-      <div className="flex gap-4 justify-center">
-        <button onClick={handleExport} className="px-8 py-4 bg-red-600 text-white rounded-xl font-black uppercase text-[10px] italic shadow-lg shadow-red-600/20 flex items-center gap-2"><Download size={16} /> Export PDF</button>
-        <button onClick={onReset} className="px-8 py-4 border border-white/10 rounded-xl font-black uppercase text-[10px] italic hover:bg-white/5 transition-all text-white">Start Over</button>
-      </div>
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-2xl w-full">
+        <img src="/design/Logo.png" alt="Logo" className="w-10 h-10 mx-auto mb-10 object-contain" />
+        <h2 className="text-[26px] font-black uppercase italic tracking-tighter mb-4 leading-none">your bike is <br/> <span className="text-red-600 uppercase">Ready</span></h2>
+        <div className="flex justify-center gap-10 my-10 bg-zinc-900/40 p-6 rounded-[2.5rem] border border-white/5 shadow-2xl">
+          <div><p className="text-zinc-600 text-[8px] uppercase font-black italic mb-1 text-zinc-500 tracking-widest">Price</p><p className="text-lg font-mono text-red-600 tracking-tighter font-black italic">€{totalP.toLocaleString()}</p></div>
+          <div className="w-px bg-white/5" />
+          <div><p className="text-zinc-600 text-[8px] uppercase font-black italic mb-1 text-zinc-500 tracking-widest">Weight</p><p className="text-lg font-mono text-white/80 tracking-tighter font-black italic">{totalW}g</p></div>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <button onClick={doPDF} disabled={isExp} style={{ background: isExp ? `linear-gradient(to right, #ef4444 ${prog}%, #18181b ${prog}%)` : '' }} className={cn("px-8 py-4 rounded-xl font-black uppercase text-[10px] italic transition-all flex items-center justify-center gap-2 relative overflow-hidden shadow-lg shadow-red-600/10", isExp ? "border border-red-600/30" : "bg-red-600 hover:bg-red-700 active:scale-95")}>
+            <Download size={14} /> {isExp ? `Exporting ${prog}%` : 'Export PDF'}
+          </button>
+          <button onClick={onSaveBuild} className="px-8 py-4 bg-white text-black rounded-xl font-black uppercase text-[10px] italic flex items-center justify-center gap-2 hover:bg-zinc-200 transition-all active:scale-95 shadow-lg shadow-white/5"><Save size={14} /> Save Build</button>
+          <button onClick={onReset} className="px-8 py-4 border border-white/10 rounded-xl font-black uppercase text-[10px] italic text-zinc-500 hover:text-white transition-all active:scale-95">Start Over</button>
+        </div>
+      </motion.div>
     </div>
   );
 }
