@@ -375,7 +375,7 @@ export default function BikeConfigurator() {
   {/* ГРУПА ЗЛІВА: ЛОГО + НАПИС */}
   <div className="flex items-center gap-3">
     <img src="/design/Logo.png" alt="Logo" className="h-5 lg:h-6 w-auto object-contain" />
-    <div className="text-zinc-600 font-mono text-[6px] lg:text-[11px] uppercase tracking-widest italic border-l border-white/10 pl-3 mt-0.5">
+    <div className="text-zinc-600 font-mono text-[8px] lg:text-[9px] uppercase tracking-widest italic border-l border-white/10 pl-3 mt-0.5">
       Build by Vasile & AI
     </div>
   </div>
@@ -518,7 +518,7 @@ function SummaryView({ selections, onReset }: any) {
     setIsExporting(true);
     setProgress(0);
     
-    // Імітація прогресу для люксового ефекту завантаження
+    // Імітація прогресу для люксового ефекту
     const interval = setInterval(() => {
       setProgress(prev => {
         if (prev >= 95) { clearInterval(interval); return 95; }
@@ -531,11 +531,19 @@ function SummaryView({ selections, onReset }: any) {
     const pageHeight = doc.internal.pageSize.getHeight();
     const cleanText = (text: string) => text ? String(text).replace(/[^\x00-\x7F]/g, "").toUpperCase() : "";
 
+    // 1. ЛОГОТИП У PDF (НАПІВПРОЗОРИЙ)
     try {
       const logoBase64 = await getBase64Image("/design/Logo.png");
-      if (logoBase64) doc.addImage(logoBase64, 'PNG', (pageWidth / 2) - 5, 8, 10, 10);
+      if (logoBase64) {
+        // Встановлюємо прозорість 40% (opacity 0.3)
+        doc.setGState(new (doc as any).GState({ opacity: 0.3 })); 
+        doc.addImage(logoBase64, 'PNG', (pageWidth / 2) - 15, 8, 10, 10);
+        // Скидаємо прозорість до 100% для решти контенту
+        doc.setGState(new (doc as any).GState({ opacity: 1 })); 
+      }
     } catch (e) {}
 
+    // 2. ЗОБРАЖЕННЯ ВЕЛОСИПЕДА (ЯК У PROJECT1)
     try {
       const sortedByZ = [...selections].sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
       for (const comp of sortedByZ) {
@@ -546,6 +554,7 @@ function SummaryView({ selections, onReset }: any) {
       }
     } catch (e) {}
 
+    // 3. ТАБЛИЦЯ КОМПОНЕНТІВ
     autoTable(doc, { 
       startY: 135, head: [['SECTION', 'COMPONENT', 'BRAND', 'WEIGHT', 'PRICE']],
       body: selections.map((c: any) => [cleanText(c.stepTitle || ""), cleanText(c.name), cleanText(c.brand), `${c.weight} g`, `${c.price.toLocaleString()} €`]),
@@ -555,7 +564,19 @@ function SummaryView({ selections, onReset }: any) {
     });
 
     const finalY = (doc as any).lastAutoTable.finalY + 10;
+    
+    // 4. ТЕКСТ ДИСКЛЕЙМЕРА (ЯК У PROJECT1)
     doc.setFontSize(6); doc.setTextColor(100);
+    const disclaimer = "NOTICE: THE WEIGHT AND PRICE INDICATED ARE PRELIMINARY AND SUBJECT TO MINOR CHANGES BASED ON COMPONENT AVAILABILITY. ADICTO.BIKE RESERVES THE RIGHT TO MODIFY SPECIFICATIONS WITHOUT PRIOR NOTICE.";
+    doc.text(doc.splitTextToSize(disclaimer, pageWidth - 30), 15, finalY);
+
+    // 5. QR-КОД 35x35 MM ТА ФУТЕР
+    try {
+      const qrBase64 = await getBase64Image("/design/qr-code.png");
+      if (qrBase64) doc.addImage(qrBase64, 'PNG', pageWidth - 50, pageHeight - 50, 35, 35);
+    } catch (e) {}
+
+    doc.setFontSize(7); doc.setTextColor(20);
     doc.text("WWW.ADICTO.BIKE  |  @ADICTO.BIKE", pageWidth / 2, pageHeight - 15, { align: 'center' });
 
     setTimeout(() => {
@@ -566,31 +587,31 @@ function SummaryView({ selections, onReset }: any) {
         setIsExporting(false);
         setProgress(0);
       }, 400);
-    }, 1000);
+    }, 1200);
   };
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-8 text-center font-sans">
-      {/* ЛОГОТИП ЗАМІСТЬ ЧЕКБОКСА */}
+      {/* UI: ЛОГОТИП ЗАМІСТЬ ЧЕКБОКСА */}
       <motion.img 
         initial={{ y: 10, opacity: 0 }} 
         animate={{ y: 0, opacity: 1 }} 
         src="/design/Logo.png" 
-        className="h-8 mb-10 object-contain opacity-90" 
+        className="h-8 mb-10 object-contain opacity-100" 
       />
 
-      {/* ЗМЕНШЕНИЙ ШРИФТ ЗАГОЛОВКА (на 25%) */}
-      <h2 className="text-[20px] lg:text-[22px] font-black italic uppercase tracking-tighter mb-4 leading-none text-white">
-        Your bike is <br/> <span className="text-red-600">Ready</span>
+      {/* UI: ЗМЕНШЕНИЙ ШРИФТ ЗАГОЛОВКА (на 25%) */}
+      <h2 className="text-[20px] lg:text-[22px] font-black italic uppercase tracking-tighter mb-6 leading-[1.1] text-white">
+        Your bike is <br/> <span className="text-red-600 uppercase">Ready</span>
       </h2>
 
-      {/* ЗМЕНШЕНІ ЦИФРИ ЦІНИ ТА ВАГИ */}
+      {/* UI: ЗМЕНШЕНІ ЦИФРИ ЦІНИ ТА ВАГИ */}
       <div className="flex justify-center gap-10 my-8 bg-zinc-900/40 p-6 rounded-[2rem] border border-white/5 shadow-2xl backdrop-blur-md">
         <div>
           <p className="text-zinc-600 text-[7px] uppercase font-black mb-1 italic tracking-widest">Price</p>
           <p className="text-[14px] font-mono text-red-600 font-black tracking-tighter italic">€{totalPrice.toLocaleString()}</p>
         </div>
-        <div className="w-px bg-white/10 h-8 mt-1" />
+        
         <div>
           <p className="text-zinc-600 text-[7px] uppercase font-black mb-1 italic tracking-widest">Weight</p>
           <p className="text-[14px] font-mono text-white/80 font-black tracking-tighter italic">{totalWeight}g</p>
@@ -598,13 +619,13 @@ function SummaryView({ selections, onReset }: any) {
       </div>
 
       <div className="flex flex-col gap-4 w-full max-w-[280px]">
-        {/* КНОПКА ЕКСПОРТУ З ЧЕРВОНИМ ПРОГРЕСОМ */}
+        {/* UI: КНОПКА ЕКСПОРТУ З ЧЕРВОНИМ ПРОГРЕСОМ */}
         <button 
           onClick={handleExport} 
           disabled={isExporting}
           className="relative h-14 bg-zinc-900 border border-white/10 rounded-2xl font-black uppercase text-[10px] italic overflow-hidden transition-all active:scale-95 group shadow-xl"
         >
-          {/* Динамічна заливка червоним */}
+          {/* UI: Динамічна заливка червоним */}
           <motion.div 
             className="absolute left-0 top-0 bottom-0 bg-red-600/80 z-0"
             animate={{ width: `${progress}%` }}
@@ -612,7 +633,7 @@ function SummaryView({ selections, onReset }: any) {
           />
           
           <span className="relative z-10 flex items-center justify-center gap-2 text-white">
-            {isExporting ? `EXPORTING ${progress}%` : <><Download size={14} /> EXPORT PDF</>}
+            {isExporting ? `SAVING ${progress}%` : <><Download size={14} /> EXPORT PDF</>}
           </span>
         </button>
 
