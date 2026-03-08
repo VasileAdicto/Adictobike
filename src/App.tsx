@@ -438,22 +438,31 @@ export default function BikeConfigurator() {
   </div> {/* КІНЕЦЬ FLEX/GRID КОНТЕЙНЕРА */}
 </main> {/* КІНЕЦЬ MAIN */}
 
-      <div className="col-span-3 flex justify-end">
+      <div className="col-span-3 flex justify-end items-center">
   <button 
-    onClick={() => {
-      if (filteredOptions.length > 0 && !selections[currentStep.id]) { setError("Select!"); return; }
+    type="button"
+    onClick={(e) => {
+      e.preventDefault();
+      if (filteredOptions.length > 0 && !selections[currentStep.id]) { 
+        setError("Select!"); 
+        return; 
+      }
+      setError(null);
       currentStepIndex < steps.length - 1 ? setCurrentStepIndex(currentStepIndex + 1) : setIsFinished(true);
     }} 
     className={cn(
-      "font-black uppercase text-[10px] italic flex items-center gap-2 transition-all active:scale-95",
-      // Мобільна версія: без фону, червоний текст
-      "text-red-600 bg-transparent px-0",
-      // Десктопна версія (lg): повертаємо червону кнопку
-      "lg:bg-red-600 lg:hover:bg-red-700 lg:text-white lg:h-[32px] lg:px-6 lg:rounded-lg lg:shadow-lg lg:shadow-red-600/20"
+      // ЗАГАЛЬНІ СТИЛІ
+      "flex items-center gap-2 font-black uppercase text-[10px] italic transition-all active:scale-95",
+      
+      // МОБІЛЬНА ВЕРСІЯ (Base)
+      "bg-transparent text-red-600 px-0 shadow-none border-none outline-none",
+      
+      // ДЕСКТОПНА ВЕРСІЯ (lg)
+      "lg:bg-red-600 lg:text-white lg:h-[32px] lg:px-6 lg:rounded-lg lg:hover:bg-red-700 lg:shadow-lg lg:shadow-red-600/20"
     )}
   >
-    {currentStepIndex === steps.length - 1 ? 'Finish' : 'Next'} 
-    <ChevronRight size={14} strokeWidth={3} />
+    <span>{currentStepIndex === steps.length - 1 ? 'Finish' : 'Next'}</span>
+    <ChevronRight size={14} strokeWidth={3} className="shrink-0" />
   </button>
 </div>
         </div>
