@@ -27,7 +27,7 @@ interface SavedBuild {
 // --- CONSTANTS ---
 const INITIAL_STEPS: Step[] = [ { id: 'frame', title: 'Frame', options: [] }, { id: 'wheelset', title: 'Wheelset', options: [] }, { id: 'tyres', title: 'Tyres', options: [] }, { id: 'cockpit', title: 'Cockpit', options: [] }, { id: 'tape', title: 'Tape', options: [] }, { id: 'saddle', title: 'Saddle', options: [] }, { id: 'shifters', title: 'Shifters', options: [] }, { id: 'crankset', title: 'Crankset', options: [] }, { id: 'derailleurs', title: 'Derailleurs', options: [] }, { id: 'cassette', title: 'Cassette', options: [] }, { id: 'discs', title: 'Discs', options: [] } ];
 
-// --- SUB-COMPONENTS (DEFINED BEFORE MAIN COMPONENT) ---
+// --- HELPER COMPONENTS ---
 
 const OptionCard = ({ component, isSelected, onClick }: { component: Component, isSelected: boolean, onClick: () => void }) => (
   <motion.button layout onClick={(e) => { e.preventDefault(); onClick(); }} className={cn("relative flex flex-col p-2 lg:p-3 rounded-xl lg:rounded-2xl border text-left transition-all group w-full shrink-0", isSelected ? "border-red-600 bg-red-600/5 ring-1 ring-red-600/20 shadow-[0_0_20px_rgba(255,0,0,0.1)]" : "border-white/5 bg-zinc-900/50 hover:border-white/20 hover:bg-zinc-900")}>
@@ -128,13 +128,12 @@ const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
   );
 };
 
-// --- ADMIN PANEL COMPONENT ---
-const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, onLogout }: any) => {
+// --- ADMIN PANEL ---
+const AdminPanel = ({ categories, offsets, setOffsets, onLogout }: any) => {
   const [selectedCat, setSelectedCat] = useState('excel');
   const [status, setStatus] = useState('');
   const [token, setToken] = useState(localStorage.getItem('adicto_github_token') || ''); 
   const REPO = "VasileAdicto/Adictobike";
-  const BRANCH = "main";
 
   const saveToGithub = async (path: string, content: string, isJson = false) => {
     if (!token) { setStatus("❌ Token Required"); return false; }
@@ -145,7 +144,7 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, onLogout
       const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${path}`, {
         method: "PUT",
         headers: { Authorization: `token ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ message: `Admin update: ${path}`, content: isJson ? btoa(unescape(encodeURIComponent(content))) : content, sha: sha || undefined, branch: BRANCH }),
+        body: JSON.stringify({ message: `Admin update: ${path}`, content: isJson ? btoa(unescape(encodeURIComponent(content))) : content, sha: sha || undefined, branch: "main" }),
       });
       if (res.ok) { setStatus("✅ Success!"); localStorage.setItem('adicto_github_token', token); setTimeout(() => setStatus(''), 3000); return true; }
       return false;
@@ -155,11 +154,10 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, onLogout
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files; if (!files) return;
     const fileArray = Array.from(files);
-    for (let i = 0; i < fileArray.length; i++) {
-        const file = fileArray[i];
+    for (const file of fileArray) {
         const reader = new FileReader(); reader.readAsDataURL(file);
         const result = await new Promise((res) => { reader.onload = () => res(reader.result); });
-        const path = `public/parts/${selectedCat}/${file.name}`;
+        const path = selectedCat === 'excel' ? "public/data.xlsx" : `public/parts/${selectedCat}/${file.name}`;
         await saveToGithub(path, (result as string).split(',')[1]);
     }
     setStatus("✅ Done");
@@ -192,11 +190,11 @@ const UserDashboard = ({ builds, onEdit, onDelete, onClose, onLogout, onPDF }: a
   return (
     <div className="fixed inset-0 z-[150] bg-black text-white flex flex-col font-sans overflow-hidden">
       <div className="flex-1 overflow-y-auto p-6 lg:p-12 selection:bg-red-600">
-        <div className="max-w-7xl mx-auto text-white">
+        <div className="max-w-7xl mx-auto">
           <div className="flex justify-between items-start mb-16">
-            <div className="leading-tight">
-              <h2 className="text-xs font-black uppercase tracking-widest text-white">My Adicto</h2>
-              <h1 className="text-xs font-black uppercase tracking-widest text-red-600">Garage</h1>
+            <div>
+              <h2 className="text-sm font-black uppercase tracking-widest text-white">My Adicto</h2>
+              <h1 className="text-sm font-black uppercase tracking-widest text-red-600 leading-none mt-1">Garage</h1>
             </div>
             <div className="flex gap-4 items-center">
               <button onClick={onLogout} className="text-zinc-500 hover:text-red-600 transition-colors uppercase text-[9px] font-black flex items-center gap-2">Logout <LogOut size={14}/></button>
@@ -217,14 +215,12 @@ const UserDashboard = ({ builds, onEdit, onDelete, onClose, onLogout, onPDF }: a
                   {b.name.replace(/adicto_/gi, '')}
                 </button>
                 <div className="mb-6">
-                  <p className="text-[7px] text-zinc-600 uppercase font-black mb-1 italic">Configuration:</p>
-                  <p className="text-[8px] text-zinc-500 uppercase leading-tight line-clamp-2 italic font-medium">
-                    {b.components.map(c => `${c.brand}`).join(' • ')}
-                  </p>
+                  <p className="text-[7px] text-zinc-600 uppercase font-black mb-1 italic tracking-widest">Configuration:</p>
+                  <p className="text-[8px] text-zinc-500 uppercase leading-tight line-clamp-3 italic font-medium">{b.components.map(c => c.brand).join(' • ')}</p>
                 </div>
                 <div className="flex justify-between items-end border-t border-white/5 pt-4 mt-auto">
-                  <div><p className="text-[7px] font-black uppercase text-zinc-600 tracking-tighter">Price</p><p className="font-mono text-xs text-red-600">€{b.totalPrice.toLocaleString()}</p></div>
-                  <div className="flex gap-4">
+                  <div><p className="text-[7px] font-black uppercase text-zinc-600 tracking-tighter">Price</p><p className="font-mono text-xs text-red-600 font-bold">€{b.totalPrice.toLocaleString()}</p></div>
+                  <div className="flex gap-4 items-center">
                     <button onClick={() => onPDF(b)} className="text-zinc-600 hover:text-white transition-colors"><FileText size={14}/></button>
                     <button onClick={() => onDelete(b.id)} className="text-zinc-600 hover:text-red-600 transition-colors"><Trash2 size={14}/></button>
                   </div>
@@ -234,15 +230,15 @@ const UserDashboard = ({ builds, onEdit, onDelete, onClose, onLogout, onPDF }: a
           </div>
         </div>
       </div>
-      <div className="p-10 border-t border-white/5 text-center bg-black text-zinc-500">
+      <div className="p-10 border-t border-white/5 text-center bg-black text-zinc-600">
         <p className="text-[8px] font-bold uppercase tracking-[0.3em] mb-2">Powered by Adicto.Bike All Right Reserved</p>
-        <p className="text-[8px] font-bold uppercase tracking-[0.1em]">Please contact us if you have any questions or bugs (баг) — <a href="mailto:hello@adicto.bike" className="hover:text-red-600">hello@adicto.bike</a></p>
+        <p className="text-[8px] font-bold uppercase tracking-[0.1em]">Please contact us if you have any questions or bugs (баг) — hello@adicto.bike</p>
       </div>
     </div>
   );
 };
 
-// --- MAIN BIKE CONFIGURATOR ---
+// --- MAIN CONFIGURATOR ---
 
 export default function BikeConfigurator() {
   const [isAdminMode, setIsAdminMode] = useState(false);
@@ -256,7 +252,6 @@ export default function BikeConfigurator() {
   const [savedBuilds, setSavedBuilds] = useState<SavedBuild[]>(JSON.parse(localStorage.getItem('adicto_saved_builds') || '[]'));
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isDashboardOpen, setIsDashboardOpen] = useState(false);
-
   const stepsNavRef = useRef<HTMLDivElement>(null);
   const currentStep = steps[currentStepIndex] || steps[0];
 
@@ -264,14 +259,14 @@ export default function BikeConfigurator() {
     const path = window.location.pathname; 
     if (path === '/admin') setIsAdminMode(true);
     fetch('/offsets.json').then(r => r.ok ? r.json() : {}).then(data => setOffsets(data)).catch(() => {});
-    const loadExcel = async () => {
+    const loadData = async () => {
         try {
           const res = await fetch('/data.xlsx'); if (!res.ok) return;
           const XLSX = await import('xlsx');
           const buffer = await res.arrayBuffer();
           const wb = XLSX.read(buffer);
           const newSteps = INITIAL_STEPS.map(step => {
-            const sheet = wb.Sheets[Object.keys(workbook.Sheets).find(n => n.toUpperCase().trim() === step.title.toUpperCase().trim()) || ""];
+            const sheet = wb.Sheets[Object.keys(wb.Sheets).find(n => n.toUpperCase().trim() === step.title.toUpperCase().trim()) || ""];
             if (sheet) {
               const data = XLSX.utils.sheet_to_json(sheet);
               return { ...step, options: data.map((row: any, idx: number) => ({
@@ -280,7 +275,7 @@ export default function BikeConfigurator() {
             } return step;
           }); setSteps(newSteps);
         } catch (e) {}
-    }; loadExcel();
+    }; loadData();
   }, []);
 
   useEffect(() => {
@@ -290,37 +285,44 @@ export default function BikeConfigurator() {
     }
   }, [currentStepIndex]);
 
-  const activeLogic = useMemo(() => {
-    if (currentStepIndex === 0) return null;
-    const prevStep = steps[currentStepIndex - 1];
-    return prevStep.options.find(o => o.id === selections[prevStep.id])?.logic || null;
-  }, [selections, currentStepIndex, steps]);
-
-  const filteredOptions = useMemo(() => 
-    currentStep.options.filter(opt => !activeLogic || !opt.logic || opt.logic === activeLogic)
-  , [currentStep, activeLogic]);
+  const filteredOptions = useMemo(() => {
+    const activeLogic = currentStepIndex > 0 ? (steps[currentStepIndex-1].options.find(o => o.id === selections[steps[currentStepIndex-1].id])?.logic || null) : null;
+    return currentStep.options.filter(opt => !activeLogic || !opt.logic || opt.logic === activeLogic);
+  }, [currentStep, currentStepIndex, selections, steps]);
 
   const selectedComponents = useMemo(() => steps.map(s => {
     const opt = s.options.find(o => o.id === selections[s.id]);
     return opt ? { ...opt, stepTitle: s.title } : null;
   }).filter((c): c is Component => !!c), [selections, steps]);
 
+  const handleEditFromGarage = (b: SavedBuild) => {
+    const newS: any = {};
+    let missing = false;
+    b.components.forEach(c => {
+      const step = steps.find(s => s.title === c.stepTitle);
+      const option = step?.options.find(o => o.name === c.name);
+      if (option) newS[step!.id] = option.id; else missing = true;
+    });
+    if (missing) alert("Sorry, some components are no longer available. You need to restart the build process.");
+    setSelections(newS); setIsDashboardOpen(false); setIsFinished(false); setCurrentStepIndex(0);
+  };
+
   if (isAdminMode && !isAdminLoggedIn) return <AdminLogin onLogin={() => setIsAdminLoggedIn(true)} />;
-  if (isDashboardOpen) return <UserDashboard builds={savedBuilds} onClose={() => setIsDashboardOpen(false)} onLogout={() => { setUser(null); localStorage.removeItem('adicto_user'); setIsDashboardOpen(false); }} onDelete={(id: string) => { const upd = savedBuilds.filter(x => x.id !== id); setSavedBuilds(upd); localStorage.setItem('adicto_saved_builds', JSON.stringify(upd)); }} onPDF={(b: any) => {
+  if (isDashboardOpen) return <UserDashboard builds={savedBuilds} onClose={() => setIsDashboardOpen(false)} onLogout={() => { setUser(null); localStorage.removeItem('adicto_user'); setIsDashboardOpen(false); }} onDelete={(id: string) => { const upd = savedBuilds.filter(x => x.id !== id); setSavedBuilds(upd); localStorage.setItem('adicto_saved_builds', JSON.stringify(upd)); }} onEdit={handleEditFromGarage} onPDF={(b: any) => {
     const doc = new jsPDF(); autoTable(doc, { head: [['Section', 'Brand', 'Weight', 'Price']], body: b.components.map((c:any) => [c.stepTitle, c.brand, `${c.weight}g`, `€${c.price}`]) });
     doc.save(`${b.name}.pdf`);
   }} />;
 
   if (isFinished) return <SummaryView selections={selectedComponents} onReset={() => window.location.reload()} user={user} onLogin={() => setIsAuthModalOpen(true)} onDashboard={() => setIsDashboardOpen(true)} onSaveBuild={() => {
     if (!user) { setIsAuthModalOpen(true); return; }
-    const newB = { id: Date.now().toString(), name: `${selectedComponents[0]?.brand || 'Machine'} Build`, date: new Date().toLocaleDateString(), components: selectedComponents, totalPrice: selectedComponents.reduce((acc,c)=>acc+c.price,0), totalWeight: selectedComponents.reduce((acc,c)=>acc+c.weight,0) };
+    const newB = { id: Date.now().toString(), name: `${selectedComponents[0]?.brand || 'Bike'} Build`, date: new Date().toLocaleDateString(), components: selectedComponents, totalPrice: selectedComponents.reduce((acc,c)=>acc+c.price,0), totalWeight: selectedComponents.reduce((acc,c)=>acc+c.weight,0) };
     const upd = [...savedBuilds, newB]; setSavedBuilds(upd); localStorage.setItem('adicto_saved_builds', JSON.stringify(upd)); alert("Saved!");
   }} />;
 
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-red-600 pb-24 overflow-x-hidden">
       <style>{`
-        .custom-scroll-container::-webkit-scrollbar { height: 4px; display: block !important; }
+        .custom-scroll-container::-webkit-scrollbar, .steps-scroll-container::-webkit-scrollbar { height: 4px; display: block !important; }
         .custom-scroll-container::-webkit-scrollbar-thumb { background: #ef4444; border-radius: 10px; }
         @keyframes bounce-x { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(5px); } }
         .animate-bounce-x { animation: bounce-x 1s infinite; }
@@ -345,11 +347,11 @@ export default function BikeConfigurator() {
       </nav>
 
       <main className="max-w-[1500px] mx-auto px-4 lg:px-6 pt-2">
-        <div className="flex flex-col lg:grid lg:grid-cols-12 gap-2 lg:h-[550px]">
+        <div className="flex flex-col lg:grid lg:grid-cols-12 gap-1 lg:h-[550px]">
           <div className="lg:col-span-9 flex flex-col gap-1">
             <div ref={stepsNavRef} className="flex overflow-x-auto no-scrollbar gap-x-6 pb-1 border-b border-white/5">
               {steps.map((step, idx) => (
-                <button key={step.id} onClick={() => setCurrentStepIndex(idx)} className={cn("transition-all text-[9px] font-black italic uppercase tracking-widest pb-1 border-b-2 whitespace-nowrap", idx === currentStepIndex ? "text-red-600 border-red-600" : "text-white opacity-20 border-transparent hover:opacity-100")}>{step.title}</button>
+                <button key={step.id} onClick={() => setCurrentStepIndex(idx)} className={cn("transition-all text-[9px] font-black italic uppercase tracking-widest pb-1 border-b-2 whitespace-nowrap", idx === currentStepIndex ? "text-red-600 border-red-600" : "text-white opacity-20 border-transparent")}>{step.title}</button>
               ))}
             </div>
             <div className="h-[250px] md:h-[400px] lg:flex-1 relative"><Visualizer selectedComponents={selectedComponents} offsets={offsets} /></div>
@@ -375,7 +377,7 @@ export default function BikeConfigurator() {
         </div>
       </main>
 
-      <div className="fixed bottom-0 left-0 right-0 bg-black/90 backdrop-blur-3xl border-t border-white/5 z-50 py-4 px-6 text-white shadow-2xl">
+      <div className="fixed bottom-0 left-0 right-0 bg-black/90 backdrop-blur-3xl border-t border-white/5 z-50 py-4 px-6 text-white">
         <div className="max-w-[1500px] mx-auto flex items-center justify-between">
           <button onClick={() => currentStepIndex > 0 && setCurrentStepIndex(currentStepIndex - 1)} className="text-zinc-500 hover:text-white transition-all font-black uppercase text-[10px] italic flex items-center gap-1 w-20">
             <ChevronLeft size={18} /> <span className="hidden sm:inline">Back</span>
@@ -388,7 +390,10 @@ export default function BikeConfigurator() {
           </div>
 
           <div className="w-20 flex justify-end">
-            <button onClick={() => currentStepIndex < steps.length - 1 ? setCurrentStepIndex(currentStepIndex + 1) : setIsFinished(true)} className="bg-red-600 text-white p-2.5 rounded-xl font-black active:scale-95 transition-all shadow-lg shadow-red-600/30">
+            <button onClick={() => {
+                if (filteredOptions.length > 0 && !selections[currentStep.id]) return;
+                currentStepIndex < steps.length - 1 ? setCurrentStepIndex(currentStepIndex + 1) : setIsFinished(true);
+            }} className="bg-red-600 text-white p-2.5 rounded-xl font-black active:scale-95 transition-all shadow-lg shadow-red-600/20">
               <ChevronRight size={18} />
             </button>
           </div>
@@ -398,7 +403,6 @@ export default function BikeConfigurator() {
   );
 }
 
-// --- SUMMARY VIEW (FINAL SCREEN) ---
 function SummaryView({ selections, onReset, user, onSaveBuild, onLogin, onDashboard }: any) {
   const [isExp, setIsExp] = useState(false);
   const [prog, setProg] = useState(0);
@@ -412,7 +416,11 @@ function SummaryView({ selections, onReset, user, onSaveBuild, onLogin, onDashbo
         if (p >= 100) { 
           clearInterval(itv); 
           const doc = new jsPDF();
-          autoTable(doc, { head: [['SECTION', 'BRAND', 'WEIGHT', 'PRICE']], body: selections.map((c: any) => [c.stepTitle, c.brand, `${c.weight}g`, `€${c.price}`]) });
+          autoTable(doc, { 
+            startY: 135, head: [['SECTION', 'BRAND', 'WEIGHT', 'PRICE']],
+            body: selections.map((c: any) => [c.stepTitle, c.brand, `${c.weight}g`, `€${c.price}`]),
+            theme: 'grid'
+          });
           doc.save('ADICTO_BIKE.pdf');
           setTimeout(() => { setIsExp(false); setProg(0); }, 500);
           return 100;
@@ -430,14 +438,17 @@ function SummaryView({ selections, onReset, user, onSaveBuild, onLogin, onDashbo
           </button>
         ) : <button onClick={onLogin} className="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-full border border-white/10 text-[9px] font-black uppercase italic"><LogIn size={12}/> Login</button>}
       </div>
+
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-2xl w-full">
         <img src="/design/Logo.png" alt="Logo" className="w-10 h-10 mx-auto mb-10 object-contain" />
         <h2 className="text-[26px] font-black uppercase italic tracking-tighter mb-4 leading-none">your bike is <br/> <span className="text-red-600 uppercase">Ready</span></h2>
+        
         <div className="flex justify-center gap-10 my-10 bg-zinc-900/40 p-6 rounded-[2.5rem] border border-white/5 shadow-2xl">
-          <div><p className="text-zinc-600 text-[8px] uppercase font-black italic mb-1">Price</p><p className="text-lg font-mono text-red-600 tracking-tighter italic font-black">€{totalP.toLocaleString()}</p></div>
+          <div><p className="text-zinc-600 text-[8px] uppercase font-black italic mb-1">Price</p><p className="text-lg font-mono text-red-600 tracking-tighter font-black italic">€{totalP.toLocaleString()}</p></div>
           <div className="w-px bg-white/5" />
-          <div><p className="text-zinc-600 text-[8px] uppercase font-black italic mb-1">Weight</p><p className="text-lg font-mono text-white/80 tracking-tighter italic font-black">{totalW}g</p></div>
+          <div><p className="text-zinc-600 text-[8px] uppercase font-black italic mb-1">Weight</p><p className="text-lg font-mono text-white/80 tracking-tighter font-black italic">{totalW}g</p></div>
         </div>
+
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <button onClick={doPDF} disabled={isExp} style={{ background: isExp ? `linear-gradient(to right, #ef4444 ${prog}%, #18181b ${prog}%)` : '' }} className={cn("px-8 py-4 rounded-xl font-black uppercase text-[10px] italic transition-all flex items-center justify-center gap-2 relative overflow-hidden", isExp ? "border border-red-600/30" : "bg-red-600 hover:bg-red-700")}>
             <Download size={14} /> {isExp ? `Exporting ${prog}%` : 'Export PDF'}
