@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Download, CheckCircle2, Upload, Database, Lock, User, Settings2, Save, RotateCcw } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Download, CheckCircle2, Upload, Database, Lock, User, Settings2, Save, RotateCcw, Grid3X3, Search, Move } from 'lucide-react';
 import { cn } from './lib/utils';
 
 import jsPDF from 'jspdf';
@@ -28,9 +28,9 @@ interface Step {
 }
 
 interface OffsetData {
-  s: number; // scale
-  x: number; // offsetX
-  y: number; // offsetY
+  s: number; 
+  x: number; 
+  y: number; 
 }
 
 // --- ADMIN LOGIN COMPONENT ---
@@ -57,15 +57,9 @@ const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
 
   return (
     <div className="min-h-screen bg-black flex items-center justify-center p-6 selection:bg-red-600 font-sans">
-      <motion.form 
-        initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-        onSubmit={handleLogin} 
-        className="bg-zinc-900/50 p-10 rounded-[2.5rem] border border-white/5 w-full max-w-md backdrop-blur-xl shadow-2xl"
-      >
+      <motion.form initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} onSubmit={handleLogin} className="bg-zinc-900/50 p-10 rounded-[2.5rem] border border-white/5 w-full max-w-md backdrop-blur-xl shadow-2xl">
         <div className="flex flex-col items-center mb-8">
-          <div className="w-12 h-12 bg-red-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-red-600/20">
-            <Lock className="text-white" size={24} />
-          </div>
+          <div className="w-12 h-12 bg-red-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-red-600/20"><Lock className="text-white" size={24} /></div>
           <h2 className="text-xl font-black uppercase tracking-widest text-white italic">Adicto Admin</h2>
         </div>
         <div className="space-y-4">
@@ -87,7 +81,7 @@ const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
 };
 
 // --- ADMIN PANEL COMPONENT ---
-const AdminPanel = ({ categories, offsets, setOffsets, activeComponent }: any) => {
+const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid, setShowGrid, isZoomed, setIsZoomed }: any) => {
   const [selectedCat, setSelectedCat] = useState('excel');
   const [status, setStatus] = useState('');
 
@@ -104,12 +98,7 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent }: any) =
       const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${path}`, {
         method: "PUT",
         headers: { Authorization: `token ${GITHUB_TOKEN}`, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: `Admin update: ${path}`,
-          content: isJson ? btoa(unescape(encodeURIComponent(content))) : content,
-          sha: sha || undefined,
-          branch: BRANCH
-        }),
+        body: JSON.stringify({ message: `Admin update: ${path}`, content: isJson ? btoa(unescape(encodeURIComponent(content))) : content, sha: sha || undefined, branch: BRANCH }),
       });
       if (res.ok) setStatus("✅ Success!"); else setStatus("❌ Error");
     } catch (err) { setStatus("❌ Failed"); }
@@ -121,12 +110,13 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent }: any) =
   };
 
   return (
-    <div className="z-[100] sticky top-0 shadow-2xl">
+    <div className="z-[100] sticky top-0 shadow-2xl font-sans">
       <motion.div initial={{ y: -50 }} animate={{ y: 0 }} className="bg-zinc-900 border-b border-white/5 p-2 flex gap-4 items-center justify-center backdrop-blur-md">
-        <select value={selectedCat} onChange={(e) => setSelectedCat(e.target.value)} className="bg-black border border-white/10 text-[9px] px-2 py-1 rounded uppercase font-bold text-zinc-400 outline-none focus:border-red-600 transition-all">
+        <select value={selectedCat} onChange={(e) => setSelectedCat(e.target.value)} className="bg-black border border-white/10 text-[9px] px-2 py-1 rounded uppercase font-bold text-zinc-400 outline-none focus:border-red-600">
           <option value="excel">📁 EXCEL</option>
           {categories.map((cat: string) => <option key={cat} value={cat}>🖼️ {cat.toUpperCase()}</option>)}
         </select>
+        
         <label className="cursor-pointer bg-zinc-800 text-zinc-300 px-3 py-1 rounded text-[9px] font-bold uppercase hover:bg-zinc-700 transition-all flex items-center gap-2">
           <Upload size={10}/> UPLOAD <input type="file" className="hidden" onChange={(e) => {
              const file = e.target.files?.[0];
@@ -137,7 +127,18 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent }: any) =
              }
           }} />
         </label>
-        {status && <span className="text-[8px] font-mono uppercase text-red-600 animate-pulse">{status}</span>}
+
+        <div className="h-4 w-px bg-white/10 mx-2" />
+
+        <button onClick={() => setShowGrid(!showGrid)} className={cn("px-3 py-1 rounded text-[9px] font-bold uppercase transition-all flex items-center gap-2", showGrid ? "bg-red-600 text-white" : "bg-zinc-800 text-zinc-400")}>
+          <Grid3X3 size={10}/> Grid
+        </button>
+
+        <button onClick={() => setIsZoomed(!isZoomed)} className={cn("px-3 py-1 rounded text-[9px] font-bold uppercase transition-all flex items-center gap-2", isZoomed ? "bg-red-600 text-white" : "bg-zinc-800 text-zinc-400")}>
+          <Search size={10}/> Magnify 5X
+        </button>
+
+        {status && <span className="text-[8px] font-mono uppercase text-red-600 animate-pulse ml-2">{status}</span>}
       </motion.div>
 
       {activeComponent && (
@@ -176,26 +177,51 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent }: any) =
   );
 };
 
-// --- VISUALIZER & OPTION CARD ---
-const Visualizer = ({ selectedComponents, offsets }: { selectedComponents: Component[], offsets: Record<string, OffsetData> }) => (
-  <div id="bike-visualizer" className="relative w-full h-full bg-zinc-950 rounded-[1.5rem] lg:rounded-[2.5rem] overflow-hidden border border-white/5 shadow-[0_0_100px_rgba(0,0,0,0.5)] flex items-center justify-center">
-    <div className="absolute inset-0 opacity-5 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
-    <AnimatePresence mode="popLayout">
-      {selectedComponents.map((comp) => {
-        const tune = offsets[comp.id] || { s: 1, x: 0, y: 0 };
-        return (
-          <motion.img
-            key={comp.id} src={comp.imageUrl} crossOrigin="anonymous" loading="eager" alt={comp.name}
-            initial={{ opacity: 0 }} animate={{ opacity: 1, scale: tune.s, x: tune.x, y: tune.y }} exit={{ opacity: 0 }}
-            transition={{ duration: 0.4 }} className="absolute inset-0 w-full h-full object-contain pointer-events-none"
-            style={{ zIndex: Number(comp.zIndex) }}
-          />
-        );
-      })}
-    </AnimatePresence>
-  </div>
-);
+// --- VISUALIZER ---
+const Visualizer = ({ selectedComponents, offsets, showGrid, isZoomed }: any) => {
+  return (
+    <div id="bike-visualizer" className="relative w-full h-full bg-zinc-950 rounded-[1.5rem] lg:rounded-[2.5rem] overflow-hidden border border-white/5 shadow-[0_0_100px_rgba(0,0,0,0.5)] flex items-center justify-center cursor-crosshair">
+      
+      {/* 5px Grid Overlay */}
+      {showGrid && (
+        <div className="absolute inset-0 z-[60] pointer-events-none opacity-20" 
+             style={{ backgroundImage: 'linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)', backgroundSize: '5px 5px' }} />
+      )}
 
+      <motion.div 
+        drag={isZoomed}
+        dragConstraints={{ left: -1000, right: 1000, top: -1000, bottom: 1000 }}
+        animate={{ scale: isZoomed ? 5 : 1 }}
+        transition={{ type: 'spring', damping: 20, stiffness: 100 }}
+        className="relative w-full h-full flex items-center justify-center"
+      >
+        <AnimatePresence mode="popLayout">
+          {selectedComponents.map((comp: any) => {
+            const tune = offsets[comp.id] || { s: 1, x: 0, y: 0 };
+            return (
+              <motion.img
+                key={comp.id} src={comp.imageUrl} crossOrigin="anonymous" loading="eager" alt={comp.name}
+                initial={{ opacity: 0 }} 
+                animate={{ opacity: 1, scale: tune.s, x: tune.x, y: tune.y }} 
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.4 }} className="absolute inset-0 w-full h-full object-contain pointer-events-none"
+                style={{ zIndex: Number(comp.zIndex) }}
+              />
+            );
+          })}
+        </AnimatePresence>
+      </motion.div>
+
+      {isZoomed && (
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-red-600 text-white px-4 py-1 rounded-full text-[8px] font-black uppercase flex items-center gap-2 z-[70] shadow-2xl">
+          <Move size={10}/> Drag to Move
+        </div>
+      )}
+    </div>
+  );
+};
+
+// --- OPTION CARD ---
 const OptionCard = ({ component, isSelected, onClick }: { component: Component, isSelected: boolean, onClick: () => void }) => (
   <motion.button
     layout onClick={(e) => { e.preventDefault(); onClick(); }}
@@ -233,12 +259,14 @@ export default function BikeConfigurator() {
   const [isAdminMode, setIsAdminMode] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [offsets, setOffsets] = useState<Record<string, OffsetData>>({});
+  const [showGrid, setShowGrid] = useState(false);
+  const [isZoomed, setIsZoomed] = useState(false);
   
   useEffect(() => {
     const path = window.location.pathname; 
     const urlParams = new URLSearchParams(window.location.search);
     if (path === '/admin' || urlParams.get('admin') === 'true') setIsAdminMode(true);
-    fetch('/offsets.json').then(r => r.ok ? r.json() : {}).then(data => setOffsets(data)).catch(() => setOffsets({}));
+    fetch('/offsets.json').then(r => r.ok ? r.json() : {}).then(data => setOffsets(data)).catch(() => {});
   }, []);
 
   const [steps, setSteps] = useState<Step[]>(INITIAL_STEPS);
@@ -248,28 +276,12 @@ export default function BikeConfigurator() {
   const [error, setError] = useState<string | null>(null);
 
   const currentStep = steps[currentStepIndex] || steps[0];
-  const listRef = useRef<HTMLDivElement>(null);
-  const stepRefs = useRef<(HTMLButtonElement | null)[]>([]);
-
-  const activeLogic = useMemo(() => {
-    if (currentStepIndex === 0) return null;
-    const prevStepId = steps[currentStepIndex - 1].id;
-    const selectedId = selections[prevStepId];
-    if (!selectedId) return null;
-    const prevComp = steps[currentStepIndex - 1].options.find(o => o.id === selectedId);
-    return prevComp?.logic?.trim() || null;
-  }, [selections, currentStepIndex, steps]);
-
-  const filteredOptions = useMemo(() => {
-    if (!currentStep) return [];
-    return currentStep.options.filter(opt => !activeLogic || !opt.logic || opt.logic.trim() === "" || opt.logic.trim() === activeLogic);
-  }, [currentStep, activeLogic]);
 
   useEffect(() => {
     const autoLoadExcel = async () => {
       try {
         const response = await fetch('/data.xlsx');
-        if (!response.ok) throw new Error("File not found");
+        if (!response.ok) return;
         const arrayBuffer = await response.arrayBuffer();
         const XLSX = await import('xlsx');
         const workbook = XLSX.read(arrayBuffer);
@@ -278,25 +290,21 @@ export default function BikeConfigurator() {
           const sheet = sheetName ? workbook.Sheets[sheetName] : null;
           if (sheet) {
             const data = XLSX.utils.sheet_to_json(sheet);
-            return {
-              ...step,
-              options: data.map((row: any, idx: number) => {
-                const findKey = (name: string) => Object.keys(row).find(k => k.toLowerCase().trim() === name.toLowerCase());
-                return {
-                  id: `${step.id}-${idx}`,
-                  name: row.Name || 'Unknown', brand: row.Brand || '',
-                  price: Number(row.Price || row.PRICE) || 0, weight: Number(row.Weight || row.WEIGHT) || 0,
-                  imageUrl: row[findKey('imageurl') || 'image'] || "",
-                  cardImageUrl: row[findKey('cardimg') || 'cardimage'] || row[findKey('imageurl') || 'image'] || "",
-                  zIndex: Number(row[findKey('zindex')]) || 10, logic: String(row[findKey('logic')] || "").trim()
-                };
-              })
-            };
+            return { ...step, options: data.map((row: any, idx: number) => {
+              const findKey = (name: string) => Object.keys(row).find(k => k.toLowerCase().trim() === name.toLowerCase());
+              return {
+                id: `${step.id}-${idx}`, name: row.Name || 'Unknown', brand: row.Brand || '',
+                price: Number(row.Price || row.PRICE) || 0, weight: Number(row.Weight || row.WEIGHT) || 0,
+                imageUrl: row[findKey('imageurl') || 'image'] || "",
+                cardImageUrl: row[findKey('cardimg') || 'cardimage'] || row[findKey('imageurl') || 'image'] || "",
+                zIndex: Number(row[findKey('zindex')]) || 10, logic: String(row[findKey('logic')] || "").trim()
+              };
+            })};
           }
           return step;
         });
         setSteps(newSteps);
-      } catch (err) { console.error(err); }
+      } catch (err) {}
     };
     autoLoadExcel();
   }, []);
@@ -310,10 +318,16 @@ export default function BikeConfigurator() {
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-red-600 pb-28 lg:pb-24 overflow-x-hidden">
       {isLoggedIn ? (
-        <AdminPanel categories={INITIAL_STEPS.map(s => s.title)} offsets={offsets} setOffsets={setOffsets} activeComponent={activeComponentForTuning} />
+        <AdminPanel 
+          categories={INITIAL_STEPS.map(s => s.title)} 
+          offsets={offsets} setOffsets={setOffsets} 
+          activeComponent={activeComponentForTuning}
+          showGrid={showGrid} setShowGrid={setShowGrid}
+          isZoomed={isZoomed} setIsZoomed={setIsZoomed}
+        />
       ) : (
         <nav className="border-b border-white/5 px-4 lg:px-8 py-2 flex justify-between items-center bg-black/80 backdrop-blur-2xl sticky top-0 z-50">
-          <div className="flex items-center gap-4 pl-2"><img src="/design/Logo.png" alt="Logo" className="h-4 lg:h-6 w-auto object-contain" /></div>
+          <div className="flex items-center gap-4 pl-2"><img src="/design/Logo.png" alt="Logo" className="h-4 lg:h-6 w-auto" /></div>
           <div className="flex items-center gap-6"><div className="text-zinc-400 font-mono text-[7px] pr-2 opacity-70 uppercase tracking-widest italic">Build by Vasile & AI</div></div>
         </nav>
       )}
@@ -325,18 +339,20 @@ export default function BikeConfigurator() {
               {steps.map((step, idx) => (
                 <button key={step.id} onClick={() => { setCurrentStepIndex(idx); setError(null); }} 
                   className={cn("transition-all duration-300 text-[10px] font-black italic uppercase tracking-widest pb-1 border-b-2 whitespace-nowrap", 
-                  idx === currentStepIndex ? "text-red-600 border-red-600 drop-shadow-[0_0_9px_rgba(255,0,0,0.3)]" : "text-white opacity-20 border-transparent hover:opacity-100")}
+                  idx === currentStepIndex ? "text-red-600 border-red-600" : "text-white opacity-20 border-transparent hover:opacity-100")}
                 >{step.title}</button>
               ))}
             </div>
-            <div className="h-[280px] md:h-[400px] lg:flex-1"><Visualizer selectedComponents={selectedComponents} offsets={offsets} /></div>
+            <div className="h-[280px] md:h-[400px] lg:flex-1 relative">
+              <Visualizer selectedComponents={selectedComponents} offsets={offsets} showGrid={showGrid} isZoomed={isZoomed} />
+            </div>
           </div>
           <div className="lg:col-span-3 flex flex-col bg-zinc-900/40 rounded-[2.5rem] border border-white/5 p-4 lg:p-6 relative overflow-hidden order-2 shadow-2xl">
             <style>{`.custom-scroll-container::-webkit-scrollbar {height: 3px;}.custom-scroll-container::-webkit-scrollbar-track {background: rgba(255, 255, 255, 0.05);}.custom-scroll-container::-webkit-scrollbar-thumb {background: #ef4444;border-radius: 10px;}.custom-scroll-container {scrollbar-width: thin;scrollbar-color: #ef4444 rgba(255, 255, 255, 0.05);}`}</style>
-            <div ref={listRef} className="flex-1 overflow-x-auto lg:overflow-y-auto lg:overflow-x-hidden custom-scroll-container pb-2 lg:pb-0" style={{ display: 'flex', flexDirection: 'column' }}>
+            <div className="flex-1 overflow-x-auto lg:overflow-y-auto lg:overflow-x-hidden custom-scroll-container pb-2 lg:pb-0" style={{ display: 'flex', flexDirection: 'column' }}>
                 <div className="flex flex-row lg:flex-col gap-3 min-w-full">
                   <AnimatePresence mode="popLayout">
-                    {filteredOptions.map((option) => (
+                    {currentStep.options.map((option) => (
                       <div key={option.id} className="w-[31%] min-w-[31%] lg:w-full lg:min-w-0 shrink-0">
                         <OptionCard component={option} isSelected={selections[currentStep.id] === option.id} onClick={() => setSelections(prev => ({...prev, [currentStep.id]: option.id}))} />
                       </div>
@@ -352,9 +368,9 @@ export default function BikeConfigurator() {
         <div className="max-w-[1500px] mx-auto px-4 lg:px-6 py-6 grid grid-cols-12 gap-2 items-center">
           <button onClick={() => currentStepIndex > 0 && setCurrentStepIndex(currentStepIndex - 1)} className="col-span-3 lg:col-span-2 flex items-center gap-1 text-zinc-500 hover:text-white transition-all font-black uppercase text-[10px] tracking-widest italic"><ChevronLeft size={20} /> Back</button>
           <div className="col-span-6 lg:col-span-7 flex justify-center lg:justify-end items-center gap-4 lg:gap-10">
-            <div className="text-center lg:text-right"><p className="text-[7px] text-zinc-600 uppercase font-black mb-0.5 italic">Weight</p><p className="font-mono text-xs">{selectedComponents.reduce((acc, c) => acc + c.weight, 0)}g</p></div>
+            <div className="text-center lg:text-right"><p className="text-[7px] text-zinc-600 uppercase font-black mb-0.5">Weight</p><p className="font-mono text-xs">{selectedComponents.reduce((acc, c) => acc + c.weight, 0)}g</p></div>
             <div className="h-8 w-px bg-white/10" />
-            <div className="text-center lg:text-right"><p className="text-[7px] text-zinc-600 uppercase font-black mb-0.5 italic">Price</p><p className="font-mono text-xs text-red-600">€{selectedComponents.reduce((acc, c) => acc + c.price, 0).toLocaleString()}</p></div>
+            <div className="text-center lg:text-right"><p className="text-[7px] text-zinc-600 uppercase font-black mb-0.5">Price</p><p className="font-mono text-xs text-red-600">€{selectedComponents.reduce((acc, c) => acc + c.price, 0).toLocaleString()}</p></div>
           </div>
           <div className="col-span-3 flex justify-end">
             <button onClick={() => currentStepIndex < steps.length - 1 ? setCurrentStepIndex(currentStepIndex + 1) : setIsFinished(true)} className="bg-red-600 text-white h-[32px] px-6 rounded-lg font-black uppercase text-[10px] tracking-widest flex items-center gap-2 active:scale-95 shadow-lg shadow-red-600/20 italic">{currentStepIndex === steps.length - 1 ? 'Finish' : 'Next'} <ChevronRight size={14} /></button>
@@ -368,40 +384,17 @@ export default function BikeConfigurator() {
 function SummaryView({ selections, onReset }: any) {
   const totalPrice = selections.reduce((acc: number, c: any) => acc + c.price, 0);
   const totalWeight = selections.reduce((acc: number, c: any) => acc + c.weight, 0);
-  const getBase64Image = async (url: string): Promise<string> => {
-    try { const res = await fetch(url); const blob = await res.blob();
-      return new Promise((resolve, reject) => { const reader = new FileReader(); reader.onloadend = () => resolve(reader.result as string); reader.onerror = reject; reader.readAsDataURL(blob); });
-    } catch (e) { return ""; }
-  };
   const handleExport = async () => {
-    const doc = new jsPDF(); const pageWidth = doc.internal.pageSize.getWidth(); const pageHeight = doc.internal.pageSize.getHeight();
-    const cleanText = (text: string) => text ? String(text).replace(/[^\x00-\x7F]/g, "").toUpperCase() : "";
-    try { const logoBase64 = await getBase64Image("/design/Logo.png");
-      if (logoBase64) { doc.saveGraphicsState(); (doc as any).setGState(new (doc as any).GState({ opacity: 0.8 })); doc.addImage(logoBase64, 'PNG', (pageWidth / 2) - 15, 8, 10, 10); doc.restoreGraphicsState(); }
-    } catch (e) {}
-    try { const sortedByZ = [...selections].sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
-      for (const comp of sortedByZ) { if (comp.imageUrl) { const imgBase64 = await getBase64Image(comp.imageUrl); if (imgBase64) doc.addImage(imgBase64, 'PNG', 15, 22, 180, 115, undefined, 'FAST'); } }
-    } catch (e) {}
-    autoTable(doc, { startY: 140, head: [['SECTION', 'COMPONENT', 'BRAND', 'WEIGHT', 'PRICE']],
-      body: selections.map((c: any) => [cleanText(c.stepTitle || ""), cleanText(c.name), cleanText(c.brand), `${c.weight} g`, `${c.price.toLocaleString()} €`]),
-      styles: { font: "helvetica", fontSize: 5.8, cellPadding: 2 }, headStyles: { fillColor: [20, 20, 20], textColor: [255, 255, 255] },
-      columnStyles: { 0: { fontStyle: 'bold', cellWidth: 25 } }, foot: [['TOTAL', '', '', `${totalWeight} g`, `${totalPrice.toLocaleString()} €`]],
-      footStyles: { fillColor: [220, 38, 38], textColor: [255, 255, 255], fontSize: 9, fontStyle: 'bold', cellPadding: 3 }, theme: 'grid'
-    });
+    const doc = new jsPDF();
+    autoTable(doc, { startY: 20, head: [['SECTION', 'COMPONENT', 'PRICE']], body: selections.map((c: any) => [c.stepTitle, c.name, `${c.price} €`]) });
     doc.save(`ADICTO_BUILD.pdf`);
   };
-
   return (
     <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-8 text-center font-sans">
       <CheckCircle2 size={32} className="text-red-600 mb-4" />
-      <h2 className="text-[27px] font-black italic uppercase tracking-tighter mb-4 leading-none">Configuration <br/> <span className="text-red-600">Complete</span></h2>
-      <div className="flex justify-center gap-10 my-8 bg-zinc-900/50 p-6 rounded-3xl border border-white/5">
-        <div><p className="text-zinc-500 text-[9px] uppercase font-bold italic">Price</p><p className="text-[18px] font-mono text-red-600">€{totalPrice.toLocaleString()}</p></div>
-        <div className="w-px bg-white/10" />
-        <div><p className="text-zinc-500 text-[9px] uppercase font-bold italic">Weight</p><p className="text-[18px] font-mono">{totalWeight}g</p></div>
-      </div>
+      <h2 className="text-[27px] font-black italic uppercase tracking-tighter mb-8 leading-none">Configuration <span className="text-red-600">Complete</span></h2>
       <div className="flex gap-4 justify-center">
-        <button onClick={handleExport} className="px-8 py-4 bg-red-600 text-white rounded-xl font-black uppercase text-[10px] italic shadow-lg shadow-red-600/20"><Download size={16} /> Export PDF</button>
+        <button onClick={handleExport} className="px-8 py-4 bg-red-600 text-white rounded-xl font-black uppercase text-[10px] italic shadow-lg shadow-red-600/20">Export PDF</button>
         <button onClick={onReset} className="px-8 py-4 border border-white/10 rounded-xl font-black uppercase text-[10px] italic hover:bg-white/5">Start Over</button>
       </div>
     </div>
