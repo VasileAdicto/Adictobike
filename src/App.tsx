@@ -80,8 +80,11 @@ const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
   );
 };
 
+// Додайте в стейти BikeConfigurator:
+const [gridSize, setGridSize] = useState(5); // за замовчуванням 5px
+
 // --- ADMIN PANEL COMPONENT ---
-const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid, setShowGrid, isZoomed, setIsZoomed }: any) => {
+const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid, setShowGrid, gridSize, setGridSize, isZoomed, setIsZoomed }: any) => {
   const [selectedCat, setSelectedCat] = useState('excel');
   const [status, setStatus] = useState('');
 
@@ -128,11 +131,20 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
           }} />
         </label>
 
-        <div className="h-4 w-px bg-white/10 mx-2" />
+        <div className="h-4 w-px bg-white/10 mx-1" />
 
-        <button onClick={() => setShowGrid(!showGrid)} className={cn("px-3 py-1 rounded text-[9px] font-bold uppercase transition-all flex items-center gap-2", showGrid ? "bg-red-600 text-white" : "bg-zinc-800 text-zinc-400")}>
-          <Grid3X3 size={10}/> Grid 2.5px
-        </button>
+        {/* Grid Control Group */}
+        <div className="flex items-center gap-2 bg-black/40 p-1 rounded-lg border border-white/5">
+          <button onClick={() => setShowGrid(!showGrid)} className={cn("px-3 py-1 rounded text-[9px] font-bold uppercase transition-all flex items-center gap-2", showGrid ? "bg-red-600 text-white" : "bg-zinc-800 text-zinc-400")}>
+            <Grid3X3 size={10}/> Grid
+          </button>
+          {showGrid && (
+            <div className="flex items-center gap-2 px-2 animate-in fade-in slide-in-from-left-2">
+              <span className="text-[8px] text-zinc-500 font-bold uppercase whitespace-nowrap">Step: {gridSize}px</span>
+              <input type="range" min="1" max="20" step="1" value={gridSize} onChange={(e) => setGridSize(parseInt(e.target.value))} className="w-20 h-1 bg-zinc-700 appearance-none accent-red-600" />
+            </div>
+          )}
+        </div>
 
         <button onClick={() => setIsZoomed(!isZoomed)} className={cn("px-3 py-1 rounded text-[9px] font-bold uppercase transition-all flex items-center gap-2", isZoomed ? "bg-red-600 text-white" : "bg-zinc-800 text-zinc-400")}>
           <Search size={10}/> Magnify 5X
@@ -178,25 +190,27 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
 };
 
 // --- VISUALIZER ---
-const Visualizer = ({ selectedComponents, offsets, showGrid, isZoomed }: any) => {
+const Visualizer = ({ selectedComponents, offsets, showGrid, gridSize, isZoomed }: any) => {
   return (
     <div id="bike-visualizer" className="relative w-full h-full bg-zinc-950 rounded-[1.5rem] lg:rounded-[2.5rem] overflow-hidden border border-white/5 shadow-[0_0_100px_rgba(0,0,0,0.5)] flex items-center justify-center cursor-crosshair">
       
-      {/* 2.5px Grid Overlay */}
+      {/* Dynamic Grid Overlay */}
       {showGrid && (
-        <div className="absolute inset-0 z-[60] pointer-events-none opacity-20" 
-             style={{ backgroundImage: 'linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)', backgroundSize: '2.5px 2.5px' }} />
+        <div className="absolute inset-0 z-[60] pointer-events-none opacity-[0.15]" 
+             style={{ 
+               backgroundImage: `linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)`, 
+               backgroundSize: `${gridSize}px ${gridSize}px` 
+             }} />
       )}
 
-      {/* Контейнер для зуму та перетягування */}
       <motion.div 
         drag={isZoomed}
         dragMomentum={false}
         dragConstraints={{ left: -1500, right: 1500, top: -1500, bottom: 1500 }}
         animate={{ 
           scale: isZoomed ? 5 : 1,
-          x: isZoomed ? undefined : 0, // Повернення в центр по X
-          y: isZoomed ? undefined : 0  // Повернення в центр по Y
+          x: isZoomed ? undefined : 0,
+          y: isZoomed ? undefined : 0
         }}
         transition={{ type: 'spring', damping: 25, stiffness: 150 }}
         className="relative w-full h-full flex items-center justify-center"
@@ -220,7 +234,7 @@ const Visualizer = ({ selectedComponents, offsets, showGrid, isZoomed }: any) =>
 
       {isZoomed && (
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-red-600 text-white px-4 py-1 rounded-full text-[8px] font-black uppercase flex items-center gap-2 z-[70] shadow-2xl">
-          <Move size={10}/> Drag to Explore
+          <Move size={10}/> Drag to Move
         </div>
       )}
     </div>
