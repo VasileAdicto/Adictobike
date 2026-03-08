@@ -80,9 +80,6 @@ const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
   );
 };
 
-// Додайте в стейти BikeConfigurator:
-const [gridSize, setGridSize] = useState(5); // за замовчуванням 5px
-
 // --- ADMIN PANEL COMPONENT ---
 const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid, setShowGrid, gridSize, setGridSize, isZoomed, setIsZoomed }: any) => {
   const [selectedCat, setSelectedCat] = useState('excel');
@@ -101,7 +98,12 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
       const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${path}`, {
         method: "PUT",
         headers: { Authorization: `token ${GITHUB_TOKEN}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ message: `Admin update: ${path}`, content: isJson ? btoa(unescape(encodeURIComponent(content))) : content, sha: sha || undefined, branch: BRANCH }),
+        body: JSON.stringify({
+          message: `Admin update: ${path}`,
+          content: isJson ? btoa(unescape(encodeURIComponent(content))) : content,
+          sha: sha || undefined,
+          branch: BRANCH
+        }),
       });
       if (res.ok) setStatus("✅ Success!"); else setStatus("❌ Error");
     } catch (err) { setStatus("❌ Failed"); }
@@ -133,7 +135,6 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
 
         <div className="h-4 w-px bg-white/10 mx-1" />
 
-        {/* Grid Control Group */}
         <div className="flex items-center gap-2 bg-black/40 p-1 rounded-lg border border-white/5">
           <button onClick={() => setShowGrid(!showGrid)} className={cn("px-3 py-1 rounded text-[9px] font-bold uppercase transition-all flex items-center gap-2", showGrid ? "bg-red-600 text-white" : "bg-zinc-800 text-zinc-400")}>
             <Grid3X3 size={10}/> Grid
@@ -171,7 +172,7 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
                 <input type="number" step={item.step} 
                   value={offsets[activeComponent.id]?.[item.key as keyof OffsetData] ?? item.reset}
                   onChange={e => updateTune(item.key as keyof OffsetData, parseFloat(e.target.value))}
-                  className="bg-transparent text-white text-[9px] w-10 text-right font-mono outline-none border-b border-white/5 focus:border-red-600" 
+                  className="bg-transparent text-white text-[9px] w-10 text-right font-mono border-b border-white/5 focus:border-red-600" 
                 />
                 <button onClick={() => updateTune(item.key as keyof OffsetData, item.reset)} className="text-zinc-600 hover:text-red-600 transition-colors"><RotateCcw size={10}/></button>
               </div>
@@ -194,7 +195,6 @@ const Visualizer = ({ selectedComponents, offsets, showGrid, gridSize, isZoomed 
   return (
     <div id="bike-visualizer" className="relative w-full h-full bg-zinc-950 rounded-[1.5rem] lg:rounded-[2.5rem] overflow-hidden border border-white/5 shadow-[0_0_100px_rgba(0,0,0,0.5)] flex items-center justify-center cursor-crosshair">
       
-      {/* Dynamic Grid Overlay */}
       {showGrid && (
         <div className="absolute inset-0 z-[60] pointer-events-none opacity-[0.15]" 
              style={{ 
@@ -209,10 +209,10 @@ const Visualizer = ({ selectedComponents, offsets, showGrid, gridSize, isZoomed 
         dragConstraints={{ left: -1500, right: 1500, top: -1500, bottom: 1500 }}
         animate={{ 
           scale: isZoomed ? 5 : 1,
-          x: isZoomed ? undefined : 0,
+          x: isZoomed ? undefined : 0, // Авто-центрування при виході
           y: isZoomed ? undefined : 0
         }}
-        transition={{ type: 'spring', damping: 25, stiffness: 150 }}
+        transition={{ type: 'spring', damping: 25, stiffness: 120 }}
         className="relative w-full h-full flex items-center justify-center"
       >
         <AnimatePresence mode="popLayout">
@@ -280,6 +280,7 @@ export default function BikeConfigurator() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [offsets, setOffsets] = useState<Record<string, OffsetData>>({});
   const [showGrid, setShowGrid] = useState(false);
+  const [gridSize, setGridSize] = useState(5);
   const [isZoomed, setIsZoomed] = useState(false);
   
   useEffect(() => {
@@ -343,6 +344,7 @@ export default function BikeConfigurator() {
           offsets={offsets} setOffsets={setOffsets} 
           activeComponent={activeComponentForTuning}
           showGrid={showGrid} setShowGrid={setShowGrid}
+          gridSize={gridSize} setGridSize={setGridSize}
           isZoomed={isZoomed} setIsZoomed={setIsZoomed}
         />
       ) : (
@@ -364,7 +366,7 @@ export default function BikeConfigurator() {
               ))}
             </div>
             <div className="h-[280px] md:h-[400px] lg:flex-1 relative">
-              <Visualizer selectedComponents={selectedComponents} offsets={offsets} showGrid={showGrid} isZoomed={isZoomed} />
+              <Visualizer selectedComponents={selectedComponents} offsets={offsets} showGrid={showGrid} gridSize={gridSize} isZoomed={isZoomed} />
             </div>
           </div>
           <div className="lg:col-span-3 flex flex-col bg-zinc-900/40 rounded-[2.5rem] border border-white/5 p-4 lg:p-6 relative overflow-hidden order-2 shadow-2xl">
@@ -388,9 +390,9 @@ export default function BikeConfigurator() {
         <div className="max-w-[1500px] mx-auto px-4 lg:px-6 py-6 grid grid-cols-12 gap-2 items-center">
           <button onClick={() => currentStepIndex > 0 && setCurrentStepIndex(currentStepIndex - 1)} className="col-span-3 lg:col-span-2 flex items-center gap-1 text-zinc-500 hover:text-white transition-all font-black uppercase text-[10px] tracking-widest italic"><ChevronLeft size={20} /> Back</button>
           <div className="col-span-6 lg:col-span-7 flex justify-center lg:justify-end items-center gap-4 lg:gap-10">
-            <div className="text-center lg:text-right"><p className="text-[7px] text-zinc-600 uppercase font-black mb-0.5">Weight</p><p className="font-mono text-xs">{selectedComponents.reduce((acc, c) => acc + c.weight, 0)}g</p></div>
+            <div className="text-center lg:text-right"><p className="text-[7px] text-zinc-600 uppercase font-black mb-0.5 italic">Weight</p><p className="font-mono text-xs">{selectedComponents.reduce((acc, c) => acc + c.weight, 0)}g</p></div>
             <div className="h-8 w-px bg-white/10" />
-            <div className="text-center lg:text-right"><p className="text-[7px] text-zinc-600 uppercase font-black mb-0.5">Price</p><p className="font-mono text-xs text-red-600">€{selectedComponents.reduce((acc, c) => acc + c.price, 0).toLocaleString()}</p></div>
+            <div className="text-center lg:text-right"><p className="text-[7px] text-zinc-600 uppercase font-black mb-0.5 italic">Price</p><p className="font-mono text-xs text-red-600">€{selectedComponents.reduce((acc, c) => acc + c.price, 0).toLocaleString()}</p></div>
           </div>
           <div className="col-span-3 flex justify-end">
             <button onClick={() => currentStepIndex < steps.length - 1 ? setCurrentStepIndex(currentStepIndex + 1) : setIsFinished(true)} className="bg-red-600 text-white h-[32px] px-6 rounded-lg font-black uppercase text-[10px] tracking-widest flex items-center gap-2 active:scale-95 shadow-lg shadow-red-600/20 italic">{currentStepIndex === steps.length - 1 ? 'Finish' : 'Next'} <ChevronRight size={14} /></button>
@@ -406,7 +408,9 @@ function SummaryView({ selections, onReset }: any) {
   const totalWeight = selections.reduce((acc: number, c: any) => acc + c.weight, 0);
   const handleExport = async () => {
     const doc = new jsPDF();
-    autoTable(doc, { startY: 20, head: [['SECTION', 'COMPONENT', 'PRICE']], body: selections.map((c: any) => [c.stepTitle, c.name, `${c.price} €`]) });
+    autoTable(doc, { startY: 140, head: [['SECTION', 'COMPONENT', 'BRAND', 'WEIGHT', 'PRICE']],
+      body: selections.map((c: any) => [c.stepTitle || "", c.name, c.brand, `${c.weight} g`, `${c.price.toLocaleString()} €`]), theme: 'grid'
+    });
     doc.save(`ADICTO_BUILD.pdf`);
   };
   return (
@@ -415,7 +419,7 @@ function SummaryView({ selections, onReset }: any) {
       <h2 className="text-[27px] font-black italic uppercase tracking-tighter mb-8 leading-none">Configuration <span className="text-red-600">Complete</span></h2>
       <div className="flex gap-4 justify-center">
         <button onClick={handleExport} className="px-8 py-4 bg-red-600 text-white rounded-xl font-black uppercase text-[10px] italic shadow-lg shadow-red-600/20">Export PDF</button>
-        <button onClick={onReset} className="px-8 py-4 border border-white/10 rounded-xl font-black uppercase text-[10px] italic hover:bg-white/5">Start Over</button>
+        <button onClick={onReset} className="px-8 py-4 border border-white/10 rounded-xl font-black uppercase text-[10px] italic hover:bg-white/5 transition-all">Start Over</button>
       </div>
     </div>
   );
