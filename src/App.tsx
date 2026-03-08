@@ -80,7 +80,7 @@ const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
   );
 };
 
-// --- Оновлений AdminPanel ---
+// --- ADMIN PANEL COMPONENT ---
 const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid, setShowGrid, gridSize, setGridSize, isZoomed, setIsZoomed, zoomScale, setZoomScale }: any) => {
   const [selectedCat, setSelectedCat] = useState('excel');
   const [status, setStatus] = useState('');
@@ -137,7 +137,7 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
           </button>
           {showGrid && (
             <div className="flex items-center gap-2 px-1 border-r border-white/5 mr-1">
-              <span className="text-[7px] text-zinc-500 font-bold">GRID: {gridSize}px</span>
+              <span className="text-[7px] text-zinc-500 font-bold uppercase whitespace-nowrap">Step: {gridSize}px</span>
               <input type="range" min="1" max="20" step="1" value={gridSize} onChange={(e) => setGridSize(parseInt(e.target.value))} className="w-16 h-1 bg-zinc-700 appearance-none accent-red-600" />
             </div>
           )}
@@ -146,17 +146,17 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
         {/* Zoom Control */}
         <div className="flex items-center gap-2 bg-black/40 p-1 rounded-lg border border-white/5">
           <button onClick={() => setIsZoomed(!isZoomed)} className={cn("px-2 py-1 rounded text-[9px] font-bold uppercase transition-all flex items-center gap-2", isZoomed ? "bg-red-600 text-white" : "bg-zinc-800 text-zinc-400")}>
-            <Search size={10}/> {isZoomed ? `${zoomScale}X` : 'Magnify'}
+            <Search size={10}/> {isZoomed ? `${zoomScale.toFixed(1)}X` : 'Magnify'}
           </button>
           {isZoomed && (
-            <div className="flex items-center gap-2 px-1">
-              <span className="text-[7px] text-zinc-500 font-bold">ZOOM</span>
+            <div className="flex items-center gap-2 px-1 animate-in fade-in slide-in-from-left-2">
+              <span className="text-[7px] text-zinc-500 font-bold uppercase">Scale</span>
               <input type="range" min="2" max="10" step="0.1" value={zoomScale} onChange={(e) => setZoomScale(parseFloat(e.target.value))} className="w-20 h-1 bg-zinc-700 appearance-none accent-red-600" />
             </div>
           )}
         </div>
 
-        {status && <span className="text-[8px] font-mono uppercase text-red-600 animate-pulse ml-1">{status}</span>}
+        {status && <span className="text-[8px] font-mono uppercase text-red-600 animate-pulse ml-2">{status}</span>}
       </motion.div>
 
       {activeComponent && (
@@ -177,7 +177,7 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
                 <input type="number" step={item.step} 
                   value={offsets[activeComponent.id]?.[item.key as keyof OffsetData] ?? item.reset}
                   onChange={e => updateTune(item.key as keyof OffsetData, parseFloat(e.target.value))}
-                  className="bg-transparent text-white text-[9px] w-10 text-right font-mono border-b border-white/5 outline-none focus:border-red-600" 
+                  className="bg-transparent text-white text-[9px] w-10 text-right font-mono border-b border-white/5 focus:border-red-600 outline-none" 
                 />
                 <button onClick={() => updateTune(item.key as keyof OffsetData, item.reset)} className="text-zinc-600 hover:text-red-600 transition-colors"><RotateCcw size={10}/></button>
               </div>
@@ -195,7 +195,7 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
   );
 };
 
-// --- Оновлений Visualizer ---
+// --- VISUALIZER ---
 const Visualizer = ({ selectedComponents, offsets, showGrid, gridSize, isZoomed, zoomScale }: any) => {
   return (
     <div id="bike-visualizer" className="relative w-full h-full bg-zinc-950 rounded-[1.5rem] lg:rounded-[2.5rem] overflow-hidden border border-white/5 shadow-[0_0_100px_rgba(0,0,0,0.5)] flex items-center justify-center cursor-crosshair">
@@ -211,13 +211,13 @@ const Visualizer = ({ selectedComponents, offsets, showGrid, gridSize, isZoomed,
       <motion.div 
         drag={isZoomed}
         dragMomentum={false}
-        dragConstraints={{ left: -2000, right: 2000, top: -2000, bottom: 2000 }}
+        dragConstraints={{ left: -2500, right: 2500, top: -2500, bottom: 2500 }}
         animate={{ 
-          scale: isZoomed ? zoomScale : 1, // Використовуємо динамічний масштаб
+          scale: isZoomed ? zoomScale : 1,
           x: isZoomed ? undefined : 0,
           y: isZoomed ? undefined : 0
         }}
-        transition={{ type: 'spring', damping: 30, stiffness: 200 }}
+        transition={{ type: 'spring', damping: 25, stiffness: 120 }}
         className="relative w-full h-full flex items-center justify-center"
       >
         <AnimatePresence mode="popLayout">
@@ -246,7 +246,7 @@ const Visualizer = ({ selectedComponents, offsets, showGrid, gridSize, isZoomed,
   );
 };
 
-// --- OPTION CARD ---
+// --- OPTION CARD & MAIN CONFIGURATOR (REMAINING CODE) ---
 const OptionCard = ({ component, isSelected, onClick }: { component: Component, isSelected: boolean, onClick: () => void }) => (
   <motion.button
     layout onClick={(e) => { e.preventDefault(); onClick(); }}
@@ -270,7 +270,6 @@ const OptionCard = ({ component, isSelected, onClick }: { component: Component, 
   </motion.button>
 );
 
-// --- MAIN CONFIGURATOR ---
 const INITIAL_STEPS: Step[] = [
   { id: 'frame', title: 'Frame', options: [] }, { id: 'wheelset', title: 'Wheelset', options: [] },
   { id: 'tyres', title: 'Tyres', options: [] }, { id: 'cockpit', title: 'Cockpit', options: [] },
@@ -300,8 +299,6 @@ export default function BikeConfigurator() {
   const [selections, setSelections] = useState<Record<string, string>>({});
   const [isFinished, setIsFinished] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const currentStep = steps[currentStepIndex] || steps[0];
 
   useEffect(() => {
     const autoLoadExcel = async () => {
@@ -336,7 +333,7 @@ export default function BikeConfigurator() {
   }, []);
 
   const selectedComponents = useMemo(() => steps.map(s => s.options.find(o => o.id === selections[s.id]) || null).filter((c): c is Component => !!c), [selections, steps]);
-  const activeComponentForTuning = currentStep.options.find(o => o.id === selections[currentStep.id]);
+  const activeComponentForTuning = (steps[currentStepIndex] || steps[0]).options.find(o => o.id === selections[(steps[currentStepIndex] || steps[0]).id]);
 
   if (isAdminMode && !isLoggedIn) return <AdminLogin onLogin={() => setIsLoggedIn(true)} />;
   if (isFinished) return <SummaryView selections={selectedComponents} onReset={() => window.location.reload()} />;
@@ -351,11 +348,12 @@ export default function BikeConfigurator() {
           showGrid={showGrid} setShowGrid={setShowGrid}
           gridSize={gridSize} setGridSize={setGridSize}
           isZoomed={isZoomed} setIsZoomed={setIsZoomed}
+          zoomScale={zoomScale} setZoomScale={setZoomScale}
         />
       ) : (
         <nav className="border-b border-white/5 px-4 lg:px-8 py-2 flex justify-between items-center bg-black/80 backdrop-blur-2xl sticky top-0 z-50">
           <div className="flex items-center gap-4 pl-2"><img src="/design/Logo.png" alt="Logo" className="h-4 lg:h-6 w-auto" /></div>
-          <div className="flex items-center gap-6"><div className="text-zinc-400 font-mono text-[7px] pr-2 opacity-70 uppercase tracking-widest italic">Build by Vasile & AI</div></div>
+          <div className="text-zinc-400 font-mono text-[7px] pr-2 opacity-70 uppercase tracking-widest italic">Build by Vasile & AI</div>
         </nav>
       )}
 
@@ -371,17 +369,16 @@ export default function BikeConfigurator() {
               ))}
             </div>
             <div className="h-[280px] md:h-[400px] lg:flex-1 relative">
-              <Visualizer selectedComponents={selectedComponents} offsets={offsets} showGrid={showGrid} gridSize={gridSize} isZoomed={isZoomed} />
+              <Visualizer selectedComponents={selectedComponents} offsets={offsets} showGrid={showGrid} gridSize={gridSize} isZoomed={isZoomed} zoomScale={zoomScale} />
             </div>
           </div>
           <div className="lg:col-span-3 flex flex-col bg-zinc-900/40 rounded-[2.5rem] border border-white/5 p-4 lg:p-6 relative overflow-hidden order-2 shadow-2xl">
-            <style>{`.custom-scroll-container::-webkit-scrollbar {height: 3px;}.custom-scroll-container::-webkit-scrollbar-track {background: rgba(255, 255, 255, 0.05);}.custom-scroll-container::-webkit-scrollbar-thumb {background: #ef4444;border-radius: 10px;}.custom-scroll-container {scrollbar-width: thin;scrollbar-color: #ef4444 rgba(255, 255, 255, 0.05);}`}</style>
             <div className="flex-1 overflow-x-auto lg:overflow-y-auto lg:overflow-x-hidden custom-scroll-container pb-2 lg:pb-0" style={{ display: 'flex', flexDirection: 'column' }}>
                 <div className="flex flex-row lg:flex-col gap-3 min-w-full">
                   <AnimatePresence mode="popLayout">
-                    {currentStep.options.map((option) => (
+                    {(steps[currentStepIndex] || steps[0]).options.map((option) => (
                       <div key={option.id} className="w-[31%] min-w-[31%] lg:w-full lg:min-w-0 shrink-0">
-                        <OptionCard component={option} isSelected={selections[currentStep.id] === option.id} onClick={() => setSelections(prev => ({...prev, [currentStep.id]: option.id}))} />
+                        <OptionCard component={option} isSelected={selections[(steps[currentStepIndex] || steps[0]).id] === option.id} onClick={() => setSelections(prev => ({...prev, [(steps[currentStepIndex] || steps[0]).id]: option.id}))} />
                       </div>
                     ))}
                   </AnimatePresence>
@@ -395,9 +392,9 @@ export default function BikeConfigurator() {
         <div className="max-w-[1500px] mx-auto px-4 lg:px-6 py-6 grid grid-cols-12 gap-2 items-center">
           <button onClick={() => currentStepIndex > 0 && setCurrentStepIndex(currentStepIndex - 1)} className="col-span-3 lg:col-span-2 flex items-center gap-1 text-zinc-500 hover:text-white transition-all font-black uppercase text-[10px] tracking-widest italic"><ChevronLeft size={20} /> Back</button>
           <div className="col-span-6 lg:col-span-7 flex justify-center lg:justify-end items-center gap-4 lg:gap-10">
-            <div className="text-center lg:text-right"><p className="text-[7px] text-zinc-600 uppercase font-black mb-0.5 italic">Weight</p><p className="font-mono text-xs">{selectedComponents.reduce((acc, c) => acc + c.weight, 0)}g</p></div>
+            <div className="text-center lg:text-right"><p className="text-[7px] text-zinc-600 uppercase font-black mb-0.5">Weight</p><p className="font-mono text-xs">{selectedComponents.reduce((acc, c) => acc + c.weight, 0)}g</p></div>
             <div className="h-8 w-px bg-white/10" />
-            <div className="text-center lg:text-right"><p className="text-[7px] text-zinc-600 uppercase font-black mb-0.5 italic">Price</p><p className="font-mono text-xs text-red-600">€{selectedComponents.reduce((acc, c) => acc + c.price, 0).toLocaleString()}</p></div>
+            <div className="text-center lg:text-right"><p className="text-[7px] text-zinc-600 uppercase font-black mb-0.5">Price</p><p className="font-mono text-xs text-red-600">€{selectedComponents.reduce((acc, c) => acc + c.price, 0).toLocaleString()}</p></div>
           </div>
           <div className="col-span-3 flex justify-end">
             <button onClick={() => currentStepIndex < steps.length - 1 ? setCurrentStepIndex(currentStepIndex + 1) : setIsFinished(true)} className="bg-red-600 text-white h-[32px] px-6 rounded-lg font-black uppercase text-[10px] tracking-widest flex items-center gap-2 active:scale-95 shadow-lg shadow-red-600/20 italic">{currentStepIndex === steps.length - 1 ? 'Finish' : 'Next'} <ChevronRight size={14} /></button>
