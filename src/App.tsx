@@ -117,16 +117,35 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
           {categories.map((cat: string) => <option key={cat} value={cat}>🖼️ {cat.toUpperCase()}</option>)}
         </select>
         
-        <label className="cursor-pointer bg-zinc-800 text-zinc-300 px-3 py-1 rounded text-[9px] font-bold uppercase hover:bg-zinc-700 transition-all flex items-center gap-2">
-          <Upload size={10}/> UPLOAD <input type="file" className="hidden" onChange={(e) => {
-             const file = e.target.files?.[0];
-             if (file) {
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = () => saveToGithub(selectedCat === 'excel' ? "public/data.xlsx" : `public/parts/${selectedCat}/${file.name}`, (reader.result as string).split(',')[1]);
-             }
-          }} />
-        </label>
+        <label className="cursor-pointer bg-zinc-800 text-zinc-300 px-3 py-1 rounded text-[9px] font-bold uppercase hover:bg-zinc-700 transition-all flex items-center gap-2 italic">
+  <Upload size={10}/> UPLOAD 
+  <input 
+    type="file" 
+    className="hidden" 
+    multiple // Дозволяє виділяти багато файлів (Ctrl+A)
+    webkitdirectory="" // Дозволяє вибирати цілу папку (працює в Chrome/Edge/Safari)
+    onChange={(e) => {
+      const files = e.target.files;
+      if (files && files.length > 0) {
+        // Перетворюємо FileList у масив та завантажуємо кожен файл окремо
+        Array.from(files).forEach((file: any) => {
+          const reader = new FileReader();
+          reader.readAsDataURL(file);
+          reader.onload = () => {
+            const content = (reader.result as string).split(',')[1];
+            
+            // Якщо завантажуємо папку, file.webkitRelativePath містить шлях (напр. "folder/img.png")
+            // Якщо просто файли - використовуємо ім'я файлу
+            const fileName = file.webkitRelativePath || file.name;
+            const path = selectedCat === 'excel' ? "public/data.xlsx" : `public/parts/${selectedCat}/${fileName}`;
+            
+            saveToGithub(path, content);
+          };
+        });
+      }
+    }} 
+  />
+</label>
 
         <div className="h-4 w-px bg-white/10 mx-1" />
 
