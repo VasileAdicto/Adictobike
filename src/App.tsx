@@ -400,7 +400,7 @@ function SummaryView({ selections, onReset }: any) {
     doc.text("WWW.ADICTO.BIKE  |  @ADICTO.BIKE", pageWidth / 2, pageHeight - 15, { align: 'center' });
     
     try {
-      const qrBase64 = await getBase64Image("/design/qr.png");
+      const qrBase64 = await getBase64Image("/design/qr-code.png");
       if (qrBase64) doc.addImage(qrBase64, 'PNG', pageWidth - 35, pageHeight - 35, 20, 20);
     } catch (e) {}
 
