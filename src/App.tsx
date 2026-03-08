@@ -33,7 +33,7 @@ interface OffsetData {
   y: number; 
 }
 
-// --- ADMIN LOGIN COMPONENT ---
+// --- ADMIN LOGIN ---
 const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
   const [email, setEmail] = useState('');
   const [pass, setPass] = useState('');
@@ -50,9 +50,7 @@ const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
     if (email === "hello@adicto.bike" && pass === "Scalpel2012!") {
       if (rememberMe) localStorage.setItem('adicto_auth', 'true');
       onLogin();
-    } else {
-      setError("Invalid credentials");
-    }
+    } else { setError("Invalid credentials"); }
   };
 
   return (
@@ -69,9 +67,9 @@ const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
             <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white transition-colors text-[10px] font-bold uppercase">{showPass ? "Hide" : "Show"}</button>
           </div>
         </div>
-        <div className="flex items-center gap-2 mt-4 px-2">
+        <div className="flex items-center gap-2 mt-4 px-2 text-white">
           <input type="checkbox" id="remember" checked={rememberMe} onChange={() => setRememberMe(!rememberMe)} className="accent-red-600 h-4 w-4 rounded border-white/10 bg-black" />
-          <label htmlFor="remember" className="text-zinc-500 text-[10px] uppercase font-bold cursor-pointer select-none text-white">Remember Me</label>
+          <label htmlFor="remember" className="text-zinc-500 text-[10px] uppercase font-bold cursor-pointer select-none">Remember Me</label>
         </div>
         {error && <p className="text-red-600 text-[10px] text-center mt-4 uppercase font-black italic tracking-widest">{error}</p>}
         <button className="w-full bg-red-600 py-4 rounded-2xl font-black uppercase tracking-widest text-white mt-8 hover:bg-red-700 active:scale-95 transition-all shadow-lg shadow-red-600/20 text-sm italic">Access Dashboard</button>
@@ -84,41 +82,29 @@ const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
 const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid, setShowGrid, gridSize, setGridSize, isZoomed, setIsZoomed, zoomScale, setZoomScale, onLogout }: any) => {
   const [selectedCat, setSelectedCat] = useState('excel');
   const [status, setStatus] = useState('');
-  const [token, setToken] = useState(localStorage.getItem('adicto_github_token') || ''); 
   const [showToken, setShowToken] = useState(false);
+  const [token, setToken] = useState(localStorage.getItem('adicto_github_token') || ''); 
   const REPO = "VasileAdicto/Adictobike";
   const BRANCH = "main";
 
   const saveToGithub = async (path: string, content: string, isJson = false) => {
-    if (!token) {
-        setStatus("❌ Token Required");
-        return;
-    }
-    setStatus("Saving...");
+    if (!token) { setStatus("❌ Token Required"); return false; }
     try {
       let sha = "";
-      const getRes = await fetch(`https://api.github.com/repos/${REPO}/contents/${path}`, { 
-        headers: { Authorization: `token ${token}` } 
-      });
+      const getRes = await fetch(`https://api.github.com/repos/${REPO}/contents/${path}`, { headers: { Authorization: `token ${token}` } });
       if (getRes.ok) { const data = await getRes.json(); sha = data.sha; }
       
       const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${path}`, {
         method: "PUT",
         headers: { Authorization: `token ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          message: `Admin update: ${path}`, 
-          content: isJson ? btoa(unescape(encodeURIComponent(content))) : content, 
-          sha: sha || undefined, 
-          branch: BRANCH 
-        }),
+        body: JSON.stringify({ message: `Admin update: ${path}`, content: isJson ? btoa(unescape(encodeURIComponent(content))) : content, sha: sha || undefined, branch: BRANCH }),
       });
       if (res.ok) {
-          setStatus("✅ Success!");
           localStorage.setItem('adicto_github_token', token);
-      } else {
-          setStatus("❌ Auth Error");
+          return true;
       }
-    } catch (err) { setStatus("❌ Failed"); }
+      return false;
+    } catch (err) { return false; }
   };
 
   const updateTune = (key: keyof OffsetData, val: number) => {
@@ -126,60 +112,61 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
     setOffsets((prev: any) => ({ ...prev, [activeComponent.id]: { ...(prev[activeComponent.id] || { s: 1, x: 0, y: 0 }), [key]: val } }));
   };
 
-  const handleUpload = (e: React.ChangeEvent<HTMLInputElement>, isFolder: boolean) => {
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>, isFolder: boolean) => {
     const files = e.target.files;
-    if (files) {
-      Array.from(files).forEach((file: any) => {
+    if (!files || files.length === 0) return;
+
+    const fileArray = Array.from(files);
+    setStatus(`⏳ Loading 0/${fileArray.length}...`);
+
+    for (let i = 0; i < fileArray.length; i++) {
+      const file = fileArray[i];
+      setStatus(`⏳ Sending ${i + 1}/${fileArray.length}...`);
+      const contentBase64 = await new Promise<string>((resolve) => {
         const reader = new FileReader();
         reader.readAsDataURL(file);
-        reader.onload = () => {
-          const content = (reader.result as string).split(',')[1];
-          const fileName = isFolder ? file.webkitRelativePath : file.name;
-          const path = selectedCat === 'excel' ? "public/data.xlsx" : `public/parts/${selectedCat}/${fileName}`;
-          saveToGithub(path, content);
-        };
+        reader.onload = () => resolve((reader.result as string).split(',')[1]);
       });
-      e.target.value = ""; // Скидання інпуту для наступного завантаження
+      const fileName = isFolder ? file.webkitRelativePath : file.name;
+      const path = selectedCat === 'excel' ? "public/data.xlsx" : `public/parts/${selectedCat}/${fileName}`;
+      const success = await saveToGithub(path, contentBase64);
+      if (!success) { setStatus(`❌ Error at ${file.name}`); return; }
+    }
+
+    setStatus("✅ Success!");
+    setTimeout(() => setStatus(''), 3000); // ОЧИЩЕННЯ СТАТУСУ ЧЕРЕЗ 3 СЕКУНДИ
+    e.target.value = ""; 
+  };
+
+  const handleSaveOffsets = async () => {
+    setStatus("Saving...");
+    const success = await saveToGithub("public/offsets.json", JSON.stringify(offsets), true);
+    if (success) {
+      setStatus("✅ Saved!");
+      setTimeout(() => setStatus(''), 3000); // ОЧИЩЕННЯ СТАТУСУ ЧЕРЕЗ 3 СЕКУНДИ
+    } else {
+      setStatus("❌ Error");
+      setTimeout(() => setStatus(''), 3000);
     }
   };
 
   return (
     <div className="z-[100] sticky top-0 shadow-2xl font-sans text-white">
       <motion.div initial={{ y: -50 }} animate={{ y: 0 }} className="bg-zinc-900 border-b border-white/5 p-2 flex gap-3 items-center justify-center backdrop-blur-md">
-        
-        {/* TOKEN FIELD */}
         <div className="flex items-center gap-2 bg-black/40 px-2 py-1 rounded-lg border border-white/10 focus-within:border-red-600 transition-all">
           <Key size={10} className={token ? "text-red-600" : "text-zinc-500"} />
-          <input 
-            type={showToken ? "text" : "password"} 
-            placeholder="TOKEN" 
-            value={token}
-            onChange={(e) => setToken(e.target.value)}
-            className="bg-transparent text-[9px] w-20 outline-none font-mono uppercase text-white"
-          />
-          <button onClick={() => setShowToken(!showToken)} className="text-zinc-500 hover:text-white">
-            {showToken ? <EyeOff size={10} /> : <Eye size={10} />}
-          </button>
+          <input type={showToken ? "text" : "password"} placeholder="TOKEN" value={token} onChange={(e) => setToken(e.target.value)} className="bg-transparent text-[9px] w-20 outline-none font-mono uppercase text-white" />
+          <button onClick={() => setShowToken(!showToken)} className="text-zinc-600 hover:text-white">{showToken ? <EyeOff size={10} /> : <Eye size={10} />}</button>
         </div>
-
         <select value={selectedCat} onChange={(e) => setSelectedCat(e.target.value)} className="bg-black border border-white/10 text-[9px] px-2 py-1 rounded uppercase font-bold outline-none focus:border-red-600 transition-all text-white">
           <option value="excel">📁 EXCEL</option>
           {categories?.map((cat: string) => <option key={cat} value={cat}>🖼️ {cat.toUpperCase()}</option>)}
         </select>
-        
         <div className="flex gap-1">
-          <label className="cursor-pointer bg-zinc-800 text-zinc-300 px-2 py-1 rounded text-[9px] font-bold uppercase hover:bg-zinc-700 flex items-center gap-1 italic">
-            <Upload size={10}/> Files
-            <input type="file" className="hidden" multiple onChange={(e) => handleUpload(e, false)} />
-          </label>
-          <label className="cursor-pointer bg-zinc-800 text-zinc-300 px-2 py-1 rounded text-[9px] font-bold uppercase hover:bg-zinc-700 flex items-center gap-1 italic">
-            <FolderOpen size={10}/> Folder
-            <input type="file" className="hidden" webkitdirectory="" onChange={(e: any) => handleUpload(e, true)} />
-          </label>
+          <label className="cursor-pointer bg-zinc-800 text-zinc-300 px-2 py-1 rounded text-[9px] font-bold uppercase hover:bg-zinc-700 flex items-center gap-1 italic"><Upload size={10}/> Files<input type="file" className="hidden" multiple onChange={(e) => handleUpload(e, false)} /></label>
+          <label className="cursor-pointer bg-zinc-800 text-zinc-300 px-2 py-1 rounded text-[9px] font-bold uppercase hover:bg-zinc-700 flex items-center gap-1 italic"><FolderOpen size={10}/> Folder<input type="file" className="hidden" webkitdirectory="" onChange={(e: any) => handleUpload(e, true)} /></label>
         </div>
-
         <div className="h-4 w-px bg-white/10 mx-1" />
-
         <div className="flex items-center gap-2 bg-black/40 p-1 rounded-lg border border-white/5">
           <button onClick={() => setShowGrid(!showGrid)} className={cn("px-2 py-1 rounded text-[9px] font-bold uppercase transition-all", showGrid ? "bg-red-600 text-white" : "bg-zinc-800 text-zinc-400")}><Grid3X3 size={10}/></button>
           {showGrid && (
@@ -189,24 +176,18 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
             </div>
           )}
         </div>
-
         <div className="flex items-center gap-2 bg-black/40 p-1 rounded-lg border border-white/5">
           <button onClick={() => setIsZoomed(!isZoomed)} className={cn("px-2 py-1 rounded text-[9px] font-bold uppercase transition-all flex items-center gap-2", isZoomed ? "bg-red-600 text-white" : "bg-zinc-800 text-zinc-400")}><Search size={10}/> {isZoomed ? `${zoomScale}X` : 'Magnify'}</button>
           {isZoomed && (
             <div className="flex items-center gap-2 px-1 animate-in fade-in slide-in-from-left-2">
-              <span className="text-[7px] text-zinc-500 font-bold uppercase">Scale</span>
+              <span className="text-[7px] text-zinc-500 font-bold uppercase text-white">Scale</span>
               <input type="range" min="2" max="10" step="0.1" value={zoomScale} onChange={(e) => setZoomScale(parseFloat(e.target.value))} className="w-20 h-1 bg-zinc-700 appearance-none accent-red-600" />
             </div>
           )}
         </div>
-
-        <button onClick={onLogout} className="text-zinc-500 hover:text-red-600 transition-colors p-1" title="Logout">
-          <LogOut size={12} />
-        </button>
-
-        {status && <span className="text-[8px] font-mono uppercase text-red-600 animate-pulse ml-1">{status}</span>}
+        <button onClick={onLogout} className="text-zinc-500 hover:text-red-600 transition-colors p-1" title="Logout"><LogOut size={12} /></button>
+        {status && <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-[8px] font-mono uppercase text-red-600 ml-1">{status}</motion.span>}
       </motion.div>
-
       {activeComponent && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-black/80 border-b border-white/5 p-2 flex justify-between items-center px-6 backdrop-blur-xl gap-10">
           <div className="flex flex-col gap-1 flex-1">
@@ -221,9 +202,7 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
           </div>
           <div className="flex flex-col items-end gap-1 shrink-0 text-white">
             <div className="text-[9px] font-black text-red-600 italic uppercase tracking-widest leading-none mb-1">{activeComponent.name}</div>
-            <button onClick={() => saveToGithub("public/offsets.json", JSON.stringify(offsets), true)} className="bg-red-600 text-white px-5 py-2 rounded-lg text-[10px] font-black uppercase hover:bg-red-700 transition-all flex items-center gap-2 italic shadow-lg shadow-red-600/20">
-              <Save size={12}/> Save Offsets
-            </button>
+            <button onClick={handleSaveOffsets} className="bg-red-600 text-white px-5 py-2 rounded-lg text-[10px] font-black uppercase hover:bg-red-700 transition-all flex items-center gap-2 italic shadow-lg shadow-red-600/20"><Save size={12}/> Save Offsets</button>
           </div>
         </motion.div>
       )}
@@ -313,14 +292,13 @@ export default function BikeConfigurator() {
     }; autoLoadExcel();
   }, []);
 
-  // --- ЛОГІКА СУМІСНОСТІ (ФІЛЬТРАЦІЯ) ---
   const activeLogic = useMemo(() => {
     if (currentStepIndex === 0) return null;
     const prevStepId = steps[currentStepIndex - 1]?.id;
-    const selectedIdInPrevStep = selections[prevStepId];
-    if (!selectedIdInPrevStep) return null;
-    const prevComponent = steps[currentStepIndex - 1].options.find(o => o.id === selectedIdInPrevStep);
-    return prevComponent?.logic?.trim() || null;
+    const selectedId = selections[prevStepId];
+    if (!selectedId) return null;
+    const prevComp = steps[currentStepIndex - 1].options.find(o => o.id === selectedId);
+    return prevComp?.logic?.trim() || null;
   }, [selections, currentStepIndex, steps]);
 
   const filteredOptions = useMemo(() => {
@@ -414,10 +392,12 @@ function SummaryView({ selections, onReset }: any) {
   const handleExport = async () => {
     const doc = new jsPDF(); const pageWidth = doc.internal.pageSize.getWidth(); const pageHeight = doc.internal.pageSize.getHeight();
     const cleanText = (text: string) => text ? String(text).replace(/[^\x00-\x7F]/g, "").toUpperCase() : "";
+
     try {
       const logoBase64 = await getBase64Image("/design/Logo.png");
       if (logoBase64) doc.addImage(logoBase64, 'PNG', (pageWidth / 2) - 15, 8, 10, 10);
     } catch (e) {}
+
     try {
       const sortedByZ = [...selections].sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
       for (const comp of sortedByZ) {
@@ -427,6 +407,7 @@ function SummaryView({ selections, onReset }: any) {
         }
       }
     } catch (e) {}
+
     autoTable(doc, { 
       startY: 135, head: [['SECTION', 'COMPONENT', 'BRAND', 'WEIGHT', 'PRICE']],
       body: selections.map((c: any) => [cleanText(c.stepTitle || ""), cleanText(c.name), cleanText(c.brand), `${c.weight} g`, `${c.price.toLocaleString()} €`]),
@@ -434,18 +415,23 @@ function SummaryView({ selections, onReset }: any) {
       columnStyles: { 0: { fontStyle: 'bold', cellWidth: 25 } }, foot: [['TOTAL', '', '', `${totalWeight} g`, `${totalPrice.toLocaleString()} €`]],
       footStyles: { fillColor: [220, 38, 38], textColor: [255, 255, 255], fontSize: 8, fontStyle: 'bold' }, theme: 'grid'
     });
+
     const finalY = (doc as any).lastAutoTable.finalY + 10;
     doc.setFontSize(6); doc.setTextColor(100);
     const disclaimer = "NOTICE: THE WEIGHT AND PRICE INDICATED ARE PRELIMINARY AND SUBJECT TO MINOR CHANGES BASED ON COMPONENT AVAILABILITY. ADICTO.BIKE RESERVES THE RIGHT TO MODIFY SPECIFICATIONS WITHOUT PRIOR NOTICE.";
     doc.text(doc.splitTextToSize(disclaimer, pageWidth - 30), 15, finalY);
+
     doc.setFontSize(7); doc.setTextColor(20);
     doc.text("WWW.ADICTO.BIKE  |  @ADICTO.BIKE", pageWidth / 2, pageHeight - 15, { align: 'center' });
+    
     try {
       const qrBase64 = await getBase64Image("/design/qr-code.png");
       if (qrBase64) doc.addImage(qrBase64, 'PNG', pageWidth - 50, pageHeight - 50, 35, 35);
     } catch (e) {}
+
     doc.save(`ADICTO_BUILD.pdf`);
   };
+
   return (
     <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-8 text-center font-sans">
       <CheckCircle2 size={32} className="text-red-600 mb-4" />
