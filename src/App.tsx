@@ -33,7 +33,7 @@ interface OffsetData {
   y: number; 
 }
 
-// --- ADMIN LOGIN COMPONENT ---
+// --- ADMIN LOGIN ---
 const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
   const [email, setEmail] = useState('');
   const [pass, setPass] = useState('');
@@ -50,17 +50,15 @@ const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
     if (email === "hello@adicto.bike" && pass === "Scalpel2012!") {
       if (rememberMe) localStorage.setItem('adicto_auth', 'true');
       onLogin();
-    } else {
-      setError("Invalid credentials");
-    }
+    } else { setError("Invalid credentials"); }
   };
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center p-6 selection:bg-red-600 font-sans">
+    <div className="min-h-screen bg-black flex items-center justify-center p-6 selection:bg-red-600 font-sans text-white">
       <motion.form initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} onSubmit={handleLogin} className="bg-zinc-900/50 p-10 rounded-[2.5rem] border border-white/5 w-full max-w-md backdrop-blur-xl shadow-2xl">
         <div className="flex flex-col items-center mb-8">
           <div className="w-12 h-12 bg-red-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-red-600/20"><Lock size={24} /></div>
-          <h2 className="text-xl font-black uppercase tracking-widest italic text-center text-white">Adicto Admin</h2>
+          <h2 className="text-xl font-black uppercase tracking-widest italic text-center">Adicto Admin</h2>
         </div>
         <div className="space-y-4 text-black">
           <input type="email" placeholder="Email" className="w-full bg-black border border-white/10 p-4 rounded-2xl text-white outline-none focus:border-red-600 transition-all text-sm font-mono" value={email} onChange={(e) => setEmail(e.target.value)} />
@@ -71,7 +69,7 @@ const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
         </div>
         <div className="flex items-center gap-2 mt-4 px-2">
           <input type="checkbox" id="remember" checked={rememberMe} onChange={() => setRememberMe(!rememberMe)} className="accent-red-600 h-4 w-4 rounded border-white/10 bg-black" />
-          <label htmlFor="remember" className="text-zinc-500 text-[10px] uppercase font-bold cursor-pointer select-none text-white">Remember Me</label>
+          <label htmlFor="remember" className="text-zinc-500 text-[10px] uppercase font-bold cursor-pointer select-none">Remember Me</label>
         </div>
         {error && <p className="text-red-600 text-[10px] text-center mt-4 uppercase font-black italic tracking-widest">{error}</p>}
         <button className="w-full bg-red-600 py-4 rounded-2xl font-black uppercase tracking-widest text-white mt-8 hover:bg-red-700 active:scale-95 transition-all shadow-lg shadow-red-600/20 text-sm italic">Access Dashboard</button>
@@ -84,8 +82,8 @@ const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
 const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid, setShowGrid, gridSize, setGridSize, isZoomed, setIsZoomed, zoomScale, setZoomScale, onLogout }: any) => {
   const [selectedCat, setSelectedCat] = useState('excel');
   const [status, setStatus] = useState('');
-  const [token, setToken] = useState(localStorage.getItem('adicto_github_token') || ''); 
   const [showToken, setShowToken] = useState(false);
+  const [token, setToken] = useState(localStorage.getItem('adicto_github_token') || ''); 
   const REPO = "VasileAdicto/Adictobike";
   const BRANCH = "main";
 
@@ -108,20 +106,19 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>, isFolder: boolean) => {
     const files = e.target.files;
-    if (files) {
-      const fileArray = Array.from(files);
-      for (const file of fileArray) {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = async () => {
-          const content = (reader.result as string).split(',')[1];
-          const fileName = isFolder ? (file as any).webkitRelativePath : file.name;
-          const path = selectedCat === 'excel' ? "public/data.xlsx" : `public/parts/${selectedCat}/${fileName}`;
-          await saveToGithub(path, content);
-        };
-      }
-      e.target.value = "";
+    if (!files) return;
+    const fileArray = Array.from(files);
+    for (const file of fileArray) {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = async () => {
+        const content = (reader.result as string).split(',')[1];
+        const fileName = isFolder ? (file as any).webkitRelativePath : file.name;
+        const path = selectedCat === 'excel' ? "public/data.xlsx" : `public/parts/${selectedCat}/${fileName}`;
+        await saveToGithub(path, content);
+      };
     }
+    e.target.value = "";
   };
 
   return (
@@ -140,7 +137,6 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
           <label className="cursor-pointer bg-zinc-800 text-zinc-300 px-2 py-1 rounded text-[9px] font-bold uppercase hover:bg-zinc-700 flex items-center gap-1 italic"><Upload size={10}/> Files<input type="file" className="hidden" multiple onChange={(e) => handleUpload(e, false)} /></label>
           <label className="cursor-pointer bg-zinc-800 text-zinc-300 px-2 py-1 rounded text-[9px] font-bold uppercase hover:bg-zinc-700 flex items-center gap-1 italic"><FolderOpen size={10}/> Folder<input type="file" className="hidden" webkitdirectory="" onChange={(e: any) => handleUpload(e, true)} /></label>
         </div>
-        <div className="h-4 w-px bg-white/10 mx-1" />
         <button onClick={() => saveToGithub("public/offsets.json", JSON.stringify(offsets), true)} className="bg-red-600 text-white px-3 py-1 rounded text-[9px] font-bold uppercase hover:bg-red-700 flex items-center gap-1 italic"><Save size={10}/> Offsets</button>
         <button onClick={onLogout} className="text-zinc-500 hover:text-red-600 p-1"><LogOut size={12} /></button>
         {status && <span className="text-[8px] font-mono uppercase text-red-600 ml-1">{status}</span>}
@@ -197,7 +193,6 @@ export default function BikeConfigurator() {
   const [isFinished, setIsFinished] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // REF ДЛЯ ГОРИЗОНТАЛЬНОГО СКРОЛУ РОЗДІЛІВ
   const stepsNavRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -225,7 +220,7 @@ export default function BikeConfigurator() {
     }; autoLoadExcel();
   }, []);
 
-  // ЦЕЙ ЕФЕКТ ПЕРЕМІЩУЄ АКТИВНИЙ РОЗДІЛ ВЛІВО
+  // АВТО-СКРОЛ РОЗДІЛІВ ВЛІВО
   useEffect(() => {
     if (stepsNavRef.current) {
       const activeBtn = stepsNavRef.current.children[currentStepIndex] as HTMLElement;
@@ -268,27 +263,32 @@ export default function BikeConfigurator() {
 
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-red-600 pb-28 lg:pb-24 overflow-x-hidden">
+      {/* FORCE SCROLLBAR DESIGN FOR MOBILE */}
       <style>{`
-        /* СКРОЛБАР ЗАВЖДИ АКТИВНИЙ ТА ЧЕРВОНИЙ */
+        .custom-scroll-container, .steps-scroll-container {
+          -webkit-overflow-scrolling: touch;
+        }
+        /* Примусове відображення для Webkit (Chrome, Safari, Edge) */
         .custom-scroll-container::-webkit-scrollbar, 
-        .steps-scroll-container::-webkit-scrollbar { 
-          width: 4px; 
-          height: 4px; 
+        .steps-scroll-container::-webkit-scrollbar {
+          height: 5px !important;
+          width: 5px !important;
           display: block !important;
         }
-        .custom-scroll-container::-webkit-scrollbar-track,
-        .steps-scroll-container::-webkit-scrollbar-track { 
-          background: rgba(255, 255, 255, 0.05); 
-          border-radius: 10px; 
+        .custom-scroll-container::-webkit-scrollbar-track, 
+        .steps-scroll-container::-webkit-scrollbar-track {
+          background: rgba(255, 255, 255, 0.05) !important;
         }
-        .custom-scroll-container::-webkit-scrollbar-thumb,
-        .steps-scroll-container::-webkit-scrollbar-thumb { 
-          background: #ef4444; 
-          border-radius: 10px; 
+        .custom-scroll-container::-webkit-scrollbar-thumb, 
+        .steps-scroll-container::-webkit-scrollbar-thumb {
+          background: #ef4444 !important;
+          border-radius: 10px !important;
+          border: 1px solid rgba(0,0,0,0.2);
         }
-        .custom-scroll-container, .steps-scroll-container { 
-          scrollbar-width: thin; 
-          scrollbar-color: #ef4444 rgba(255, 255, 255, 0.05); 
+        /* Запобігання зникненню в Firefox */
+        .custom-scroll-container, .steps-scroll-container {
+          scrollbar-width: thin !important;
+          scrollbar-color: #ef4444 rgba(255, 255, 255, 0.05) !important;
         }
       `}</style>
 
@@ -301,21 +301,15 @@ export default function BikeConfigurator() {
       <main className="max-w-[1500px] mx-auto px-4 lg:px-6 pt-2 lg:pt-3">
         <div className="flex flex-col lg:grid lg:grid-cols-12 gap-6 lg:gap-10 lg:h-[550px] items-stretch">
           <div className="lg:col-span-9 flex flex-col gap-2 order-1">
-            
-            {/* КОНТЕЙНЕР РОЗДІЛІВ З АВТО-СКРОЛОМ */}
-            <div 
-              ref={stepsNavRef}
-              className="flex overflow-x-auto no-scrollbar steps-scroll-container gap-x-6 gap-y-2 pb-2"
-            >
+            <div ref={stepsNavRef} className="flex overflow-x-auto no-scrollbar steps-scroll-container gap-x-6 gap-y-2 pb-2">
               {steps.map((step, idx) => (
                 <button key={step.id} onClick={() => setCurrentStepIndex(idx)} className={cn("transition-all duration-300 text-[10px] font-black italic uppercase tracking-widest pb-1 border-b-2 whitespace-nowrap", idx === currentStepIndex ? "text-red-600 border-red-600 drop-shadow-[0_0_9px_rgba(255,0,0,0.3)]" : "text-white opacity-20 border-transparent hover:opacity-100")}>{step.title}</button>
               ))}
             </div>
-
             <div className="h-[280px] md:h-[400px] lg:flex-1 relative"><Visualizer selectedComponents={selectedComponents} offsets={offsets} showGrid={showGrid} gridSize={gridSize} isZoomed={isZoomed} zoomScale={zoomScale} /></div>
           </div>
           <div className="lg:col-span-3 flex flex-col bg-zinc-900/40 rounded-[2.5rem] border border-white/5 p-4 lg:p-6 relative overflow-hidden order-2 shadow-2xl">
-            <div className="flex-1 overflow-x-auto lg:overflow-y-auto lg:overflow-x-hidden custom-scroll-container pb-2 lg:pb-0" style={{ display: 'flex', flexDirection: 'column' }}>
+            <div className="flex-1 overflow-x-auto lg:overflow-y-auto lg:overflow-x-hidden custom-scroll-container pb-4 lg:pb-0" style={{ display: 'flex', flexDirection: 'column' }}>
                 <div className="flex flex-row lg:flex-col gap-3 min-w-full text-zinc-300">
                   <AnimatePresence mode="popLayout">
                     {filteredOptions.map((option) => (
