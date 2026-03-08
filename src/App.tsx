@@ -42,7 +42,7 @@ interface SavedBuild {
   totalWeight: number;
 }
 
-// --- LOGIN MODAL COMPONENT ---
+// --- LUXURY AUTH MODAL COMPONENT ---
 const AuthModal = ({ isOpen, onClose, onLogin }: any) => {
   const [step, setStep] = useState('email'); // email, otp
   const [email, setEmail] = useState('');
@@ -56,36 +56,70 @@ const AuthModal = ({ isOpen, onClose, onLogin }: any) => {
   };
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-      <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-zinc-900 border border-white/10 p-8 rounded-[2.5rem] max-w-md w-full relative">
-        <button onClick={onClose} className="absolute top-6 right-6 text-zinc-500 hover:text-white"><X size={20}/></button>
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xl">
+      <motion.div 
+        initial={{ scale: 0.98, opacity: 0 }} 
+        animate={{ scale: 1, opacity: 1 }} 
+        className="bg-zinc-900/90 border border-white/5 p-10 rounded-[2.5rem] max-w-sm w-full relative shadow-2xl"
+      >
+        <button onClick={onClose} className="absolute top-8 right-8 text-zinc-600 hover:text-white transition-colors">
+          <X size={16}/>
+        </button>
         
-        <h2 className="text-2xl font-black uppercase italic text-white mb-2">{step === 'email' ? 'Join Adicto' : 'Verify Email'}</h2>
-        <p className="text-zinc-500 text-xs uppercase font-bold mb-8 tracking-widest">
-          {step === 'email' ? 'Access your private garage' : `Enter code sent to ${email}`}
-        </p>
+        <div className="text-center mb-10">
+          <h2 className="text-lg font-black uppercase italic text-white tracking-widest mb-1">
+            {step === 'email' ? 'Identification' : 'Verification'}
+          </h2>
+          <p className="text-zinc-500 text-[9px] uppercase font-bold tracking-[0.3em]">
+            {step === 'email' ? 'Access your adicto garage' : `Sent to ${email}`}
+          </p>
+        </div>
 
         {step === 'email' ? (
-          <div className="space-y-4">
-            <input type="email" placeholder="EMAIL ADDRESS" value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-black border border-white/10 p-4 rounded-2xl text-white outline-none focus:border-red-600 transition-all font-mono text-sm" />
-            <div className="grid grid-cols-2 gap-3">
-              <button className="flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 py-3 rounded-xl transition-all text-[10px] font-bold text-white uppercase"><Smartphone size={14}/> Apple</button>
-              <button className="flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 py-3 rounded-xl transition-all text-[10px] font-bold text-white uppercase"><Mail size={14}/> Google</button>
+          <div className="space-y-6">
+            <div className="relative">
+              <input 
+                type="email" 
+                placeholder="EMAIL ADDRESS" 
+                value={email} 
+                onChange={e => setEmail(e.target.value)} 
+                className="w-full bg-black/50 border border-white/5 p-4 rounded-xl text-white outline-none focus:border-red-600/50 transition-all font-mono text-[11px] placeholder:text-zinc-700" 
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <button className="flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 py-3 rounded-xl transition-all text-[8px] font-black text-zinc-400 hover:text-white uppercase tracking-tighter">
+                <Smartphone size={12}/> Apple ID
+              </button>
+              <button className="flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 py-3 rounded-xl transition-all text-[8px] font-black text-zinc-400 hover:text-white uppercase tracking-tighter">
+                <Mail size={12}/> Google
+              </button>
             </div>
           </div>
         ) : (
-          <div className="flex justify-between gap-2 mb-8">
+          <div className="flex justify-center gap-3 mb-10">
             {otp.map((digit, i) => (
-              <input key={i} type="text" maxLength={1} value={digit} onChange={e => {
-                const newOtp = [...otp]; newOtp[i] = e.target.value; setOtp(newOtp);
-                if (e.target.nextSibling && e.target.value) (e.target.nextSibling as HTMLElement).focus();
-              }} className="w-16 h-20 bg-black border border-white/10 rounded-2xl text-center text-2xl font-black text-red-600 outline-none focus:border-red-600" />
+              <input 
+                key={i} 
+                type="text" 
+                maxLength={1} 
+                value={digit} 
+                onChange={e => {
+                  const newOtp = [...otp]; 
+                  newOtp[i] = e.target.value; 
+                  setOtp(newOtp);
+                  if (e.target.nextSibling && e.target.value) (e.target.nextSibling as HTMLElement).focus();
+                }} 
+                className="w-10 h-14 bg-black border border-white/5 rounded-xl text-center text-sm font-mono font-bold text-red-600 outline-none focus:border-red-600 transition-colors shadow-inner" 
+              />
             ))}
           </div>
         )}
 
-        <button onClick={handleNext} className="w-full bg-red-600 py-4 rounded-2xl font-black uppercase text-white mt-8 hover:bg-red-700 transition-all italic tracking-widest shadow-lg shadow-red-600/20">
-          {step === 'email' ? 'Continue' : 'Verify & Access'}
+        <button 
+          onClick={handleNext} 
+          className="w-full bg-red-600 py-4 rounded-xl font-black uppercase text-white mt-4 hover:bg-red-700 active:scale-95 transition-all italic tracking-[0.2em] text-[10px] shadow-lg shadow-red-600/10"
+        >
+          {step === 'email' ? 'Request Code' : 'Confirm Access'}
         </button>
       </motion.div>
     </div>
@@ -106,7 +140,7 @@ const UserDashboard = ({ builds, onEdit, onDelete, onClose }: any) => {
   const compareBuilds = builds.filter((b: any) => selectedForCompare.includes(b.id));
 
   return (
-    <div className="min-h-screen bg-black text-white p-6 lg:p-12 font-sans overflow-y-auto">
+    <div className="min-h-screen bg-black text-white p-6 lg:p-12 font-sans overflow-y-auto selection:bg-red-600">
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-end mb-12">
           <div>
@@ -132,12 +166,12 @@ const UserDashboard = ({ builds, onEdit, onDelete, onClose }: any) => {
                     {selectedForCompare.includes(build.id) && <CheckCircle2 size={14}/>}
                   </div>
                   <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
-                    <button onClick={() => onEdit(build)} className="p-2 bg-zinc-800 rounded-lg hover:text-red-600"><Edit3 size={14}/></button>
-                    <button onClick={() => onDelete(build.id)} className="p-2 bg-zinc-800 rounded-lg hover:text-red-600"><Trash2 size={14}/></button>
+                    <button onClick={() => onEdit(build)} className="p-2 bg-zinc-800 rounded-lg hover:text-red-600 transition-colors"><Edit3 size={14}/></button>
+                    <button onClick={() => onDelete(build.id)} className="p-2 bg-zinc-800 rounded-lg hover:text-red-600 transition-colors"><Trash2 size={14}/></button>
                   </div>
                 </div>
                 <h3 className="text-xl font-black uppercase italic mb-1">{build.name}</h3>
-                <p className="text-[10px] text-zinc-500 mb-6 uppercase font-bold">{build.date}</p>
+                <p className="text-[10px] text-zinc-500 mb-6 uppercase font-bold tracking-widest">{build.date}</p>
                 <div className="flex justify-between items-end border-t border-white/5 pt-4">
                   <div><p className="text-[8px] text-zinc-600 uppercase font-black">Price</p><p className="font-mono text-red-600">€{build.totalPrice.toLocaleString()}</p></div>
                   <div className="text-right"><p className="text-[8px] text-zinc-600 uppercase font-black">Weight</p><p className="font-mono">{build.totalWeight}g</p></div>
@@ -146,7 +180,7 @@ const UserDashboard = ({ builds, onEdit, onDelete, onClose }: any) => {
             ))}
           </div>
         ) : (
-          <div className="overflow-x-auto bg-zinc-900/30 rounded-[2rem] border border-white/5">
+          <div className="overflow-x-auto bg-zinc-900/30 rounded-[2rem] border border-white/5 custom-scroll-container">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-white/5">
@@ -156,19 +190,19 @@ const UserDashboard = ({ builds, onEdit, onDelete, onClose }: any) => {
               </thead>
               <tbody>
                 <tr className="border-b border-white/5">
-                  <td className="p-6 text-[10px] font-black uppercase text-zinc-400">Total Price</td>
-                  {compareBuilds.map((b: any) => <td key={b.id} className="p-6 font-mono">€{b.totalPrice.toLocaleString()}</td>)}
+                  <td className="p-6 text-[10px] font-black uppercase text-zinc-400 tracking-widest">Total Price</td>
+                  {compareBuilds.map((b: any) => <td key={b.id} className="p-6 font-mono text-sm">€{b.totalPrice.toLocaleString()}</td>)}
                 </tr>
                 <tr className="border-b border-white/5">
-                  <td className="p-6 text-[10px] font-black uppercase text-zinc-400">Total Weight</td>
-                  {compareBuilds.map((b: any) => <td key={b.id} className="p-6 font-mono text-red-500">{b.totalWeight}g</td>)}
+                  <td className="p-6 text-[10px] font-black uppercase text-zinc-400 tracking-widest">Total Weight</td>
+                  {compareBuilds.map((b: any) => <td key={b.id} className="p-6 font-mono text-sm text-red-500">{b.totalWeight}g</td>)}
                 </tr>
                 {INITIAL_STEPS.map(step => (
                   <tr key={step.id} className="border-b border-white/5">
-                    <td className="p-6 text-[10px] font-black uppercase text-zinc-400">{step.title}</td>
+                    <td className="p-6 text-[10px] font-black uppercase text-zinc-400 tracking-widest">{step.title}</td>
                     {compareBuilds.map((b: any) => {
                       const comp = b.components.find((c: any) => c.stepTitle === step.title);
-                      return <td key={b.id} className="p-6 text-[10px] uppercase font-bold text-zinc-300">{comp?.name || '-'}</td>
+                      return <td key={b.id} className="p-6 text-[10px] uppercase font-bold text-zinc-300 tracking-tighter">{comp?.name || '-'}</td>
                     })}
                   </tr>
                 ))}
@@ -279,7 +313,7 @@ const Visualizer = ({ selectedComponents, offsets, showGrid, gridSize, isZoomed,
 const OptionCard = ({ component, isSelected, onClick }: { component: Component, isSelected: boolean, onClick: () => void }) => (
   <motion.button layout onClick={(e) => { e.preventDefault(); onClick(); }} className={cn("relative flex flex-col p-2 lg:p-3 rounded-xl lg:rounded-2xl border text-left transition-all group w-full shrink-0", isSelected ? "border-red-600 bg-red-600/5 ring-1 ring-red-600/20 shadow-[0_0_20px_rgba(255,0,0,0.1)]" : "border-white/5 bg-zinc-900/50 hover:border-white/20 hover:bg-zinc-900")}>
     <div className="aspect-square w-full rounded-lg lg:rounded-xl bg-black/40 mb-2 lg:mb-3 overflow-hidden relative"><img src={component.cardImageUrl} alt={component.name} className="w-full h-full object-contain p-1 lg:p-2 group-hover:scale-110 transition duration-500" />{isSelected && <div className="absolute top-1 lg:top-2 right-1 lg:right-2 bg-red-600 p-1 lg:p-1.5 rounded-full shadow-lg z-10"><CheckCircle2 size={10} className="text-white" /></div>}</div>
-    <div className="flex-1 flex flex-col justify-between overflow-hidden"><div><h3 className="text-[6.5px] lg:text-[11px] font-bold leading-tight tracking-tighter line-clamp-2 text-zinc-300 uppercase text-zinc-300">{component.name}</h3><p className="text-[6px] lg:text-[9px] text-zinc-500 uppercase font-black">{component.brand}</p></div><div className="flex justify-between items-end mt-1 lg:mt-2"><p className="font-mono text-[10px] lg:text-sm text-red-600 tracking-tighter">€{component.price.toLocaleString()}</p><p className="text-[9px] lg:text-sm text-zinc-600 font-mono italic">{component.weight}g</p></div></div>
+    <div className="flex-1 flex flex-col justify-between overflow-hidden"><div><h3 className="text-[6.5px] lg:text-[11px] font-bold leading-tight tracking-tighter line-clamp-2 text-zinc-300 uppercase">{component.name}</h3><p className="text-[6px] lg:text-[9px] text-zinc-500 uppercase font-black">{component.brand}</p></div><div className="flex justify-between items-end mt-1 lg:mt-2"><p className="font-mono text-[10px] lg:text-sm text-red-600 tracking-tighter">€{component.price.toLocaleString()}</p><p className="text-[9px] lg:text-sm text-zinc-600 font-mono italic">{component.weight}g</p></div></div>
   </motion.button>
 );
 
@@ -429,7 +463,7 @@ export default function BikeConfigurator() {
           ) : (
             <button onClick={() => setIsAuthModalOpen(true)} className="flex items-center gap-2 bg-red-600 px-5 py-2 rounded-full hover:bg-red-700 transition-all shadow-lg shadow-red-600/20">
               <LogIn size={16}/>
-              <span className="text-[10px] font-black uppercase italic">Login</span>
+              <span className="text-[10px] font-black uppercase italic text-white">Login</span>
             </button>
           )}
         </div>
@@ -461,17 +495,17 @@ export default function BikeConfigurator() {
         </div>
       </main>
 
-      <div className="fixed bottom-0 left-0 right-0 bg-black/90 backdrop-blur-3xl border-t border-white/5 z-50 py-6">
-        <div className="max-w-[1500px] mx-auto px-6 flex flex-row items-center justify-between lg:grid lg:grid-cols-12">
-          <button onClick={() => currentStepIndex > 0 && setCurrentStepIndex(currentStepIndex - 1)} className="lg:col-span-2 flex items-center gap-2 text-zinc-500 hover:text-white transition-all font-black uppercase text-[10px] italic"><ChevronLeft size={20} /> Back</button>
+      <div className="fixed bottom-0 left-0 right-0 bg-black/90 backdrop-blur-3xl border-t border-white/5 z-50 py-6 text-white">
+        <div className="max-w-[1500px] mx-auto px-6 grid grid-cols-12 gap-2 items-center">
+          <button onClick={() => currentStepIndex > 0 && setCurrentStepIndex(currentStepIndex - 1)} className="col-span-3 lg:col-span-2 flex items-center gap-2 text-zinc-500 hover:text-white transition-all font-black uppercase text-[10px] italic"><ChevronLeft size={20} /> Back</button>
           
-          <div className="flex flex-row gap-6 lg:col-span-8 justify-center items-center">
+          <div className="col-span-6 lg:col-span-8 flex justify-center items-center gap-6">
             <div className="text-center"><p className="text-[8px] text-zinc-600 uppercase font-black italic">Weight</p><p className="font-mono text-sm">{totalWeight}g</p></div>
             <div className="h-8 w-px bg-white/10" />
             <div className="text-center"><p className="text-[8px] text-zinc-600 uppercase font-black italic">Price</p><p className="font-mono text-sm text-red-600">€{totalPrice.toLocaleString()}</p></div>
           </div>
 
-          <div className="lg:col-span-2 flex justify-end">
+          <div className="col-span-3 lg:col-span-2 flex justify-end">
             <button onClick={() => {
                 if (filteredOptions.length > 0 && !selections[currentStep.id]) return;
                 currentStepIndex < steps.length - 1 ? setCurrentStepIndex(currentStepIndex + 1) : setIsFinished(true);
@@ -531,7 +565,7 @@ function SummaryView({ selections, onReset, user, onSaveBuild }: any) {
                 : ''
             }}
             className={cn(
-              "px-10 py-5 rounded-[1.5rem] font-black uppercase text-[11px] italic transition-all flex items-center justify-center gap-3 relative overflow-hidden",
+              "px-10 py-5 rounded-[1.5rem] font-black uppercase text-[11px] italic transition-all flex items-center justify-center gap-3 relative overflow-hidden text-white",
               isExporting ? "border border-white/10" : "bg-red-600 hover:bg-red-700"
             )}
           >
