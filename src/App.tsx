@@ -482,7 +482,7 @@ const handleLoadBuild = (build: any) => {
 </nav>
       )}
 
-      <<main className="flex-1 max-w-[1500px] mx-auto px-2 lg:px-6 pt-1 lg:pt-3 w-full overflow-hidden flex flex-col">
+      <main className="flex-1 max-w-[1500px] mx-auto px-2 lg:px-6 pt-1 lg:pt-3 w-full overflow-hidden flex flex-col">
   <div className="flex flex-col lg:grid lg:grid-cols-12 gap-2 lg:gap-10 h-full items-stretch pb-20 lg:pb-32">
     
     {/* ЛІВА ЧАСТИНА: ВІЗУАЛІЗАТОР (Зменшено висоту для мобайлу) */}
