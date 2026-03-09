@@ -365,29 +365,40 @@ const handleLoadBuild = (build: any) => {
 
   const activeComponentForTuning = useMemo(() => currentStep?.options.find(o => o.id === selections[currentStep?.id]), [currentStep, selections]);
 
-  if (isAdminMode && !isLoggedIn) return <AdminLogin onLogin={() => setIsLoggedIn(true)} />;
-  if (isFinished) return (
-    <SummaryView 
-      selections={selectedComponents} 
-      onReset={() => window.location.reload()} 
-      setSavedBuilds={setSavedBuilds}
-      user={user} 
-      onOpenGarage={() => setIsGarageOpen(true)}
-      onOpenAuth={() => setIsAuthModalOpen(true)}
-    />
-  );
-
   return (
-    <div className="min-h-screen bg-black text-white font-sans selection:bg-red-600 pb-28 lg:pb-24 overflow-x-hidden">
-     <AuthModal 
-      isOpen={isAuthModalOpen} 
-      onClose={() => setIsAuthModalOpen(false)} 
-      onLogin={(u: any) => { 
-        setUser(u); 
-        localStorage.setItem('adicto_user', JSON.stringify(u)); 
-        setIsAuthModalOpen(false); 
-      }} 
-    />
+    <div className="min-h-screen bg-black text-white font-sans selection:bg-red-600 pb-28 lg:pb-24 overflow-x-hidden">
+      {/* АВТОРИЗАЦІЯ */}
+      <AuthModal 
+        isOpen={isAuthModalOpen} 
+        onClose={() => setIsAuthModalOpen(false)} 
+        onLogin={(u: any) => { 
+          setUser(u); 
+          localStorage.setItem('adicto_user', JSON.stringify(u)); 
+          setIsAuthModalOpen(false); 
+        }} 
+      />
+
+      {/* ФІНАЛЬНИЙ ЕКРАН (OVERLAY) */}
+      <AnimatePresence>
+        {isFinished && (
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }} 
+            animate={{ opacity: 1, y: 0 }} 
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[150]"
+          >
+            <SummaryView 
+              selections={selectedComponents} 
+              onReset={() => window.location.reload()} 
+              setSavedBuilds={setSavedBuilds}
+              user={user} 
+              onOpenGarage={() => setIsGarageOpen(true)}
+              onOpenAuth={() => setIsAuthModalOpen(true)}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <style>{`
   /* Тонкий червоний скролбар */
   .custom-scroll-container::-webkit-scrollbar { 
