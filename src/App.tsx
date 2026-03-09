@@ -239,29 +239,21 @@ const OptionCard = ({ component, isSelected, onClick }: { component: Component, 
     layout 
     onClick={(e) => { e.preventDefault(); onClick(); }} 
     className={cn(
-      "relative flex flex-col p-1 lg:p-3 rounded-xl lg:rounded-2xl border text-left transition-all group w-full shrink-0", 
-      isSelected ? "border-red-600 bg-red-600/5 ring-1 ring-red-600/20 shadow-[0_0_20px_rgba(255,0,0,0.1)]" : "border-white/5 bg-zinc-900/50 hover:border-white/20 hover:bg-zinc-900"
+      "relative flex flex-col p-1.5 lg:p-3 rounded-xl lg:rounded-2xl border text-left transition-all group w-full shrink-0", 
+      isSelected ? "border-red-600 bg-red-600/5 ring-1 ring-red-600/20" : "border-white/5 bg-zinc-900/50 hover:border-white/20"
     )}
   >
-    {/* Зображення: менші відступи на мобайлі */}
-    <div className="aspect-square w-full rounded-lg lg:rounded-xl bg-black/40 mb-1 lg:mb-3 overflow-hidden relative">
-      <img src={component.cardImageUrl} alt={component.name} className="w-full h-full object-contain p-0.5 lg:p-2 group-hover:scale-110 transition duration-500" />
-      {isSelected && (
-        <div className="absolute top-1 right-1 lg:top-2 lg:right-2 bg-red-600 p-0.5 lg:p-1.5 rounded-full shadow-lg z-10">
-          <CheckCircle2 size={8} className="text-white lg:hidden" />
-          <CheckCircle2 size={10} className="hidden lg:block text-white" />
-        </div>
-      )}
+    <div className="aspect-square w-full rounded-lg bg-black/40 mb-1 lg:mb-3 overflow-hidden relative">
+      <img src={component.cardImageUrl} alt={component.name} className="w-full h-full object-contain p-1" />
+      {isSelected && <div className="absolute top-0.5 right-0.5 bg-red-600 p-0.5 rounded-full shadow-lg z-10"><CheckCircle2 size={8} className="text-white" /></div>}
     </div>
-    
     <div className="flex-1 flex flex-col justify-between overflow-hidden">
       <div>
-        {/* Текст: у 2 рази менший на мобайлі */}
-        <h3 className="text-[6px] lg:text-[11px] font-bold leading-tight tracking-tighter line-clamp-2 text-zinc-300 uppercase">{component.name}</h3>
-        <p className="text-[5px] lg:text-[9px] text-zinc-500 uppercase font-black">{component.brand}</p>
+        <h3 className="text-[7px] lg:text-[11px] font-bold leading-none line-clamp-1 text-zinc-300 uppercase">{component.name}</h3>
+        <p className="text-[6px] lg:text-[9px] text-zinc-500 uppercase font-black truncate">{component.brand}</p>
       </div>
-      <div className="flex justify-between items-end mt-0.5 lg:mt-2">
-        <p className="font-mono text-[8px] lg:text-sm text-red-600 tracking-tighter">€{component.price.toLocaleString()}</p>
+      <div className="flex justify-between items-center mt-1">
+        <p className="font-mono text-[8px] lg:text-sm text-red-600 tracking-tighter">€{component.price}</p>
         <p className="text-[7px] lg:text-sm text-zinc-600 font-mono italic">{component.weight}g</p>
       </div>
     </div>
@@ -490,27 +482,39 @@ const handleLoadBuild = (build: any) => {
 </nav>
       )}
 
-      <main className="max-w-[1500px] mx-auto px-4 lg:px-6 pt-2 lg:pt-3 flex-1 flex flex-col overflow-hidden">
-  {/* lg:h-[calc(100vh-180px)] автоматично підтягує все до футера */}
-  <div className="flex flex-col lg:grid lg:grid-cols-12 gap-4 lg:gap-10 lg:h-[calc(100vh-180px)] items-stretch">
+      <<main className="flex-1 max-w-[1500px] mx-auto px-2 lg:px-6 pt-1 lg:pt-3 w-full overflow-hidden flex flex-col">
+  <div className="flex flex-col lg:grid lg:grid-cols-12 gap-2 lg:gap-10 h-full items-stretch pb-20 lg:pb-32">
     
-    {/* ЛІВА ЧАСТИНА: ВІЗУАЛІЗАТОР */}
-    <div className="lg:col-span-9 flex flex-col gap-2 order-1 h-[260px] lg:h-full">
-      <div ref={stepsNavRef} className="flex overflow-x-auto no-scrollbar steps-scroll-container gap-x-6 gap-y-2 pb-2 scroll-smooth">
+    {/* ЛІВА ЧАСТИНА: ВІЗУАЛІЗАТОР (Зменшено висоту для мобайлу) */}
+    <div className="lg:col-span-9 flex flex-col gap-1 order-1 h-[220px] md:h-[400px] lg:h-full shrink-0">
+      <div ref={stepsNavRef} className="flex overflow-x-auto no-scrollbar gap-x-4 pb-1 shrink-0">
         {steps.map((step, idx) => (
-          <button 
-            key={step.id} 
-            onClick={() => setCurrentStepIndex(idx)} 
-            className={cn("transition-all duration-300 text-[10px] font-black italic uppercase tracking-widest pb-1 border-b-2 whitespace-nowrap", idx === currentStepIndex ? "text-red-600 border-red-600 drop-shadow-[0_0_9px_rgba(255,0,0,0.3)]" : "text-white opacity-20 border-transparent hover:opacity-100")}
-          >
-            {step.title}
-          </button>
+          <button key={step.id} onClick={() => setCurrentStepIndex(idx)} className={cn("transition-all text-[9px] font-black uppercase tracking-widest pb-1 border-b-2 whitespace-nowrap", idx === currentStepIndex ? "text-red-600 border-red-600" : "text-white opacity-20 border-transparent")}>{step.title}</button>
         ))}
       </div>
-      <div className="flex-1 relative">
+      <div className="flex-1 relative min-h-0">
         <Visualizer selectedComponents={selectedComponents} offsets={offsets} showGrid={showGrid} gridSize={gridSize} isZoomed={isZoomed} zoomScale={zoomScale} />
       </div>
     </div>
+
+    {/* ПРАВА ЧАСТИНА: КАРТКИ ТОВАРІВ */}
+    <div className="lg:col-span-3 flex flex-col bg-zinc-900/40 rounded-[1.5rem] lg:rounded-[2.5rem] border border-white/5 p-2 lg:p-6 relative overflow-hidden order-2 shadow-2xl flex-1 min-h-0 lg:h-full">
+      <div className="flex-1 overflow-x-auto lg:overflow-y-auto custom-scroll-container">
+        {/* w-[32%] гарантує рівно 3 картки на екрані мобільного */}
+        <div className="flex flex-row lg:flex-col gap-2 min-w-full">
+          <AnimatePresence mode="popLayout">
+            {filteredOptions.map((option) => (
+              <div key={option.id} className="w-[32%] min-w-[32%] lg:w-full lg:min-w-0 shrink-0">
+                <OptionCard component={option} isSelected={selections[currentStep.id] === option.id} onClick={() => setSelections(prev => ({...prev, [currentStep.id]: option.id}))} />
+              </div>
+            ))}
+          </AnimatePresence>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
 
     {/* ПРАВА ЧАСТИНА: КАРТКИ ТОВАРІВ */}
     <div className="lg:col-span-3 flex flex-col bg-zinc-900/40 rounded-[2.5rem] border border-white/5 p-3 lg:p-6 relative overflow-hidden order-2 shadow-2xl min-h-[180px] lg:h-full">
