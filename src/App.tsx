@@ -565,10 +565,13 @@ const handleLoadBuild = (build: any) => {
           </div>
         </div> {/* закриває внутрішній grid футера */}
       </div> {/* закриває fixed контейнер футера */}
-     );
-    };
+   
+      /<GaragePanel isOpen={isGarageOpen} onClose={() => setIsGarageOpen(false)} builds={savedBuilds} user={user} onLogout={handleLogout} onSelectBuild={handleLoadBuild} onDeleteBuild={(id: string) => { const newB = savedBuilds.filter(b => b.id !== id); setSavedBuilds(newB); localStorage.setItem('adicto_saved_builds', JSON.stringify(newB)); }} />
+    </div>
+  );
+}
 
-      // --- GARAGE PANEL COMPONENT ---
+// --- GARAGE PANEL ---
 const GaragePanel = ({ isOpen, onClose, builds, user, onLogout, onSelectBuild, onDeleteBuild }: any) => {
   if (!isOpen) return null;
 
