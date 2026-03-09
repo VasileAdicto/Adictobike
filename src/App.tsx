@@ -422,36 +422,34 @@ const handleLoadBuild = (build: any) => {
       </AnimatePresence>
 
       <style>{`
-        /* Тонка лінія для ПК */
-        .custom-scroll-container::-webkit-scrollbar { 
-          width: 2px; 
-          height: 2px; 
-        }
-        .custom-scroll-container::-webkit-scrollbar-thumb { 
-          background: #ef4444; 
-          border-radius: 10px; 
-        }
-        
-        /* Мобільний скрол: робимо його видимим через підсвітку треку */
-        @media (max-width: 1024px) {
-          .custom-scroll-container {
-            overflow-x: scroll;
-            -webkit-overflow-scrolling: touch;
-          }
-          .custom-scroll-container::-webkit-scrollbar {
-            height: 3px;
-          }
-          .custom-scroll-container::-webkit-scrollbar-track {
-            background: rgba(239, 68, 68, 0.1); /* Ледь помітна червона доріжка */
-          }
-        }
+  /* Надтонкий скролбар для ПК */
+  .custom-scroll-container::-webkit-scrollbar { 
+    width: 2px !important; 
+    height: 2px !important; 
+  }
+  .custom-scroll-container::-webkit-scrollbar-thumb { 
+    background: #ef4444 !important; 
+    border-radius: 10px; 
+  }
+  .custom-scroll-container::-webkit-scrollbar-track { 
+    background: transparent; 
+  }
 
-        @keyframes slideHint { 
-          0%, 100% { transform: translateX(0); } 
-          50% { transform: translateX(5px); } 
-        }
-        .animate-slide-hint { animation: slideHint 1.5s infinite; }
-      `}</style>
+  /* Налаштування для мобайла */
+  @media (max-width: 1024px) {
+    .custom-scroll-container {
+      overflow-x: auto !important;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 15px !important; /* Місце для скролбару */
+    }
+  }
+
+  @keyframes slideHint { 
+    0%, 100% { transform: translateX(0); opacity: 0.4; } 
+    50% { transform: translateX(8px); opacity: 1; } 
+  }
+  .animate-slide-hint { animation: slideHint 1.5s infinite; }
+`}</style>
       
       {isLoggedIn ? (
         <AdminPanel categories={INITIAL_STEPS.map(s => s.title)} offsets={offsets} setOffsets={setOffsets} activeComponent={activeComponentForTuning} showGrid={showGrid} setShowGrid={setShowGrid} gridSize={gridSize} setGridSize={setGridSize} isZoomed={isZoomed} setIsZoomed={setIsZoomed} zoomScale={zoomScale} setZoomScale={setZoomScale} onLogout={handleLogout} />
@@ -510,73 +508,35 @@ const handleLoadBuild = (build: any) => {
             </div>
           </div>
 
-          {/* ПРАВА ЧАСТИНА: КАРТКИ ТОВАРІВ */}
-          <div className="lg:col-span-3 flex flex-col bg-zinc-900/40 rounded-[1.5rem] lg:rounded-[2.5rem] border border-white/5 p-2 lg:p-6 relative order-2 shadow-2xl flex-1 min-h-[160px]">
-            
-            <div className="flex-1 overflow-x-auto lg:overflow-y-auto custom-scroll-container">
-              {/* pb-6 додає простір для природного скролбару */}
-              <div className="flex flex-row lg:flex-col gap-2 min-w-full pb-6">
-                <AnimatePresence mode="popLayout">
-                  {filteredOptions.map((option) => (
-                    <div key={option.id} className="w-[32%] min-w-[32%] lg:w-full lg:min-w-0 shrink-0">
-                      <OptionCard component={option} isSelected={selections[currentStep?.id] === option.id} onClick={() => setSelections(prev => ({ ...prev, [currentStep?.id]: option.id}))} />
-                    </div>
-                  ))}
-                </AnimatePresence>
-              </div>
-            </div>
+          <style>{`
+  /* Надтонкий скролбар для ПК */
+  .custom-scroll-container::-webkit-scrollbar { 
+    width: 2px !important; 
+    height: 2px !important; 
+  }
+  .custom-scroll-container::-webkit-scrollbar-thumb { 
+    background: #ef4444 !important; 
+    border-radius: 10px; 
+  }
+  .custom-scroll-container::-webkit-scrollbar-track { 
+    background: transparent; 
+  }
 
-            {/* НАПИС SCROLL (Тепер без жорсткої умови довжини масиву) */}
-            <div className="lg:hidden flex items-center justify-center gap-2 text-red-600 py-1 shrink-0 bg-zinc-900">
-              <span className="text-[8px] font-black uppercase tracking-widest italic animate-pulse">Scroll</span>
-              <ChevronsRight size={12} className="animate-slide-hint" />
-            </div>
-          </div>
-          
-      {/* --- FOOTER --- */}
-      <div className="fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur-2xl border-t border-white/5 z-40 shrink-0">
-        <div className="max-w-[1500px] mx-auto px-4 lg:px-6 py-4 lg:py-6 grid grid-cols-12 gap-2 items-center">
-          <button onClick={() => currentStepIndex > 0 && setCurrentStepIndex(currentStepIndex - 1)} className="col-span-3 lg:col-span-2 flex items-center gap-1 text-zinc-500 hover:text-white transition-all font-black uppercase text-[10px] italic">
-            <ChevronLeft size={16} /> Back
-          </button>
-          <div className="col-span-6 lg:col-span-7 flex justify-center lg:justify-end items-center gap-4 lg:gap-10">
-            <div className="text-center lg:text-right text-zinc-300">
-              <p className="text-[7px] text-zinc-600 uppercase font-black mb-0.5 italic">Weight</p>
-              <p className="font-mono text-[10px] lg:text-xs">{selectedComponents.reduce((acc, c) => acc + c.weight, 0)}g</p>
-            </div>
-            <div className="h-8 w-px bg-white/10" />
-            <div className="text-center lg:text-right text-zinc-300">
-              <p className="text-[7px] text-zinc-600 uppercase font-black mb-0.5 italic">Price</p>
-              <p className="font-mono text-[10px] lg:text-xs text-red-600">€{selectedComponents.reduce((acc, c) => acc + c.price, 0).toLocaleString()}</p>
-            </div>
-          </div>
-          <div className="col-span-3 flex justify-end">
-            <button onClick={() => {
-                if (filteredOptions.length > 0 && !selections[currentStep.id]) { setError("Select!"); return; }
-                currentStepIndex < steps.length - 1 ? setCurrentStepIndex(currentStepIndex + 1) : setIsFinished(true);
-              }} className="bg-red-600 hover:bg-red-700 text-white h-[32px] px-4 lg:px-6 rounded-lg font-black uppercase text-[10px] italic flex items-center gap-2 active:scale-95 shadow-lg shadow-red-600/20">
-              {currentStepIndex === steps.length - 1 ? 'Finish' : 'Next'} <ChevronRight size={14} />
-            </button>
-          </div>
-        </div>
-      </div>
+  /* Налаштування для мобайла */
+  @media (max-width: 1024px) {
+    .custom-scroll-container {
+      overflow-x: auto !important;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 15px !important; /* Місце для скролбару */
+    }
+  }
 
-      <GaragePanel 
-        isOpen={isGarageOpen} 
-        onClose={() => setIsGarageOpen(false)} 
-        builds={savedBuilds} 
-        user={user} 
-        onLogout={handleLogout} 
-        onSelectBuild={handleLoadBuild} 
-        onDeleteBuild={(id: string) => { 
-          const newB = savedBuilds.filter(b => b.id !== id); 
-          setSavedBuilds(newB); 
-          localStorage.setItem('adicto_saved_builds', JSON.stringify(newB)); 
-        }} 
-      />
-    </div>
-  );
-}
+  @keyframes slideHint { 
+    0%, 100% { transform: translateX(0); opacity: 0.4; } 
+    50% { transform: translateX(8px); opacity: 1; } 
+  }
+  .animate-slide-hint { animation: slideHint 1.5s infinite; }
+`}</style>
 
   const GaragePanel = ({ isOpen, onClose, builds, user, onLogout, onSelectBuild, onDeleteBuild }: any) => {
   const [exportingId, setExportingId] = useState<string | null>(null);
