@@ -419,41 +419,40 @@ const handleLoadBuild = (build: any) => {
       </AnimatePresence>
 
       <style>{`
-  /* Скролбар для комп'ютера (дуже тонкий) */
-  .custom-scroll-container::-webkit-scrollbar { 
-    width: 2px !important; 
-    height: 2px !important; 
-    display: block !important; 
-  }
-  .custom-scroll-container::-webkit-scrollbar-track { 
-    background: transparent !important; 
-  }
-  .custom-scroll-container::-webkit-scrollbar-thumb { 
-    background: #ef4444 !important; 
-    border-radius: 10px; 
-  }
+        /* Надтонкий скролбар для ПК (2px) */
+        .custom-scroll-container::-webkit-scrollbar { 
+          width: 2px !important; 
+          height: 2px !important; 
+          display: block !important;
+        }
+        .custom-scroll-container::-webkit-scrollbar-track { 
+          background: transparent !important; 
+        }
+        .custom-scroll-container::-webkit-scrollbar-thumb { 
+          background: #ef4444 !important; 
+          border-radius: 10px; 
+        }
 
-  /* Примусове відображення на мобайлі */
-  @media (max-width: 1024px) {
-    .custom-scroll-container {
-      overflow-x: auto !important;
-      -webkit-overflow-scrolling: touch;
-      /* Резервуємо місце під скролбар, щоб він не зникав */
-      padding-bottom: 8px !important; 
-    }
-    /* Робимо скролбар на мобайлі трохи товстішим для зручності, але все ще тонким */
-    .custom-scroll-container::-webkit-scrollbar { 
-      height: 3px !important; 
-      display: block !important;
-    }
-  }
+        /* Налаштування для мобайла */
+        @media (max-width: 1024px) {
+          .custom-scroll-container {
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 12px !important; /* Місце для скролбару */
+          }
+          .custom-scroll-container::-webkit-scrollbar { 
+            height: 3px !important; /* Трішки товстіший для пальця */
+            display: block !important;
+          }
+        }
 
-  @keyframes slideHint { 
-    0%, 100% { transform: translateX(0); opacity: 0.3; } 
-    50% { transform: translateX(10px); opacity: 1; } 
-  }
-  .animate-slide-hint { animation: slideHint 1.5s infinite; }
-`}</style>
+        @keyframes slideHint { 
+          0%, 100% { transform: translateX(0); opacity: 0.3; } 
+          50% { transform: translateX(10px); opacity: 1; } 
+        }
+        .animate-slide-hint { animation: slideHint 1.5s infinite; }
+      `}</style>
+      
       {isLoggedIn ? (
         <AdminPanel categories={INITIAL_STEPS.map(s => s.title)} offsets={offsets} setOffsets={setOffsets} activeComponent={activeComponentForTuning} showGrid={showGrid} setShowGrid={setShowGrid} gridSize={gridSize} setGridSize={setGridSize} isZoomed={isZoomed} setIsZoomed={setIsZoomed} zoomScale={zoomScale} setZoomScale={setZoomScale} onLogout={handleLogout} />
       ) : (
@@ -531,14 +530,16 @@ const handleLoadBuild = (build: any) => {
     </div>
   </div>
 
-  {/* ПІДКАЗКА СКРОЛУ (Тепер точно буде видно) */}
-  {filteredOptions.length > 3 && (
-    <div className="lg:hidden flex items-center justify-center gap-2 text-red-600 pt-2 pb-1 bg-gradient-to-t from-zinc-900/80 to-transparent">
-      <span className="text-[8px] font-black uppercase tracking-[0.2em] italic animate-pulse">Scroll</span>
-      <ChevronsRight size={12} className="animate-slide-hint" />
-    </div>
-  )}
-</div>
+  {/* ПІДКАЗКА СКРОЛУ */}
+          {filteredOptions.length > 3 && (
+            <div className="lg:hidden h-6 flex items-center justify-center gap-2 text-red-600 pt-2 pb-1 bg-gradient-to-t from-zinc-900/80 to-transparent shrink-0">
+              <span className="text-[8px] font-black uppercase tracking-[0.2em] italic animate-pulse">Scroll</span>
+              <ChevronsRight size={12} className="animate-slide-hint" />
+            </div>
+          )}
+        </div> {/* закриває lg:col-span-3 (праву панель) */}
+      </div> {/* закриває внутрішній flex/grid контейнер */}
+    </main>
 
       {/* --- FOOTER --- */}
       <div className="fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur-2xl border-t border-white/5 z-40 shrink-0">
