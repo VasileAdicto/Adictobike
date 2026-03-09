@@ -518,7 +518,7 @@ const handleLoadBuild = (build: any) => {
                     <div key={option.id} className="w-[32%] min-w-[32%] lg:w-full lg:min-w-0 shrink-0">
                       <OptionCard component={option} isSelected={selections[currentStep.id] === option.id} onClick={() => setSelections(prev => ({...prev, [currentStep.id]: option.id}))} />
                     </div>
-                  ))}
+                  ))})
                 </AnimatePresence>
               </div>
             </div>
@@ -562,7 +562,6 @@ const handleLoadBuild = (build: any) => {
     </div>
   );
 } //
-
 
 const GaragePanel = ({ isOpen, onClose, builds, user, onLogout, onSelectBuild, onDeleteBuild }: any) => {
   const [exportingId, setExportingId] = useState<string | null>(null);
