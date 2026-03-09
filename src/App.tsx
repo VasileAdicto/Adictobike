@@ -419,13 +419,15 @@ const handleLoadBuild = (build: any) => {
       </AnimatePresence>
 
       <style>{`
+  <style>{`
   /* Тонкий червоний скролбар */
   .custom-scroll-container::-webkit-scrollbar { 
-    width: 3px; 
-    height: 3px; 
+    height: 4px; /* Висота горизонтального скролу */
+    width: 4px; 
+    display: block !important; /* Примусово показувати */
   }
   .custom-scroll-container::-webkit-scrollbar-track { 
-    background: rgba(255, 255, 255, 0.02); 
+    background: rgba(255, 255, 255, 0.05); 
     border-radius: 10px; 
   }
   .custom-scroll-container::-webkit-scrollbar-thumb { 
@@ -433,20 +435,20 @@ const handleLoadBuild = (build: any) => {
     border-radius: 10px; 
   }
   
-  /* ВІДСТУП: Щоб скролбар був трішки правіше від карток товарів */
-  .custom-scroll-container { 
-    padding-right: 6px; 
-    scrollbar-width: thin; 
-    scrollbar-color: #ef4444 transparent; 
+  /* Для мобільних: примусово показувати скролбар завжди */
+  @media (max-width: 1024px) {
+    .custom-scroll-container {
+      -webkit-overflow-scrolling: touch;
+      overflow-x: scroll !important;
+    }
   }
 
   .no-scrollbar::-webkit-scrollbar { display: none; }
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-  /* АНІМАЦІЯ: для напису Scroll >> */
   @keyframes slideHint { 
-    0%, 100% { transform: translateX(0); } 
-    50% { transform: translateX(5px); opacity: 1; } 
+    0%, 100% { transform: translateX(0); opacity: 0.5; } 
+    50% { transform: translateX(8px); opacity: 1; } 
   }
   .animate-slide-hint { animation: slideHint 1.5s infinite; }
 `}</style>
@@ -509,30 +511,29 @@ const handleLoadBuild = (build: any) => {
           </div>
 
           {/* ПРАВА ЧАСТИНА: КАРТКИ ТОВАРІВ */}
-          <div className="lg:col-span-3 flex flex-col bg-zinc-900/40 rounded-[1.5rem] lg:rounded-[2.5rem] border border-white/5 p-2 lg:p-6 relative overflow-hidden order-2 shadow-2xl flex-1 min-h-0">
-            {/* Скрол-контейнер з примусовим відображенням скролбару */}
-            <div className="flex-1 overflow-x-auto lg:overflow-y-auto custom-scroll-container pb-2">
+          <div className="lg:col-span-3 flex flex-col bg-zinc-900/40 rounded-[1.5rem] lg:rounded-[2.5rem] border border-white/5 p-2 lg:p-6 relative overflow-hidden order-2 shadow-2xl flex-1 min-h-[140px]">
+            <div className="flex-1 overflow-x-auto lg:overflow-y-auto custom-scroll-container pb-4">
               <div className="flex flex-row lg:flex-col gap-2 min-w-full">
                 <AnimatePresence mode="popLayout">
                   {filteredOptions.map((option) => (
                     <div key={option.id} className="w-[32%] min-w-[32%] lg:w-full lg:min-w-0 shrink-0">
-                      <OptionCard component={option} isSelected={selections[currentStep.id] === option.id} onClick={() => setSelections(prev => ({...prev, [currentStep.id]: option.id}))} />
+                      <OptionCard 
+                        component={option} 
+                        isSelected={selections[currentStep.id] === option.id} 
+                        onClick={() => setSelections(prev => ({...prev, [currentStep.id]: option.id}))} 
+                      />
                     </div>
                   ))}
                 </AnimatePresence>
               </div>
             </div>
 
-            {/* ПІДКАЗКА СКРОЛУ (Повернули) */}
-            {filteredOptions.length > 3 && (
-              <div className="lg:hidden mt-1 flex items-center justify-center gap-1 text-red-600/50 animate-slide-hint">
-                <span className="text-[7px] font-black uppercase tracking-[0.2em] italic">Scroll</span>
-                <ChevronsRight size={8} strokeWidth={3} />
-              </div>
-            )}
+            {/* ПІДКАЗКА СКРОЛУ (Посилена видимість) */}
+            <div className="lg:hidden h-6 flex items-center justify-center gap-1.5 text-red-600 animate-slide-hint mt-1">
+              <span className="text-[8px] font-black uppercase tracking-[0.2em] italic">Scroll</span>
+              <ChevronsRight size={10} strokeWidth={3} />
+            </div>
           </div>
-        </div>
-      </main>
     
       {/* --- FOOTER --- */}
       <div className="fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur-2xl border-t border-white/5 z-40">
