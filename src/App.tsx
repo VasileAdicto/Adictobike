@@ -419,39 +419,37 @@ const handleLoadBuild = (build: any) => {
       </AnimatePresence>
 
       <style>{`
-  <style>{`
-  /* Тонкий червоний скролбар */
-  .custom-scroll-container::-webkit-scrollbar { 
-    height: 4px; /* Висота горизонтального скролу */
-    width: 4px; 
-    display: block !important; /* Примусово показувати */
-  }
-  .custom-scroll-container::-webkit-scrollbar-track { 
-    background: rgba(255, 255, 255, 0.05); 
-    border-radius: 10px; 
-  }
-  .custom-scroll-container::-webkit-scrollbar-thumb { 
-    background: #ef4444; 
-    border-radius: 10px; 
-  }
-  
-  /* Для мобільних: примусово показувати скролбар завжди */
-  @media (max-width: 1024px) {
-    .custom-scroll-container {
-      -webkit-overflow-scrolling: touch;
-      overflow-x: scroll !important;
-    }
-  }
+        /* Тонкий червоний скролбар */
+        .custom-scroll-container::-webkit-scrollbar { 
+          height: 4px !important; 
+          width: 4px !important;
+          display: block !important;
+        }
+        .custom-scroll-container::-webkit-scrollbar-track { 
+          background: rgba(255, 255, 255, 0.05) !important; 
+          border-radius: 10px; 
+        }
+        .custom-scroll-container::-webkit-scrollbar-thumb { 
+          background: #ef4444 !important; 
+          border-radius: 10px; 
+        }
+        
+        @media (max-width: 1024px) {
+          .custom-scroll-container {
+            -webkit-overflow-scrolling: touch;
+            overflow-x: scroll !important;
+          }
+        }
 
-  .no-scrollbar::-webkit-scrollbar { display: none; }
-  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-  @keyframes slideHint { 
-    0%, 100% { transform: translateX(0); opacity: 0.5; } 
-    50% { transform: translateX(8px); opacity: 1; } 
-  }
-  .animate-slide-hint { animation: slideHint 1.5s infinite; }
-`}</style>
+        @keyframes slideHint { 
+          0%, 100% { transform: translateX(0); opacity: 0.5; } 
+          50% { transform: translateX(8px); opacity: 1; } 
+        }
+        .animate-slide-hint { animation: slideHint 1.5s infinite; }
+      `}</style>
 
       {isLoggedIn ? (
         <AdminPanel categories={INITIAL_STEPS.map(s => s.title)} offsets={offsets} setOffsets={setOffsets} activeComponent={activeComponentForTuning} showGrid={showGrid} setShowGrid={setShowGrid} gridSize={gridSize} setGridSize={setGridSize} isZoomed={isZoomed} setIsZoomed={setIsZoomed} zoomScale={zoomScale} setZoomScale={setZoomScale} onLogout={handleLogout} />
