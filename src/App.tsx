@@ -370,7 +370,10 @@ const handleLoadBuild = (build: any) => {
     <SummaryView 
       selections={selectedComponents} 
       onReset={() => window.location.reload()} 
-      setSavedBuilds={setSavedBuilds} 
+      setSavedBuilds={setSavedBuilds}
+      user={user} 
+      onOpenGarage={() => setIsGarageOpen(true)}
+      onOpenAuth={() => setIsAuthModalOpen(true)}
     />
   );
 
@@ -891,52 +894,76 @@ function SummaryView({ selections, onReset, setSavedBuilds }: any) {
         </div>
       </div>
 
-      <div className="flex flex-col gap-4 w-full max-w-[280px]">
-        {/* UI: КНОПКА ЕКСПОРТУ PDF (з динамічним червоним прогресом) */}
-        <button 
-          onClick={handleExport} 
-          disabled={isExporting}
-          className="relative h-14 bg-zinc-900 border border-white/10 rounded-2xl font-black uppercase text-[10px] italic overflow-hidden transition-all active:scale-95 group shadow-xl"
-        >
-          {/* UI: Динамічна заливка червоним */}
-          <motion.div 
-            className="absolute left-0 top-0 bottom-0 bg-red-600/80 z-0"
-            animate={{ width: `${progress}%` }}
-            transition={{ ease: "linear" }}
-          />
-          <span className="relative z-10 flex items-center justify-center gap-2 text-white">
-            {isExporting ? `SAVING ${progress}%` : <><Download size={14} /> EXPORT PDF</>}
-          </span>
-        </button>
+      function SummaryView({ selections, onReset, user, onOpenGarage, onOpenAuth }: any) {
+  const [isExporting, setIsExporting] = useState(false);
+  const [progress, setProgress] = useState(0);
 
-        {/* UI: КНОПКА SAVE TO GARAGE (з червоним написом) */}
-        <button 
-          onClick={() => {
-            const newBuild = {
-              id: Math.random().toString(36).substr(2, 9),
-              name: selections.find((c: any) => c.stepTitle === 'Frame')?.name || 'Custom Build',
-              date: new Date().toLocaleDateString('uk-UA'),
-              totalPrice: selections.reduce((acc: number, c: any) => acc + c.price, 0),
-              components: selections.map((c: any) => ({ stepTitle: c.stepTitle, brand: c.brand, name: c.name }))
-            };
-            const currentRaw = localStorage.getItem('adicto_saved_builds') || '[]';
-            const updatedBuilds = [...JSON.parse(currentRaw), newBuild];
-            localStorage.setItem('adicto_saved_builds', JSON.stringify(updatedBuilds));
-            setSavedBuilds(updatedBuilds); 
-            alert("Build saved to your Garage!");
-          }}
-          className="px-8 py-4 border border-red-600/30 text-red-600 rounded-2xl font-black uppercase text-[10px] italic hover:bg-red-600/10 transition-all active:scale-95 shadow-lg shadow-red-600/5"
-        >
-          Save to Garage
-        </button>
+  const totalPrice = selections.reduce((acc: number, c: any) => acc + c.price, 0);
+  const totalWeight = selections.reduce((acc: number, c: any) => acc + c.weight, 0);
 
-        {/* UI: ОНОВЛЕНА КНОПКА BUILD ANOTHER ONE (з тонкою білою обводкою) */}
-        <button 
-          onClick={onReset} 
-          className="px-8 py-4 bg-transparent border border-white/10 text-white rounded-2xl font-black uppercase text-[10px] italic hover:bg-white/5 hover:border-white/20 transition-all active:scale-95 shadow-xl"
-        >
-          Build another one
-        </button>
+  // ... (тут твої функції handleExport та getBase64Image залишаються без змін) ...
+
+  return (
+    <div className="min-h-screen bg-black text-white font-sans selection:bg-red-600 flex flex-col">
+      
+      {/* HEADER: Копіюємо стиль з головної сторінки */}
+      <nav className="border-b border-white/5 px-4 lg:px-6 py-3 flex justify-between items-center bg-black/80 backdrop-blur-2xl sticky top-0 z-50 w-full">
+        <div className="flex items-center gap-3">
+          <img src="/design/Logo.png" alt="Logo" className="h-5 lg:h-6 w-auto object-contain" />
+          <div className="text-zinc-600 font-mono text-[8px] lg:text-[9px] uppercase tracking-widest italic border-l border-white/10 pl-3 mt-0.5">
+            Build by Vasile & AI
+          </div>
+        </div>
+
+        <div className="flex items-center gap-4">
+          {user ? (
+            <button onClick={onOpenGarage} className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full border border-white/5 hover:border-red-600/50 transition-all group active:scale-95">
+              <User size={12} className="text-red-600 group-hover:scale-110 transition-transform"/> 
+              <span className="text-[9px] font-black uppercase italic text-white tracking-widest">Garage: {user.name}</span>
+            </button>
+          ) : (
+            <button onClick={onOpenAuth} className="flex items-center gap-2 bg-red-600 px-4 py-1.5 rounded-full text-[9px] font-black uppercase italic tracking-widest text-white active:scale-95 transition-all">
+              <LogIn size={12}/> Login
+            </button>
+          )}
+        </div>
+      </nav>
+
+      {/* ОСНОВНИЙ КОНТЕНТ */}
+      <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
+        <motion.img initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} src="/design/Logo.png" className="h-8 mb-10 object-contain opacity-40" />
+        
+        <h2 className="text-[20px] lg:text-[22px] font-black italic uppercase tracking-tighter mb-6 leading-[1.1]">
+          Your bike is <br/> <span className="text-red-600 uppercase">Ready</span>
+        </h2>
+
+        <div className="flex justify-center gap-10 my-8 bg-zinc-900/40 p-6 rounded-[2rem] border border-white/5 shadow-2xl backdrop-blur-md">
+          <div>
+            <p className="text-zinc-600 text-[7px] uppercase font-black mb-1 italic tracking-widest">Price</p>
+            <p className="text-[14px] font-mono text-red-600 font-black tracking-tighter italic">€{totalPrice.toLocaleString()}</p>
+          </div>
+          <div>
+            <p className="text-zinc-600 text-[7px] uppercase font-black mb-1 italic tracking-widest">Weight</p>
+            <p className="text-[14px] font-mono text-white/80 font-black tracking-tighter italic">{totalWeight}g</p>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-4 w-full max-w-[280px]">
+          <button onClick={handleExport} disabled={isExporting} className="relative h-14 bg-zinc-900 border border-white/10 rounded-2xl font-black uppercase text-[10px] italic overflow-hidden transition-all active:scale-95 group shadow-xl">
+            <motion.div className="absolute left-0 top-0 bottom-0 bg-red-600/80 z-0" animate={{ width: `${progress}%` }} transition={{ ease: "linear" }} />
+            <span className="relative z-10 flex items-center justify-center gap-2 text-white">
+              {isExporting ? `SAVING ${progress}%` : <><Download size={14} /> EXPORT PDF</>}
+            </span>
+          </button>
+
+          <button onClick={() => { /* ... логіка збереження ... */ }} className="h-14 border border-red-600/30 text-red-600 rounded-2xl font-black uppercase text-[10px] italic hover:bg-red-600/10 transition-all active:scale-95">
+            Save to Garage
+          </button>
+
+          <button onClick={onReset} className="px-8 py-4 bg-transparent border border-white/10 text-white rounded-2xl font-black uppercase text-[10px] italic hover:bg-white/5 hover:border-white/20 transition-all active:scale-95">
+            Build another one
+          </button>
+        </div>
       </div>
     </div>
   );
