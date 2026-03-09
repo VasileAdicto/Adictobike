@@ -770,6 +770,7 @@ const GaragePanel = ({ isOpen, onClose, builds, user, onLogout, onSelectBuild, o
   );
 };
 
+/ --- SUMMARY VIEW (ФІНАЛЬНА СТОРІНКА) ---
 function SummaryView({ selections, onReset, setSavedBuilds, user, onOpenGarage, onOpenAuth }: any) {
   const [isExporting, setIsExporting] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -778,14 +779,14 @@ function SummaryView({ selections, onReset, setSavedBuilds, user, onOpenGarage, 
   const totalWeight = selections.reduce((acc: number, c: any) => acc + c.weight, 0);
 
   const getBase64Image = async (url: string): Promise<string> => {
-    try { 
-      const res = await fetch(url); 
+    try {
+      const res = await fetch(url);
       const blob = await res.blob();
-      return new Promise((resolve, reject) => { 
-        const reader = new FileReader(); 
-        reader.onloadend = () => resolve(reader.result as string); 
-        reader.onerror = reject; 
-        reader.readAsDataURL(blob); 
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
       });
     } catch (e) { return ""; }
   };
@@ -793,33 +794,26 @@ function SummaryView({ selections, onReset, setSavedBuilds, user, onOpenGarage, 
   const handleExport = async () => {
     setIsExporting(true);
     setProgress(0);
-    
-    // Імітація прогресу для люксового ефекту
     const interval = setInterval(() => {
-      setProgress(prev => {
-        if (prev >= 95) { clearInterval(interval); return 95; }
-        return prev + 5;
-      });
+      setProgress(prev => (prev >= 95 ? 95 : prev + 5));
     }, 100);
 
-    const doc = new jsPDF(); 
-    const pageWidth = doc.internal.pageSize.getWidth(); 
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
     const cleanText = (text: string) => text ? String(text).replace(/[^\x00-\x7F]/g, "").toUpperCase() : "";
 
-    // 1. ЛОГОТИП У PDF (НАПІВПРОЗОРИЙ)
+    // 1. Логотип
     try {
       const logoBase64 = await getBase64Image("/design/Logo.png");
       if (logoBase64) {
-        // Встановлюємо прозорість 40% (opacity 0.3)
-        doc.setGState(new (doc as any).GState({ opacity: 0.3 })); 
+        doc.setGState(new (doc as any).GState({ opacity: 0.3 }));
         doc.addImage(logoBase64, 'PNG', (pageWidth / 2) - 15, 8, 10, 10);
-        // Скидаємо прозорість до 100% для решти контенту
-        doc.setGState(new (doc as any).GState({ opacity: 1 })); 
+        doc.setGState(new (doc as any).GState({ opacity: 1 }));
       }
     } catch (e) {}
 
-    // 2. ЗОБРАЖЕННЯ ВЕЛОСИПЕДА (ЯК У PROJECT1)
+    // 2. Зображення байка (сортування за z-index)
     try {
       const sortedByZ = [...selections].sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
       for (const comp of sortedByZ) {
@@ -830,83 +824,33 @@ function SummaryView({ selections, onReset, setSavedBuilds, user, onOpenGarage, 
       }
     } catch (e) {}
 
-    // 3. ТАБЛИЦЯ КОМПОНЕНТІВ
-    autoTable(doc, { 
-      startY: 135, head: [['SECTION', 'COMPONENT', 'BRAND', 'WEIGHT', 'PRICE']],
-      body: selections.map((c: any) => [cleanText(c.stepTitle || ""), cleanText(c.name), cleanText(c.brand), `${c.weight} g`, `${c.price.toLocaleString()} €`]),
-      styles: { font: "helvetica", fontSize: 6, cellPadding: 2 }, headStyles: { fillColor: [20, 20, 20], textColor: [255, 255, 255] },
-      columnStyles: { 0: { fontStyle: 'bold', cellWidth: 25 } }, foot: [['TOTAL', '', '', `${totalWeight} g`, `${totalPrice.toLocaleString()} €`]],
-      footStyles: { fillColor: [220, 38, 38], textColor: [255, 255, 255], fontSize: 8, fontStyle: 'bold' }, theme: 'grid'
+    // 3. Таблиця
+    autoTable(doc, {
+      startY: 135,
+      head: [['SECTION', 'COMPONENT', 'BRAND', 'WEIGHT', 'PRICE']],
+      body: selections.map((c: any) => [
+        cleanText(c.stepTitle || ""),
+        cleanText(c.name),
+        cleanText(c.brand),
+        `${c.weight} g`,
+        `${c.price.toLocaleString()} €`
+      ]),
+      styles: { fontSize: 6 },
+      foot: [['TOTAL', '', '', `${totalWeight} g`, `${totalPrice.toLocaleString()} €`]],
+      footStyles: { fillColor: [220, 38, 38] }
     });
-
-    const finalY = (doc as any).lastAutoTable.finalY + 10;
-    
-    // 4. ТЕКСТ ДИСКЛЕЙМЕРА (ЯК У PROJECT1)
-    doc.setFontSize(6); doc.setTextColor(100);
-    const disclaimer = "NOTICE: THE WEIGHT AND PRICE INDICATED ARE PRELIMINARY AND SUBJECT TO MINOR CHANGES BASED ON COMPONENT AVAILABILITY. ADICTO.BIKE RESERVES THE RIGHT TO MODIFY SPECIFICATIONS WITHOUT PRIOR NOTICE.";
-    doc.text(doc.splitTextToSize(disclaimer, pageWidth - 30), 15, finalY);
-
-    // 5. QR-КОД 35x35 MM ТА ФУТЕР
-    try {
-      const qrBase64 = await getBase64Image("/design/qr-code.png");
-      if (qrBase64) doc.addImage(qrBase64, 'PNG', pageWidth - 50, pageHeight - 50, 35, 35);
-    } catch (e) {}
-
-    doc.setFontSize(7); doc.setTextColor(20);
-    doc.text("WWW.ADICTO.BIKE  |  @ADICTO.BIKE", pageWidth / 2, pageHeight - 15, { align: 'center' });
 
     setTimeout(() => {
       clearInterval(interval);
       setProgress(100);
-      setTimeout(() => {
-        doc.save(`ADICTO_BUILD.pdf`);
-        setIsExporting(false);
-        setProgress(0);
-      }, 400);
+      doc.save('ADICTO_BUILD.pdf');
+      setIsExporting(false);
     }, 1200);
   };
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-8 text-center font-sans">
-      {/* UI: ЛОГОТИП ЗАМІСТЬ ЧЕКБОКСА */}
-      <motion.img 
-        initial={{ y: 10, opacity: 0 }} 
-        animate={{ y: 0, opacity: 1 }} 
-        src="/design/Logo.png" 
-        className="h-8 mb-10 object-contain opacity-100" 
-      />
-
-      {/* UI: ЗМЕНШЕНИЙ ШРИФТ ЗАГОЛОВКА (на 25%) */}
-      <h2 className="text-[20px] lg:text-[22px] font-black italic uppercase tracking-tighter mb-6 leading-[1.1] text-white">
-        Your bike is <br/> <span className="text-red-600 uppercase">Ready</span>
-      </h2>
-
-      {/* UI: ЗМЕНШЕНІ ЦИФРИ ЦІНИ ТА ВАГИ */}
-      <div className="flex justify-center gap-10 my-8 bg-zinc-900/40 p-6 rounded-[2rem] border border-white/5 shadow-2xl backdrop-blur-md">
-        <div>
-          <p className="text-zinc-600 text-[7px] uppercase font-black mb-1 italic tracking-widest">Price</p>
-          <p className="text-[14px] font-mono text-red-600 font-black tracking-tighter italic">€{totalPrice.toLocaleString()}</p>
-        </div>
-        
-        <div>
-          <p className="text-zinc-600 text-[7px] uppercase font-black mb-1 italic tracking-widest">Weight</p>
-          <p className="text-[14px] font-mono text-white/80 font-black tracking-tighter italic">{totalWeight}g</p>
-        </div>
-      </div>
-
-      function SummaryView({ selections, onReset, user, onOpenGarage, onOpenAuth }: any) {
-  const [isExporting, setIsExporting] = useState(false);
-  const [progress, setProgress] = useState(0);
-
-  const totalPrice = selections.reduce((acc: number, c: any) => acc + c.price, 0);
-  const totalWeight = selections.reduce((acc: number, c: any) => acc + c.weight, 0);
-
-  // ... (тут твої функції handleExport та getBase64Image залишаються без змін) ...
-
-  return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-red-600 flex flex-col">
-      
-      {/* HEADER: Копіюємо стиль з головної сторінки */}
+      {/* HEADER: Копія навігації для цілісності */}
       <nav className="border-b border-white/5 px-4 lg:px-6 py-3 flex justify-between items-center bg-black/80 backdrop-blur-2xl sticky top-0 z-50 w-full">
         <div className="flex items-center gap-3">
           <img src="/design/Logo.png" alt="Logo" className="h-5 lg:h-6 w-auto object-contain" />
@@ -931,8 +875,6 @@ function SummaryView({ selections, onReset, setSavedBuilds, user, onOpenGarage, 
 
       {/* ОСНОВНИЙ КОНТЕНТ */}
       <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
-        <motion.img initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} src="/design/Logo.png" className="h-8 mb-10 object-contain opacity-40" />
-        
         <h2 className="text-[20px] lg:text-[22px] font-black italic uppercase tracking-tighter mb-6 leading-[1.1]">
           Your bike is <br/> <span className="text-red-600 uppercase">Ready</span>
         </h2>
@@ -949,18 +891,48 @@ function SummaryView({ selections, onReset, setSavedBuilds, user, onOpenGarage, 
         </div>
 
         <div className="flex flex-col gap-4 w-full max-w-[280px]">
-          <button onClick={handleExport} disabled={isExporting} className="relative h-14 bg-zinc-900 border border-white/10 rounded-2xl font-black uppercase text-[10px] italic overflow-hidden transition-all active:scale-95 group shadow-xl">
-            <motion.div className="absolute left-0 top-0 bottom-0 bg-red-600/80 z-0" animate={{ width: `${progress}%` }} transition={{ ease: "linear" }} />
+          {/* PDF EXPORT */}
+          <button 
+            onClick={handleExport} 
+            disabled={isExporting}
+            className="relative h-14 bg-zinc-900 border border-white/10 rounded-2xl font-black uppercase text-[10px] italic overflow-hidden transition-all active:scale-95 group shadow-xl"
+          >
+            <motion.div 
+              className="absolute left-0 top-0 bottom-0 bg-red-600/80 z-0"
+              animate={{ width: `${progress}%` }}
+              transition={{ ease: "linear" }}
+            />
             <span className="relative z-10 flex items-center justify-center gap-2 text-white">
               {isExporting ? `SAVING ${progress}%` : <><Download size={14} /> EXPORT PDF</>}
             </span>
           </button>
 
-          <button onClick={() => { /* ... логіка збереження ... */ }} className="h-14 border border-red-600/30 text-red-600 rounded-2xl font-black uppercase text-[10px] italic hover:bg-red-600/10 transition-all active:scale-95">
+          {/* SAVE TO GARAGE */}
+          <button 
+            onClick={() => {
+              const newBuild = {
+                id: Math.random().toString(36).substr(2, 9),
+                name: selections.find((c: any) => c.stepTitle === 'Frame')?.name || 'Custom Build',
+                date: new Date().toLocaleDateString('uk-UA'),
+                totalPrice: totalPrice,
+                components: selections.map((c: any) => ({ stepTitle: c.stepTitle, brand: c.brand, name: c.name }))
+              };
+              const current = JSON.parse(localStorage.getItem('adicto_saved_builds') || '[]');
+              const updated = [...current, newBuild];
+              localStorage.setItem('adicto_saved_builds', JSON.stringify(updated));
+              setSavedBuilds(updated); // Миттєве оновлення кабінету
+              alert("Build saved to your Garage!");
+            }} 
+            className="h-14 border border-red-600/30 text-red-600 rounded-2xl font-black uppercase text-[10px] italic hover:bg-red-600/10 transition-all active:scale-95 shadow-lg shadow-red-600/5"
+          >
             Save to Garage
           </button>
 
-          <button onClick={onReset} className="px-8 py-4 bg-transparent border border-white/10 text-white rounded-2xl font-black uppercase text-[10px] italic hover:bg-white/5 hover:border-white/20 transition-all active:scale-95">
+          {/* RESET */}
+          <button 
+            onClick={onReset} 
+            className="px-8 py-4 bg-transparent border border-white/10 text-white rounded-2xl font-black uppercase text-[10px] italic hover:bg-white/5 hover:border-white/20 transition-all active:scale-95 shadow-xl"
+          >
             Build another one
           </button>
         </div>
