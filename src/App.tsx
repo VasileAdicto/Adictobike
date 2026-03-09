@@ -513,7 +513,9 @@ const handleLoadBuild = (build: any) => {
           {/* ПРАВА ЧАСТИНА: КАРТКИ ТОВАРІВ */}
           <div className="lg:col-span-3 flex flex-col bg-zinc-900/40 rounded-[1.5rem] lg:rounded-[2.5rem] border border-white/5 p-2 lg:p-6 relative order-2 shadow-2xl flex-1 min-h-0">
             <div className="flex-1 overflow-x-auto lg:overflow-y-auto lg:overflow-x-hidden custom-scroll-container">
-              <div className="flex flex-row lg:flex-col gap-2 min-w-full pb-2">
+              
+              {/* Контейнер для карток */}
+              <div className="flex flex-row lg:flex-col gap-2 min-w-full">
                 <AnimatePresence mode="popLayout">
                   {filteredOptions.map((option) => (
                     <div key={option.id} className="w-[32%] min-w-[32%] lg:w-full lg:min-w-0 shrink-0">
@@ -526,17 +528,17 @@ const handleLoadBuild = (build: any) => {
                   ))}
                 </AnimatePresence>
               </div>
-            </div>
 
-            {/* НАПИС SCROLL - З'ЯВИТЬСЯ ТІЛЬКИ ЯКЩО ВАРІАНТІВ > 3 */}
-            {filteredOptions.length > 3 && (
-              <div className="lg:hidden flex items-center justify-center gap-2 text-red-600 py-2 shrink-0 bg-zinc-900/90 border-t border-white/5 rounded-b-[1.5rem]">
-                <span className="text-[8px] font-black uppercase tracking-widest italic animate-pulse">Scroll to more</span>
-                <ChevronsRight size={12} className="animate-slide-hint" />
-              </div>
-            )}
+              {/* НАПИС SCROLL - ТЕПЕР ОДРАЗУ ПІД КАРТКАМИ */}
+              {filteredOptions.length > 3 && (
+                <div className="lg:hidden flex items-center justify-center gap-1.5 py-2 text-zinc-500/60 transition-opacity">
+                  <span className="text-[7px] font-black uppercase tracking-widest italic">Scroll to more</span>
+                  <ChevronsRight size={10} className="animate-slide-hint" />
+                </div>
+              )}
+
+            </div>
           </div>
-         </div> {/* закриває внутрішній flex/grid контейнер */}
     </main>
 
           {/* --- FOOTER --- */}
