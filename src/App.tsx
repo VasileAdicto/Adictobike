@@ -482,11 +482,13 @@ const handleLoadBuild = (build: any) => {
 </nav>
       )}
 
-      <main className="flex-1 max-w-[1500px] mx-auto px-2 lg:px-6 pt-1 lg:pt-3 w-full overflow-hidden flex flex-col">
-  <div className="flex flex-col lg:grid lg:grid-cols-12 gap-2 lg:gap-10 h-full items-stretch pb-20 lg:pb-32">
-    
-    {/* ЛІВА ЧАСТИНА: ВІЗУАЛІЗАТОР (Зменшено висоту для мобайлу) */}
-          <div className="lg:col-span-9 flex flex-col gap-1 order-1 h-[220px] md:h-[400px] lg:h-full shrink-0">
+      {/* ОСНОВНИЙ КОНТЕНТ */}
+      <main className="flex-1 max-w-[1500px] mx-auto px-2 lg:px-6 pt-1 w-full overflow-hidden flex flex-col">
+        {/* pb-[70px] на мобайлі резервує місце під футер, щоб картки були в 5px від нього */}
+        <div className="flex flex-col lg:grid lg:grid-cols-12 gap-1.5 lg:gap-10 h-full items-stretch pb-[75px] lg:pb-32">
+          
+          {/* ЛІВА ЧАСТИНА: ВІЗУАЛІЗАТОР (Збільшено висоту до 320px) */}
+          <div className="lg:col-span-9 flex flex-col gap-1 order-1 h-[320px] md:h-[400px] lg:h-full shrink-0">
             <div ref={stepsNavRef} className="flex overflow-x-auto no-scrollbar gap-x-4 pb-1 shrink-0">
               {steps.map((step, idx) => (
                 <button 
@@ -507,8 +509,9 @@ const handleLoadBuild = (build: any) => {
           </div>
 
           {/* ПРАВА ЧАСТИНА: КАРТКИ ТОВАРІВ */}
-          <div className="lg:col-span-3 flex flex-col bg-zinc-900/40 rounded-[1.5rem] lg:rounded-[2.5rem] border border-white/5 p-2 lg:p-6 relative overflow-hidden order-2 shadow-2xl flex-1 min-h-0 lg:h-full">
-            <div className="flex-1 overflow-x-auto lg:overflow-y-auto custom-scroll-container">
+          <div className="lg:col-span-3 flex flex-col bg-zinc-900/40 rounded-[1.5rem] lg:rounded-[2.5rem] border border-white/5 p-2 lg:p-6 relative overflow-hidden order-2 shadow-2xl flex-1 min-h-0">
+            {/* Скрол-контейнер з примусовим відображенням скролбару */}
+            <div className="flex-1 overflow-x-auto lg:overflow-y-auto custom-scroll-container pb-2">
               <div className="flex flex-row lg:flex-col gap-2 min-w-full">
                 <AnimatePresence mode="popLayout">
                   {filteredOptions.map((option) => (
@@ -520,9 +523,9 @@ const handleLoadBuild = (build: any) => {
               </div>
             </div>
 
-            {/* Підказка скролу для мобайла */}
+            {/* ПІДКАЗКА СКРОЛУ (Повернули) */}
             {filteredOptions.length > 3 && (
-              <div className="lg:hidden mt-2 flex items-center justify-center gap-1 text-zinc-600 animate-slide-hint">
+              <div className="lg:hidden mt-1 flex items-center justify-center gap-1 text-red-600/50 animate-slide-hint">
                 <span className="text-[7px] font-black uppercase tracking-[0.2em] italic">Scroll</span>
                 <ChevronsRight size={8} strokeWidth={3} />
               </div>
