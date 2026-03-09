@@ -382,7 +382,10 @@ const handleLoadBuild = (build: any) => {
     return opt ? { ...opt, stepTitle: s.title } : null;
   }).filter((c): c is Component => !!c), [selections, steps]);
 
-  const activeComponentForTuning = useMemo(() => currentStep?.options.find(o => o.id === selections[currentStep?.id]), [currentStep, selections]);
+  const activeComponentForTuning = useMemo(() => {
+  if (!currentStep) return null
+  return currentStep.options.find(o => o.id === selections[currentStep.id])
+}, [currentStep, selections])
 
   return (
     <div className="h-screen bg-black text-white font-sans selection:bg-red-600 overflow-hidden flex flex-col">
@@ -516,9 +519,9 @@ const handleLoadBuild = (build: any) => {
                 <AnimatePresence mode="popLayout">
                   {filteredOptions.map((option) => (
                     <div key={option.id} className="w-[32%] min-w-[32%] lg:w-full lg:min-w-0 shrink-0">
-                      <OptionCard component={option} isSelected={selections[currentStep.id] === option.id} onClick={() => setSelections(prev => ({...prev, [currentStep.id]: option.id}))} />
+                      <OptionCard component={option} isSelected={selections[currentStep?.id] === option.id} onClick={() => setSelections(prev => ({ ...prev, [currentStep?.id]: option.id}))} />
                     </div>
-                  ))})
+                  ))}
                 </AnimatePresence>
               </div>
             </div>
