@@ -397,112 +397,54 @@ const handleLoadBuild = (build: any) => {
         }} 
       />
 
-      {/* ФІНАЛЬНИЙ ЕКРАН (OVERLAY) */}
+      {/* ФІНАЛЬНИЙ ЕКРАН */}
       <AnimatePresence>
         {isFinished && (
-          <motion.div 
-            initial={{ opacity: 0, y: 10 }} 
-            animate={{ opacity: 1, y: 0 }} 
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[150]"
-          >
-            <SummaryView 
-              selections={selectedComponents} 
-              onReset={() => window.location.reload()} 
-              setSavedBuilds={setSavedBuilds}
-              user={user} 
-              onOpenGarage={() => setIsGarageOpen(true)}
-              onOpenAuth={() => setIsAuthModalOpen(true)}
-            />
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[150]">
+            <SummaryView selections={selectedComponents} onReset={() => window.location.reload()} setSavedBuilds={setSavedBuilds} user={user} onOpenGarage={() => setIsGarageOpen(true)} onOpenAuth={() => setIsAuthModalOpen(true)} />
           </motion.div>
         )}
       </AnimatePresence>
 
       <style>{`
-        /* Надтонкий скролбар для ПК (2px) */
-        .custom-scroll-container::-webkit-scrollbar { 
-          width: 2px !important; 
-          height: 2px !important; 
-          display: block !important;
-        }
-        .custom-scroll-container::-webkit-scrollbar-track { 
-          background: transparent !important; 
-        }
-        .custom-scroll-container::-webkit-scrollbar-thumb { 
-          background: #ef4444 !important; 
-          border-radius: 10px; 
-        }
-
-        /* Налаштування для мобайла */
+        .custom-scroll-container::-webkit-scrollbar { width: 2px !important; height: 2px !important; }
+        .custom-scroll-container::-webkit-scrollbar-thumb { background: #ef4444 !important; border-radius: 10px; }
         @media (max-width: 1024px) {
-          .custom-scroll-container {
-            overflow-x: auto !important;
-            -webkit-overflow-scrolling: touch;
-            padding-bottom: 12px !important; /* Місце для скролбару */
-          }
-          .custom-scroll-container::-webkit-scrollbar { 
-            height: 3px !important; /* Трішки товстіший для пальця */
-            display: block !important;
-          }
+          .custom-scroll-container { overflow-x: auto !important; -webkit-overflow-scrolling: touch; padding-bottom: 5px !important; }
         }
-
-        @keyframes slideHint { 
-          0%, 100% { transform: translateX(0); opacity: 0.3; } 
-          50% { transform: translateX(10px); opacity: 1; } 
-        }
+        @keyframes slideHint { 0%, 100% { transform: translateX(0); opacity: 0.3; } 50% { transform: translateX(10px); opacity: 1; } }
         .animate-slide-hint { animation: slideHint 1.5s infinite; }
       `}</style>
       
-      {isLoggedIn ? (
-        <AdminPanel categories={INITIAL_STEPS.map(s => s.title)} offsets={offsets} setOffsets={setOffsets} activeComponent={activeComponentForTuning} showGrid={showGrid} setShowGrid={setShowGrid} gridSize={gridSize} setGridSize={setGridSize} isZoomed={isZoomed} setIsZoomed={setIsZoomed} zoomScale={zoomScale} setZoomScale={setZoomScale} onLogout={handleLogout} />
-      ) : (
-        <nav className="border-b border-white/5 px-4 lg:px-6 py-3 flex justify-between items-center bg-black/80 backdrop-blur-2xl sticky top-0 z-50 shrink-0">
-  {/* ГРУПА ЗЛІВА: ЛОГО + НАПИС */}
-  <div className="flex items-center gap-3">
-    <img src="/design/Logo.png" alt="Logo" className="h-5 lg:h-6 w-auto object-contain" />
-    <div className="text-zinc-600 font-mono text-[8px] lg:text-[9px] uppercase tracking-widest italic border-l border-white/10 pl-3 mt-0.5">
-      Build by Vasile & AI
-    </div>
-  </div>
+      {isLoggedIn ? (
+        <AdminPanel categories={INITIAL_STEPS.map(s => s.title)} offsets={offsets} setOffsets={setOffsets} activeComponent={activeComponentForTuning} showGrid={showGrid} setShowGrid={setShowGrid} gridSize={gridSize} setGridSize={setGridSize} isZoomed={isZoomed} setIsZoomed={setIsZoomed} zoomScale={zoomScale} setZoomScale={setZoomScale} onLogout={handleLogout} />
+      ) : (
+        <nav className="border-b border-white/5 px-4 lg:px-6 py-3 flex justify-between items-center bg-black/80 backdrop-blur-2xl sticky top-0 z-50 shrink-0">
+          <div className="flex items-center gap-3">
+            <img src="/design/Logo.png" alt="Logo" className="h-5 lg:h-6 w-auto object-contain" />
+            <div className="text-zinc-600 font-mono text-[8px] lg:text-[9px] uppercase tracking-widest italic border-l border-white/10 pl-3 mt-0.5">Build by Vasile & AI</div>
+          </div>
+          <div className="flex items-center gap-4">
+            {user ? (
+              <button onClick={() => setIsGarageOpen(true)} className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full border border-white/5 active:scale-95">
+                <User size={12} className="text-red-600"/><span className="text-[9px] font-black uppercase italic text-white tracking-widest">Garage: {user.name}</span>
+              </button>
+            ) : (
+              <button onClick={() => setIsAuthModalOpen(true)} className="flex items-center gap-2 bg-red-600 px-4 py-1.5 rounded-full text-[9px] font-black uppercase italic tracking-widest text-white active:scale-95"><LogIn size={12}/> Login</button>
+            )}
+          </div>
+        </nav>
+      )}
 
-  {/* ПРАВА ЧАСТИНА: КНОПКА LOGIN */}
-<div className="flex items-center gap-4">
-  {user ? (
-    <button 
-      onClick={() => setIsGarageOpen(true)}
-      className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full border border-white/5 hover:border-red-600/50 transition-all group active:scale-95"
-    >
-      <User size={12} className="text-red-600 group-hover:scale-110 transition-transform"/> 
-      <span className="text-[9px] font-black uppercase italic text-white tracking-widest">Garage: {user.name}</span>
-    </button>
-  ) : (
-    <button onClick={() => setIsAuthModalOpen(true)} className="flex items-center gap-2 bg-red-600 px-4 py-1.5 rounded-full text-[9px] font-black uppercase italic tracking-widest text-white">
-      <LogIn size={12}/> Login
-    </button>
-  )}
-</div>
-</nav>
-      )}
-
-      {/* ОСНОВНИЙ КОНТЕНТ */}
-<main className="flex-1 max-w-[1500px] mx-auto px-2 lg:px-6 pt-1 w-full overflow-hidden flex flex-col justify-start">
-  {/* pb-0 замість pb-2, щоб не було дірки перед футером */}
-  <div className="flex flex-col lg:grid lg:grid-cols-12 gap-1.5 lg:gap-10 h-full items-stretch pb-0 lg:pb-32">
+      {/* ОСНОВНИЙ КОНТЕНТ */}
+      <main className="flex-1 max-w-[1500px] mx-auto px-2 lg:px-6 w-full overflow-hidden flex flex-col justify-start">
+        <div className="flex flex-col lg:grid lg:grid-cols-12 gap-1 h-full items-stretch pb-0 lg:pb-32">
           
-    {/* ЛІВА ЧАСТИНА: ВІЗУАЛІЗАТОР (Зменшуємо висоту до 38-40vh) */}
-    <div className="lg:col-span-9 flex flex-col gap-1 order-1 h-[38dvh] lg:h-full shrink-0 min-h-0">
-      <div ref={stepsNavRef} className="flex overflow-x-auto no-scrollbar gap-x-4 pb-1 shrink-0">
+          {/* ЛІВА ЧАСТИНА: ВІЗУАЛІЗАТОР (Байк зафіксовано на 38% висоти) */}
+          <div className="lg:col-span-9 flex flex-col gap-1 order-1 h-[38dvh] lg:h-full shrink-0 min-h-0">
+            <div ref={stepsNavRef} className="flex overflow-x-auto no-scrollbar gap-x-4 pb-1 shrink-0">
               {steps.map((step, idx) => (
-                <button 
-                  key={step.id} 
-                  onClick={() => setCurrentStepIndex(idx)} 
-                  className={cn(
-                    "transition-all text-[9px] font-black uppercase tracking-widest pb-1 border-b-2 whitespace-nowrap", 
-                    idx === currentStepIndex ? "text-red-600 border-red-600" : "text-white opacity-20 border-transparent"
-                  )}
-                >
-                  {step.title}
-                </button>
+                <button key={step.id} onClick={() => setCurrentStepIndex(idx)} className={cn("transition-all text-[9px] font-black uppercase tracking-widest pb-1 border-b-2 whitespace-nowrap", idx === currentStepIndex ? "text-red-600 border-red-600" : "text-white opacity-20 border-transparent")}>{step.title}</button>
               ))}
             </div>
             <div className="flex-1 relative min-h-0">
@@ -511,50 +453,43 @@ const handleLoadBuild = (build: any) => {
           </div>
 
           {/* ПРАВА ЧАСТИНА: КАРТКИ ТОВАРІВ */}
-          <div className="lg:col-span-3 flex flex-col bg-zinc-900/40 rounded-[1.5rem] lg:rounded-[2.5rem] border border-white/5 p-2 lg:p-6 relative order-2 shadow-2xl min-h-0">
+          <div className="lg:col-span-3 flex flex-col bg-zinc-900/40 rounded-[1.5rem] lg:rounded-[2.5rem] border border-white/5 p-2 lg:p-6 relative order-2 shadow-2xl min-h-0 flex-1">
             <div className="overflow-x-auto lg:overflow-y-auto lg:overflow-x-hidden custom-scroll-container">
-              
-              {/* Контейнер для карток */}
               <div className="flex flex-row lg:flex-col gap-2 min-w-full">
                 <AnimatePresence mode="popLayout">
                   {filteredOptions.map((option) => (
                     <div key={option.id} className="w-[32%] min-w-[32%] lg:w-full lg:min-w-0 shrink-0">
-                      <OptionCard 
-                        component={option} 
-                        isSelected={selections[currentStep.id] === option.id} 
-                        onClick={() => setSelections(prev => ({...prev, [currentStep.id]: option.id}))} 
-                      />
+                      <OptionCard component={option} isSelected={selections[currentStep.id] === option.id} onClick={() => setSelections(prev => ({...prev, [currentStep.id]: option.id}))} />
                     </div>
                   ))}
                 </AnimatePresence>
               </div>
-             </div>
 
-
-              {/* НАПИС SCROLL - ТЕПЕР ОДРАЗУ ПІД КАРТКАМИ */}
+              {/* НАПИС SCROLL */}
               {filteredOptions.length > 3 && (
-                <div className="lg:hidden flex items-center justify-center gap-1.5 py-2 text-zinc-500/60 transition-opacity">
+                <div className="lg:hidden flex items-center justify-center gap-1.5 py-1 text-zinc-500/40">
                   <span className="text-[7px] font-black uppercase tracking-widest italic">Scroll to more</span>
                   <ChevronsRight size={10} className="animate-slide-hint" />
                 </div>
               )}
             </div>
           </div>
-    </main>
+        </div>
+      </main>
 
-          {/* --- FOOTER --- */}
-      <div className="fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur-2xl border-t border-white/5 z-40 shrink-0 pb-[safe-area-inset-bottom]">
+      {/* --- FOOTER (Закріплений і враховує меню браузера) --- */}
+      <div className="fixed bottom-0 left-0 right-0 bg-black/90 backdrop-blur-2xl border-t border-white/5 z-40 shrink-0 pb-[env(safe-area-inset-bottom)]">
         <div className="max-w-[1500px] mx-auto px-4 lg:px-6 py-4 lg:py-6 grid grid-cols-12 gap-2 items-center">
-          <button onClick={() => currentStepIndex > 0 && setCurrentStepIndex(currentStepIndex - 1)} className="col-span-3 lg:col-span-2 flex items-center gap-1 text-zinc-500 hover:text-white transition-all font-black uppercase text-[10px] italic">
+          <button onClick={() => currentStepIndex > 0 && setCurrentStepIndex(currentStepIndex - 1)} className="col-span-3 lg:col-span-2 flex items-center gap-1 text-zinc-500 hover:text-white font-black uppercase text-[10px] italic">
             <ChevronLeft size={16} /> Back
           </button>
           <div className="col-span-6 lg:col-span-7 flex justify-center lg:justify-end items-center gap-4 lg:gap-10">
-            <div className="text-center lg:text-right text-zinc-300">
+            <div className="text-center lg:text-right">
               <p className="text-[7px] text-zinc-600 uppercase font-black mb-0.5 italic">Weight</p>
-              <p className="font-mono text-[10px] lg:text-xs">{selectedComponents.reduce((acc, c) => acc + c.weight, 0)}g</p>
+              <p className="font-mono text-[10px] lg:text-xs text-white">{selectedComponents.reduce((acc, c) => acc + c.weight, 0)}g</p>
             </div>
             <div className="h-8 w-px bg-white/10" />
-            <div className="text-center lg:text-right text-zinc-300">
+            <div className="text-center lg:text-right">
               <p className="text-[7px] text-zinc-600 uppercase font-black mb-0.5 italic">Price</p>
               <p className="font-mono text-[10px] lg:text-xs text-red-600">€{selectedComponents.reduce((acc, c) => acc + c.price, 0).toLocaleString()}</p>
             </div>
@@ -573,8 +508,6 @@ const handleLoadBuild = (build: any) => {
       <GaragePanel isOpen={isGarageOpen} onClose={() => setIsGarageOpen(false)} builds={savedBuilds} user={user} onLogout={handleLogout} onSelectBuild={handleLoadBuild} onDeleteBuild={(id: string) => { const newB = savedBuilds.filter(b => b.id !== id); setSavedBuilds(newB); localStorage.setItem('adicto_saved_builds', JSON.stringify(newB)); }} />
     </div>
   );
-} //
-
 
 const GaragePanel = ({ isOpen, onClose, builds, user, onLogout, onSelectBuild, onDeleteBuild }: any) => {
   const [exportingId, setExportingId] = useState<string | null>(null);
