@@ -633,7 +633,6 @@ const GaragePanel = ({ isOpen, onClose, builds, user, onLogout, onSelectBuild, o
       <div className="px-6 py-4 border-t border-white/5 bg-black text-center"><p className="text-[7px] font-black uppercase italic text-zinc-600 tracking-widest leading-none opacity-50">Powered by Adicto.Bike | 2026</p></div>
     </motion.div>
   );
-};
 
 const AuthModal = ({ isOpen, onClose, onLogin }: any) => {
   const [email, setEmail] = useState('');
