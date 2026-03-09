@@ -486,63 +486,50 @@ const handleLoadBuild = (build: any) => {
   <div className="flex flex-col lg:grid lg:grid-cols-12 gap-2 lg:gap-10 h-full items-stretch pb-20 lg:pb-32">
     
     {/* ЛІВА ЧАСТИНА: ВІЗУАЛІЗАТОР (Зменшено висоту для мобайлу) */}
-    <div className="lg:col-span-9 flex flex-col gap-1 order-1 h-[220px] md:h-[400px] lg:h-full shrink-0">
-      <div ref={stepsNavRef} className="flex overflow-x-auto no-scrollbar gap-x-4 pb-1 shrink-0">
-        {steps.map((step, idx) => (
-          <button key={step.id} onClick={() => setCurrentStepIndex(idx)} className={cn("transition-all text-[9px] font-black uppercase tracking-widest pb-1 border-b-2 whitespace-nowrap", idx === currentStepIndex ? "text-red-600 border-red-600" : "text-white opacity-20 border-transparent")}>{step.title}</button>
-        ))}
-      </div>
-      <div className="flex-1 relative min-h-0">
-        <Visualizer selectedComponents={selectedComponents} offsets={offsets} showGrid={showGrid} gridSize={gridSize} isZoomed={isZoomed} zoomScale={zoomScale} />
-      </div>
-    </div>
-
-    {/* ПРАВА ЧАСТИНА: КАРТКИ ТОВАРІВ */}
-    <div className="lg:col-span-3 flex flex-col bg-zinc-900/40 rounded-[1.5rem] lg:rounded-[2.5rem] border border-white/5 p-2 lg:p-6 relative overflow-hidden order-2 shadow-2xl flex-1 min-h-0 lg:h-full">
-      <div className="flex-1 overflow-x-auto lg:overflow-y-auto custom-scroll-container">
-        {/* w-[32%] гарантує рівно 3 картки на екрані мобільного */}
-        <div className="flex flex-row lg:flex-col gap-2 min-w-full">
-          <AnimatePresence mode="popLayout">
-            {filteredOptions.map((option) => (
-              <div key={option.id} className="w-[32%] min-w-[32%] lg:w-full lg:min-w-0 shrink-0">
-                <OptionCard component={option} isSelected={selections[currentStep.id] === option.id} onClick={() => setSelections(prev => ({...prev, [currentStep.id]: option.id}))} />
-              </div>
-            ))}
-          </AnimatePresence>
-        </div>
-      </div>
-    </div>
-
-  </div>
-</main>
-
-    {/* ПРАВА ЧАСТИНА: КАРТКИ ТОВАРІВ */}
-        <div className="lg:col-span-3 flex flex-col bg-zinc-900/40 rounded-[1.5rem] lg:rounded-[2.5rem] border border-white/5 p-2 lg:p-6 relative overflow-hidden order-2 shadow-2xl flex-1 min-h-0">
-          <div className="flex-1 overflow-x-auto lg:overflow-y-auto custom-scroll-container">
-            <div className="flex flex-row lg:flex-col gap-2 min-w-full">
-              <AnimatePresence mode="popLayout">
-                {filteredOptions.map((option) => (
-                  <div key={option.id} className="w-[32%] min-w-[32%] lg:w-full lg:min-w-0 shrink-0">
-                    <OptionCard 
-                      component={option} 
-                      isSelected={selections[currentStep.id] === option.id} 
-                      onClick={() => setSelections(prev => ({...prev, [currentStep.id]: option.id}))} 
-                    />
-                  </div>
-                ))}
-              </AnimatePresence>
+          <div className="lg:col-span-9 flex flex-col gap-1 order-1 h-[220px] md:h-[400px] lg:h-full shrink-0">
+            <div ref={stepsNavRef} className="flex overflow-x-auto no-scrollbar gap-x-4 pb-1 shrink-0">
+              {steps.map((step, idx) => (
+                <button 
+                  key={step.id} 
+                  onClick={() => setCurrentStepIndex(idx)} 
+                  className={cn(
+                    "transition-all text-[9px] font-black uppercase tracking-widest pb-1 border-b-2 whitespace-nowrap", 
+                    idx === currentStepIndex ? "text-red-600 border-red-600" : "text-white opacity-20 border-transparent"
+                  )}
+                >
+                  {step.title}
+                </button>
+              ))}
+            </div>
+            <div className="flex-1 relative min-h-0">
+              <Visualizer selectedComponents={selectedComponents} offsets={offsets} showGrid={showGrid} gridSize={gridSize} isZoomed={isZoomed} zoomScale={zoomScale} />
             </div>
           </div>
 
-          {filteredOptions.length > 3 && (
-            <div className="lg:hidden mt-2 flex items-center justify-center gap-1 text-zinc-600 animate-slide-hint">
-              <span className="text-[7px] font-black uppercase tracking-[0.2em] italic">Scroll</span>
-              <ChevronsRight size={8} strokeWidth={3} />
+          {/* ПРАВА ЧАСТИНА: КАРТКИ ТОВАРІВ */}
+          <div className="lg:col-span-3 flex flex-col bg-zinc-900/40 rounded-[1.5rem] lg:rounded-[2.5rem] border border-white/5 p-2 lg:p-6 relative overflow-hidden order-2 shadow-2xl flex-1 min-h-0 lg:h-full">
+            <div className="flex-1 overflow-x-auto lg:overflow-y-auto custom-scroll-container">
+              <div className="flex flex-row lg:flex-col gap-2 min-w-full">
+                <AnimatePresence mode="popLayout">
+                  {filteredOptions.map((option) => (
+                    <div key={option.id} className="w-[32%] min-w-[32%] lg:w-full lg:min-w-0 shrink-0">
+                      <OptionCard component={option} isSelected={selections[currentStep.id] === option.id} onClick={() => setSelections(prev => ({...prev, [currentStep.id]: option.id}))} />
+                    </div>
+                  ))}
+                </AnimatePresence>
+              </div>
             </div>
-          )}
+
+            {/* Підказка скролу для мобайла */}
+            {filteredOptions.length > 3 && (
+              <div className="lg:hidden mt-2 flex items-center justify-center gap-1 text-zinc-600 animate-slide-hint">
+                <span className="text-[7px] font-black uppercase tracking-[0.2em] italic">Scroll</span>
+                <ChevronsRight size={8} strokeWidth={3} />
+              </div>
+            )}
+          </div>
         </div>
-      </div>
-    </main>
+      </main>
     
       {/* --- FOOTER --- */}
       <div className="fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur-2xl border-t border-white/5 z-40">
