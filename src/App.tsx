@@ -528,6 +528,8 @@ const handleLoadBuild = (build: any) => {
                   ))}
                 </AnimatePresence>
               </div>
+             </div>
+
 
               {/* НАПИС SCROLL - ТЕПЕР ОДРАЗУ ПІД КАРТКАМИ */}
               {filteredOptions.length > 3 && (
@@ -536,7 +538,6 @@ const handleLoadBuild = (build: any) => {
                   <ChevronsRight size={10} className="animate-slide-hint" />
                 </div>
               )}
-
             </div>
           </div>
     </main>
