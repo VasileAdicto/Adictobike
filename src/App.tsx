@@ -505,9 +505,46 @@ const handleLoadBuild = (build: any) => {
         </div>
       </div>
 
-      <GaragePanel isOpen={isGarageOpen} onClose={() => setIsGarageOpen(false)} builds={savedBuilds} user={user} onLogout={handleLogout} onSelectBuild={handleLoadBuild} onDeleteBuild={(id: string) => { const newB = savedBuilds.filter(b => b.id !== id); setSavedBuilds(newB); localStorage.setItem('adicto_saved_builds', JSON.stringify(newB)); }} />
+      <GaragePanel 
+        isOpen={isGarageOpen} 
+        onClose={() => setIsGarageOpen(false)} 
+        builds={savedBuilds} 
+        user={user} 
+        onLogout={handleLogout} 
+        onSelectBuild={handleLoadBuild} 
+        onDeleteBuild={(id: string) => { 
+          const newB = savedBuilds.filter(b => b.id !== id); 
+          setSavedBuilds(newB); 
+          localStorage.setItem('adicto_saved_builds', JSON.stringify(newB)); 
+        }} 
+      />
     </div>
   );
+} // Кінець BikeConfigurator
+
+// --- ГАРАЖ ---
+const GaragePanel = ({ isOpen, onClose, builds, user, onLogout, onSelectBuild, onDeleteBuild }: any) => {
+  const [exportingId, setExportingId] = useState<string | null>(null);
+  const [progress, setProgress] = useState(0);
+
+  if (!isOpen) return null;
+
+  const handleDownloadPDF = async (build: any) => {
+    setExportingId(build.id);
+    setProgress(0);
+    const interval = setInterval(() => setProgress(p => p >= 95 ? 95 : p + 5), 150);
+    await generateAdictoPDF(build.components); // Викликаємо глобальну функцію
+    clearInterval(interval);
+    setProgress(100);
+    setTimeout(() => { setExportingId(null); setProgress(0); }, 1000);
+  };
+
+  return (
+    <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} className="fixed inset-0 z-[999] bg-black/98 backdrop-blur-3xl flex flex-col font-sans text-white">
+       {/* Твій код розмітки гаража... */}
+    </motion.div>
+  );
+};
 
 const GaragePanel = ({ isOpen, onClose, builds, user, onLogout, onSelectBuild, onDeleteBuild }: any) => {
   const [exportingId, setExportingId] = useState<string | null>(null);
