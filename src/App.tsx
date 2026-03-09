@@ -550,7 +550,7 @@ const handleLoadBuild = (build: any) => {
               <p className="font-mono text-[10px] lg:text-xs text-red-600">€{selectedComponents.reduce((acc, c) => acc + c.price, 0).toLocaleString()}</p>
             </div>
           </div>
-          <div className="col-span-3 flex justify-end">
+          <<div className="col-span-3 flex justify-end">
             <button onClick={() => {
                 if (filteredOptions.length > 0 && !selections[currentStep.id]) { setError("Select!"); return; }
                 currentStepIndex < steps.length - 1 ? setCurrentStepIndex(currentStepIndex + 1) : setIsFinished(true);
@@ -561,22 +561,22 @@ const handleLoadBuild = (build: any) => {
         </div>
       </div>
 
-            <GaragePanel
-        isOpen={isGarageOpen}
-        onClose={() => setIsGarageOpen(false)}
-        builds={savedBuilds}
-        user={user}
-        onLogout={handleLogout}
-        onSelectBuild={handleLoadBuild}
-        onDeleteBuild={(id: string) => {
-          const newB = savedBuilds.filter(b => b.id !== id);
-          setSavedBuilds(newB);
-          localStorage.setItem('adicto_saved_builds', JSON.stringify(newB));
-        }}
+      <GaragePanel 
+        isOpen={isGarageOpen} 
+        onClose={() => setIsGarageOpen(false)} 
+        builds={savedBuilds} 
+        user={user} 
+        onLogout={handleLogout} 
+        onSelectBuild={handleLoadBuild} 
+        onDeleteBuild={(id: string) => { 
+          const newB = savedBuilds.filter(b => b.id !== id); 
+          setSavedBuilds(newB); 
+          localStorage.setItem('adicto_saved_builds', JSON.stringify(newB)); 
+        }} 
       />
     </div>
   );
-}
+} // <--- Ця дужка ТЕПЕР ПРАВИЛЬНО закриває BikeConfigurator
 
   const GaragePanel = ({ isOpen, onClose, builds, user, onLogout, onSelectBuild, onDeleteBuild }: any) => {
   const [exportingId, setExportingId] = useState<string | null>(null);
