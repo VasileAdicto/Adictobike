@@ -535,15 +535,14 @@ const handleLoadBuild = (build: any) => {
         </div>
       </div>
 
-     {/* ПІДКАЗКА Scroll */}
       {filteredOptions.length > 3 && (
         <div className="lg:hidden mt-2 flex items-center justify-center gap-1 text-zinc-600 animate-slide-hint">
           <span className="text-[7px] font-black uppercase tracking-[0.2em] italic">Scroll</span>
           <ChevronsRight size={8} strokeWidth={3} />
         </div>
       )}
-    </div> {/* закриває lg:col-span-3 (праву панель) */}
-  </div> {/* закриває внутрішній flex-col/lg:grid контейнер */}
+    </div>
+  </div>
 </main>
     
       {/* --- FOOTER --- */}
