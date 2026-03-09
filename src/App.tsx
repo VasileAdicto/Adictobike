@@ -566,11 +566,11 @@ const handleLoadBuild = (build: any) => {
         </div> {/* закриває внутрішній grid футера */}
       </div> {/* закриває fixed контейнер футера */}
    
-      /<GaragePanel isOpen={isGarageOpen} onClose={() => setIsGarageOpen(false)} builds={savedBuilds} user={user} onLogout={handleLogout} onSelectBuild={handleLoadBuild} onDeleteBuild={(id: string) => { const newB = savedBuilds.filter(b => b.id !== id); setSavedBuilds(newB); localStorage.setItem('adicto_saved_builds', JSON.stringify(newB)); }} />
+      <GaragePanel isOpen={isGarageOpen} onClose={() => setIsGarageOpen(false)} builds={savedBuilds} user={user} onLogout={handleLogout} onSelectBuild={handleLoadBuild} onDeleteBuild={(id: string) => { const newB = savedBuilds.filter(b => b.id !== id); setSavedBuilds(newB); localStorage.setItem('adicto_saved_builds', JSON.stringify(newB)); }} />
     </div>
   );
-}
-
+} //
+ 
 // --- GARAGE PANEL ---
 const GaragePanel = ({ isOpen, onClose, builds, user, onLogout, onSelectBuild, onDeleteBuild }: any) => {
   if (!isOpen) return null;
@@ -702,7 +702,45 @@ const GaragePanel = ({ isOpen, onClose, builds, user, onLogout, onSelectBuild, o
     </motion.div>
   );
 };
-      
+
+// --- AUTH MODAL COMPONENT ---
+const AuthModal = ({ isOpen, onClose, onLogin }: any) => {
+  const [email, setEmail] = useState('');
+  
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xl">
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="bg-zinc-900 border border-white/5 p-8 rounded-[2.5rem] max-w-sm w-full relative shadow-2xl"
+      >
+        <h2 className="text-white font-black uppercase italic tracking-widest text-center mb-6">Garage Access</h2>
+        
+        <input 
+          type="email" 
+          placeholder="ENTER YOUR EMAIL" 
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="w-full bg-black border border-white/10 p-4 rounded-xl text-white mb-4 outline-none focus:border-red-600 font-mono text-xs text-center"
+        />
+        
+        <button 
+          onClick={() => onLogin({ email, name: email.split('@')[0] })}
+          className="w-full bg-red-600 py-4 rounded-xl text-white font-black uppercase italic text-xs hover:bg-red-700 transition-all active:scale-95"
+        >
+          Access Garage
+        </button>
+        
+        <button onClick={onClose} className="w-full text-zinc-500 text-[10px] mt-4 uppercase font-black tracking-widest hover:text-white transition-colors">
+          Close
+        </button>
+      </motion.div>
+    </div>
+  );
+};
+
 // --- SUMMARY VIEW (ФІНАЛЬНА СТОРІНКА) ---
 function SummaryView({ selections, onReset, setSavedBuilds, user, onOpenGarage, onOpenAuth }: any) {
   const [isExporting, setIsExporting] = useState(false);
