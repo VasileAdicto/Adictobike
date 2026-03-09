@@ -526,12 +526,16 @@ const handleLoadBuild = (build: any) => {
               </div>
             </div>
 
-            {/* ПІДКАЗКА СКРОЛУ (Посилена видимість) */}
-            <div className="lg:hidden h-6 flex items-center justify-center gap-1.5 text-red-600 animate-slide-hint mt-1">
-              <span className="text-[8px] font-black uppercase tracking-[0.2em] italic">Scroll</span>
-              <ChevronsRight size={10} strokeWidth={3} />
-            </div>
-          </div>
+            {/* ПІДКАЗКА СКРОЛУ */}
+            {filteredOptions.length > 3 && (
+              <div className="lg:hidden h-6 flex items-center justify-center gap-1.5 text-red-600 animate-slide-hint mt-1">
+                <span className="text-[8px] font-black uppercase tracking-[0.2em] italic">Scroll</span>
+                <ChevronsRight size={10} strokeWidth={3} />
+              </div>
+            )}
+          </div> {/* закриває праву панель */}
+        </div> {/* закриває grid */}
+      </main>
     
       {/* --- FOOTER --- */}
       <div className="fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur-2xl border-t border-white/5 z-40">
