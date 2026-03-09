@@ -419,38 +419,26 @@ const handleLoadBuild = (build: any) => {
       </AnimatePresence>
 
       <style>{`
-        /* Тонкий червоний скролбар */
-        .custom-scroll-container::-webkit-scrollbar { 
-          height: 4px !important; 
-          width: 4px !important;
-          display: block !important;
-        }
-        .custom-scroll-container::-webkit-scrollbar-track { 
-          background: rgba(255, 255, 255, 0.05) !important; 
-          border-radius: 10px; 
-        }
-        .custom-scroll-container::-webkit-scrollbar-thumb { 
-          background: #ef4444 !important; 
-          border-radius: 10px; 
-        }
-        
-        @media (max-width: 1024px) {
-          .custom-scroll-container {
-            -webkit-overflow-scrolling: touch;
-            overflow-x: scroll !important;
-          }
-        }
+  /* Тонкий червоний скролбар для мобайла */
+  .custom-scroll-container::-webkit-scrollbar { 
+    height: 4px !important; 
+    display: block !important; 
+  }
+  .custom-scroll-container::-webkit-scrollbar-thumb { 
+    background: #ef4444 !important; 
+    border-radius: 10px; 
+  }
+  .custom-scroll-container::-webkit-scrollbar-track { 
+    background: rgba(255, 255, 255, 0.05) !important; 
+  }
 
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-
-        @keyframes slideHint { 
-          0%, 100% { transform: translateX(0); opacity: 0.5; } 
-          50% { transform: translateX(8px); opacity: 1; } 
-        }
-        .animate-slide-hint { animation: slideHint 1.5s infinite; }
-      `}</style>
-
+  /* Анімація для напису Scroll */
+  @keyframes slideHint { 
+    0%, 100% { transform: translateX(0); opacity: 0.5; } 
+    50% { transform: translateX(8px); opacity: 1; } 
+  }
+  .animate-slide-hint { animation: slideHint 1.5s infinite; }
+`}</style>
       {isLoggedIn ? (
         <AdminPanel categories={INITIAL_STEPS.map(s => s.title)} offsets={offsets} setOffsets={setOffsets} activeComponent={activeComponentForTuning} showGrid={showGrid} setShowGrid={setShowGrid} gridSize={gridSize} setGridSize={setGridSize} isZoomed={isZoomed} setIsZoomed={setIsZoomed} zoomScale={zoomScale} setZoomScale={setZoomScale} onLogout={handleLogout} />
       ) : (
@@ -509,33 +497,31 @@ const handleLoadBuild = (build: any) => {
           </div>
 
           {/* ПРАВА ЧАСТИНА: КАРТКИ ТОВАРІВ */}
-          <div className="lg:col-span-3 flex flex-col bg-zinc-900/40 rounded-[1.5rem] lg:rounded-[2.5rem] border border-white/5 p-2 lg:p-6 relative overflow-hidden order-2 shadow-2xl flex-1 min-h-[140px]">
-            <div className="flex-1 overflow-x-auto lg:overflow-y-auto custom-scroll-container pb-4">
-              <div className="flex flex-row lg:flex-col gap-2 min-w-full">
-                <AnimatePresence mode="popLayout">
-                  {filteredOptions.map((option) => (
-                    <div key={option.id} className="w-[32%] min-w-[32%] lg:w-full lg:min-w-0 shrink-0">
-                      <OptionCard 
-                        component={option} 
-                        isSelected={selections[currentStep.id] === option.id} 
-                        onClick={() => setSelections(prev => ({...prev, [currentStep.id]: option.id}))} 
-                      />
-                    </div>
-                  ))}
-                </AnimatePresence>
-              </div>
-            </div>
+<div className="lg:col-span-3 flex flex-col bg-zinc-900/40 rounded-[1.5rem] lg:rounded-[2.5rem] border border-white/5 p-2 lg:p-6 relative overflow-hidden order-2 shadow-2xl flex-1 min-h-[140px]">
+  
+  {/* Скрол-контейнер: додано pb-4, щоб було місце для скролбару */}
+  <div className="flex-1 overflow-x-auto lg:overflow-y-auto custom-scroll-container pb-4">
+    <div className="flex flex-row lg:flex-col gap-2 min-w-full">
+      <AnimatePresence mode="popLayout">
+        {filteredOptions.map((option) => (
+          <div key={option.id} className="w-[32%] min-w-[32%] lg:w-full lg:min-w-0 shrink-0">
+            <OptionCard 
+              component={option} 
+              isSelected={selections[currentStep.id] === option.id} 
+              onClick={() => setSelections(prev => ({...prev, [currentStep.id]: option.id}))} 
+            />
+          </div>
+        ))}
+      </AnimatePresence>
+    </div>
+  </div>
 
-            {/* ПІДКАЗКА СКРОЛУ */}
-            {filteredOptions.length > 3 && (
-              <div className="lg:hidden h-6 flex items-center justify-center gap-1.5 text-red-600 animate-slide-hint mt-1">
-                <span className="text-[8px] font-black uppercase tracking-[0.2em] italic">Scroll</span>
-                <ChevronsRight size={10} strokeWidth={3} />
-              </div>
-            )}
-          </div> {/* закриває праву панель */}
-        </div> {/* закриває grid */}
-      </main>
+  {/* ПІДКАЗКА: Вона має бути ТУТ, всередині div зrounded-[1.5rem] */}
+  <div className="lg:hidden h-6 flex items-center justify-center gap-1.5 text-red-600 animate-slide-hint mt-1">
+    <span className="text-[8px] font-black uppercase tracking-[0.2em] italic">Scroll</span>
+    <ChevronsRight size={10} strokeWidth={3} />
+  </div>
+</div>
     
       {/* --- FOOTER --- */}
       <div className="fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur-2xl border-t border-white/5 z-40">
