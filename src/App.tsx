@@ -770,7 +770,7 @@ const GaragePanel = ({ isOpen, onClose, builds, user, onLogout, onSelectBuild, o
   );
 };
 
-function SummaryView({ selections, onReset, setSavedBuilds }: any) {
+function SummaryView({ selections, onReset, setSavedBuilds, user, onOpenGarage, onOpenAuth }: any) {
   const [isExporting, setIsExporting] = useState(false);
   const [progress, setProgress] = useState(0);
 
