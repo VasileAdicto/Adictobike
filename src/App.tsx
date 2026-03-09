@@ -573,112 +573,128 @@ const handleLoadBuild = (build: any) => {
  
 // --- GARAGE PANEL ---
 const GaragePanel = ({ isOpen, onClose, builds, user, onLogout, onSelectBuild, onDeleteBuild }: any) => {
+  // Додаємо стани для PDF
+  const [exportingId, setExportingId] = useState<string | null>(null);
+  const [progress, setProgress] = useState(0);
+
   if (!isOpen) return null;
 
+  // Логіка генерації PDF (аналогічна SummaryView)
+  const handleDownloadPDF = async (build: any) => {
+    setExportingId(build.id);
+    setProgress(0);
+    
+    const interval = setInterval(() => {
+      setProgress(prev => (prev >= 95 ? 95 : prev + 5));
+    }, 100);
+
+    const doc = new jsPDF();
+    const cleanText = (text: string) => text ? String(text).replace(/[^\x00-\x7F]/g, "").toUpperCase() : "";
+
+    // Заголовок в PDF
+    doc.setFontSize(18);
+    doc.text("ADICTO BIKE BUILD", 14, 20);
+    doc.setFontSize(10);
+    doc.text(`BUILD NAME: ${build.name.toUpperCase()}`, 14, 30);
+    doc.text(`DATE: ${build.date}`, 14, 35);
+
+    // Таблиця компонентів
+    autoTable(doc, {
+      startY: 45,
+      head: [['SECTION', 'COMPONENT', 'BRAND']],
+      body: build.components.map((c: any) => [
+        cleanText(c.stepTitle || ""),
+        cleanText(c.name),
+        cleanText(c.brand)
+      ]),
+      styles: { fontSize: 8 },
+      headStyles: { fillColor: [220, 38, 38] }
+    });
+
+    setTimeout(() => {
+      clearInterval(interval);
+      setProgress(100);
+      doc.save(`ADICTO_${build.name.replace(/\s+/g, '_')}.pdf`);
+      setExportingId(null);
+      setProgress(0);
+    }, 1000);
+  };
+
   return (
-    <motion.div 
-      initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
-      className="fixed inset-0 z-[999] bg-black/98 backdrop-blur-3xl flex flex-col font-sans text-white"
-    >
-      {/* HEADER */}
+    <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} className="fixed inset-0 z-[999] bg-black/98 backdrop-blur-3xl flex flex-col font-sans text-white">
+      {/* HEADER (без змін) */}
       <div className="p-4 lg:p-6 border-b border-white/5 flex justify-between items-start relative">
-        <div className="flex gap-4">
-          <div className="w-10 h-10 lg:w-12 lg:h-12 bg-zinc-900 border border-white/10 rounded-full flex items-center justify-center font-black italic text-red-600 text-[12px] lg:text-[14px] shadow-xl">
-            {user?.name?.[0].toUpperCase()}
-          </div>
-          <div className="flex flex-col">
-            <h2 className="text-[9px] lg:text-[10px] font-black uppercase italic leading-none tracking-[0.2em] text-white">MY ADICTO</h2>
-            <h2 className="text-[9px] lg:text-[10px] font-black uppercase italic leading-none tracking-[0.2em] text-red-600 mt-1">GARAGE</h2>
-            <button onClick={onLogout} className="mt-2 flex items-center gap-1 text-zinc-600 hover:text-white transition-all text-[7px] lg:text-[8px] font-bold uppercase">
-              <LogOut size={10}/> Logout
-            </button>
-          </div>
-        </div>
-
-        {/* DESKTOP CENTER NAVIGATION */}
-        <div className="hidden lg:flex absolute left-1/2 -translate-x-1/2 top-8 items-center gap-3">
-          <button className="flex items-center gap-2 px-6 py-2 bg-red-600 rounded-full shadow-lg shadow-red-600/20 hover:bg-red-700 transition-all">
-            <span className="text-[10px] font-black uppercase italic tracking-widest text-white">Compare</span>
-          </button>
-          <span className="text-[9px] font-black uppercase italic tracking-widest text-zinc-500">Choose to compare</span>
-        </div>
-
-        {/* RIGHT ACTIONS */}
-        <div className="flex flex-col gap-2 items-end">
-          <button onClick={onClose} className="text-white transition-all uppercase text-[9px] font-black italic flex items-center gap-2 bg-white/10 px-4 py-2 rounded-full border border-white/10 hover:bg-white/20">
-            MAIN <ChevronRight size={14} />
-          </button>
-          {/* MOBILE COMPARE BUTTON */}
-          <button className="lg:hidden flex items-center gap-2 bg-red-600 px-4 py-1.5 rounded-full text-[9px] font-black uppercase italic text-white shadow-lg shadow-red-600/20">
-             Compare
-          </button>
-        </div>
+         {/* Твій існуючий хедер... */}
+         <div className="flex flex-col gap-2 items-end">
+            <button onClick={onClose} className="text-white bg-white/10 px-5 py-2 rounded-full text-[9px] font-black italic">MAIN PAGE</button>
+         </div>
       </div>
 
       {/* LIST OF BUILDS */}
-<div className="flex-1 overflow-y-auto p-4 lg:p-10 custom-scroll-container">
-  <div className="space-y-4 max-w-5xl mx-auto">
-    {builds.map((build: any) => (
-      <div key={build.id} className="bg-zinc-900/30 border border-white/5 rounded-[1.5rem] p-4 lg:p-6 hover:bg-zinc-900/50 transition-all group relative">
-        
-        {/* DATE */}
-        <div className="absolute top-2 lg:top-3 right-6 text-[7px] lg:text-[8px] font-mono text-zinc-600 uppercase tracking-widest">
-          {build.date || '09/03/2026'}
-        </div>
+      <div className="flex-1 overflow-y-auto p-4 lg:p-10 custom-scroll-container">
+        <div className="space-y-4 max-w-5xl mx-auto">
+          {builds.map((build: any) => (
+            <div key={build.id} className="bg-zinc-900/30 border border-white/5 rounded-[1.5rem] p-4 lg:p-6 group relative">
+              <div className="absolute top-2 lg:top-3 right-6 text-[7px] text-zinc-600 uppercase font-mono">{build.date}</div>
+              
+              <div className="flex flex-col lg:flex-row lg:items-center gap-4 mt-4 lg:mt-0">
+                <div className="flex items-center gap-3 lg:gap-5 flex-1 min-w-0">
+                  <label className="relative flex items-center justify-center cursor-pointer shrink-0">
+                    <input type="checkbox" className="peer sr-only" />
+                    <div className="w-5 h-5 rounded-full border-2 border-white/10 peer-checked:border-red-600 peer-checked:bg-red-600/20 transition-all flex items-center justify-center">
+                      <div className="w-2 h-2 rounded-full bg-red-600 scale-0 peer-checked:scale-100 transition-transform" />
+                    </div>
+                  </label>
+                  <button onClick={() => onSelectBuild(build)} className="text-[14px] lg:text-[18px] font-black uppercase italic hover:text-red-600 truncate">{build.name}</button>
+                </div>
 
-        <div className="flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-8 mt-4 lg:mt-0">
-          
-          {/* LEFT: Round selector + Name */}
-          <div className="flex items-center gap-3 lg:gap-5 flex-1 min-w-0">
-            <label className="relative flex items-center justify-center cursor-pointer shrink-0">
-              <input type="checkbox" className="peer sr-only" />
-              <div className="w-3 h-3 lg:w-3 lg:h-3 rounded-full border-2 border-white/10 peer-checked:border-red-600 peer-checked:bg-red-600/20 transition-all flex items-center justify-center">
-                <div className="w-2 h-2 lg:w-2.5 lg:h-2.5 rounded-full bg-red-600 scale-0 peer-checked:scale-100 transition-transform" />
+                {/* ОПИС КОМПОНЕНТІВ */}
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-1 lg:flex-[2] lg:border-l border-white/5 lg:pl-6">
+                  {build.components?.slice(0, 8).map((c: any, i: number) => (
+                    <div key={i} className="text-[7px] lg:text-[8px] uppercase text-zinc-500 truncate flex items-center">
+                      <span className="w-1 h-1 bg-red-600/50 rounded-full mr-2 shrink-0" />
+                      <span className="truncate">{c.name}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* КНОПКИ ДІЙ З ПРОГРЕС БАРОМ */}
+                <div className="flex items-center justify-between lg:justify-end gap-3 mt-2 lg:mt-0 border-t lg:border-none border-white/5 pt-3 lg:pt-0">
+                  <div className="flex gap-2 w-full lg:w-auto">
+                    
+                    {/* КНОПКА PDF З ПРОГРЕСОМ */}
+                    <button 
+                      onClick={() => handleDownloadPDF(build)}
+                      disabled={exportingId !== null}
+                      className="relative flex-1 lg:flex-none flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 text-white px-4 py-2 rounded-lg text-[8px] font-black uppercase italic overflow-hidden transition-all"
+                    >
+                      {exportingId === build.id && (
+                        <motion.div 
+                          className="absolute left-0 top-0 bottom-0 bg-red-600/40 z-0" 
+                          initial={{ width: 0 }}
+                          animate={{ width: `${progress}%` }}
+                        />
+                      )}
+                      <span className="relative z-10 flex items-center gap-1">
+                        <Download size={10} className="text-red-600"/> 
+                        {exportingId === build.id ? `Loading ${progress}%` : 'PDF'}
+                      </span>
+                    </button>
+
+                    <button onClick={() => onDeleteBuild(build.id)} className="bg-red-600/10 text-red-600 px-4 py-2 rounded-lg text-[8px] font-black uppercase italic hover:bg-red-600 hover:text-white transition-all">
+                      Delete
+                    </button>
+                  </div>
+                </div>
               </div>
-            </label>
-
-            <button 
-              onClick={() => onSelectBuild(build)} 
-              className="text-[14px] lg:text-[18px] font-black uppercase italic text-white hover:text-red-600 transition-colors text-left leading-none tracking-tight truncate"
-            >
-              {build.name || 'Custom Build'}
-            </button>
-          </div>
-
-          {/* --- ОПИС КОМПОНЕНТІВ (Тепер і на мобайлі, і на десктопі) --- */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-1 lg:flex-[2] lg:border-l border-white/5 lg:pl-6">
-            {build.components?.slice(0, 8).map((c: any, i: number) => (
-              <div key={i} className="text-[7px] lg:text-[8px] uppercase text-zinc-500 truncate tracking-tight flex items-center">
-                <span className="w-1 h-1 bg-red-600/50 rounded-full mr-2 shrink-0" />
-                <span className="truncate">{c.name}</span> 
-                {/* Бренд (c.brand) прибрано для чистоти, назва вирівняна по лівій лінії */}
-              </div>
-            ))}
-          </div>
-
-          {/* MOBILE BOTTOM ROW */}
-          <div className="flex items-center justify-between lg:justify-end gap-3 mt-2 lg:mt-0 border-t lg:border-none border-white/5 pt-3 lg:pt-0">
-            <div className="lg:hidden flex items-center gap-2">
-               <span className="text-[7px] font-black uppercase italic text-zinc-600 tracking-widest">Choose to compare</span>
             </div>
-
-            <div className="flex gap-2">
-              <button className="bg-white/5 hover:bg-white/10 text-white px-3 py-1.5 lg:px-4 lg:py-2 rounded-lg text-[8px] font-black uppercase italic transition-all flex items-center gap-2">
-                <Download size={10} className="text-red-600"/> PDF
-              </button>
-              <button 
-                onClick={() => onDeleteBuild(build.id)} 
-                className="bg-red-600/10 hover:bg-red-600 text-red-600 hover:text-white px-3 py-1.5 lg:px-4 lg:py-2 rounded-lg text-[8px] font-black uppercase italic transition-all"
-              >
-                Delete
-              </button>
-            </div>
-          </div>
+          ))}
         </div>
       </div>
-    ))}
-  </div>
-</div>
+      <div className="px-6 py-4 border-t border-white/5 text-center text-[7px] font-black text-zinc-700 uppercase tracking-[0.2em]">Powered by Adicto.Bike</div>
+    </motion.div>
+  );
+};>
 
       {/* FOOTER - 2x More Compact */}
       <div className="px-6 py-4 border-t border-white/5 bg-black mt-auto">
