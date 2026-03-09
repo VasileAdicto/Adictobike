@@ -565,6 +565,8 @@ const handleLoadBuild = (build: any) => {
           </div>
         </div> {/* закриває внутрішній grid футера */}
       </div> {/* закриває fixed контейнер футера */}
+     );
+    };
 
       // --- GARAGE PANEL COMPONENT ---
 const GaragePanel = ({ isOpen, onClose, builds, user, onLogout, onSelectBuild, onDeleteBuild }: any) => {
