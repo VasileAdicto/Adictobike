@@ -511,37 +511,33 @@ const handleLoadBuild = (build: any) => {
           </div>
 
           {/* ПРАВА ЧАСТИНА: КАРТКИ ТОВАРІВ */}
-<div className="lg:col-span-3 flex flex-col bg-zinc-900/40 rounded-[1.5rem] lg:rounded-[2.5rem] border border-white/5 p-2 lg:p-6 relative order-2 shadow-2xl flex-1 min-h-0">
-  
-  {/* Обгортка для скролу */}
-  <div className="flex-1 overflow-x-auto lg:overflow-y-auto lg:overflow-x-hidden custom-scroll-container">
-    <div className="flex flex-row lg:flex-col gap-2 min-w-full pb-2">
-      <AnimatePresence mode="popLayout">
-        {filteredOptions.map((option) => (
-          <div key={option.id} className="w-[32%] min-w-[32%] lg:w-full lg:min-w-0 shrink-0">
-            <OptionCard 
-              component={option} 
-              isSelected={selections[currentStep.id] === option.id} 
-              onClick={() => setSelections(prev => ({...prev, [currentStep.id]: option.id}))} 
-            />
-          </div>
-        ))}
-      </AnimatePresence>
-    </div>
-  </div>
-
-  {/* ПІДКАЗКА СКРОЛУ */}
-          {filteredOptions.length > 3 && (
-            <div className="lg:hidden h-6 flex items-center justify-center gap-2 text-red-600 pt-2 pb-1 bg-gradient-to-t from-zinc-900/80 to-transparent shrink-0">
-              <span className="text-[8px] font-black uppercase tracking-[0.2em] italic animate-pulse">Scroll</span>
-              <ChevronsRight size={12} className="animate-slide-hint" />
+          <div className="lg:col-span-3 flex flex-col bg-zinc-900/40 rounded-[1.5rem] lg:rounded-[2.5rem] border border-white/5 p-2 lg:p-6 relative order-2 shadow-2xl flex-1 min-h-0">
+            <div className="flex-1 overflow-x-auto lg:overflow-y-auto lg:overflow-x-hidden custom-scroll-container">
+              <div className="flex flex-row lg:flex-col gap-2 min-w-full pb-2">
+                <AnimatePresence mode="popLayout">
+                  {filteredOptions.map((option) => (
+                    <div key={option.id} className="w-[32%] min-w-[32%] lg:w-full lg:min-w-0 shrink-0">
+                      <OptionCard 
+                        component={option} 
+                        isSelected={selections[currentStep.id] === option.id} 
+                        onClick={() => setSelections(prev => ({...prev, [currentStep.id]: option.id}))} 
+                      />
+                    </div>
+                  ))}
+                </AnimatePresence>
+              </div>
             </div>
-          )}
-        </div> {/* закриває lg:col-span-3 (праву панель) */}
-      </div> {/* закриває внутрішній flex/grid контейнер */}
-    </main>
 
-      {/* --- FOOTER --- */}
+            {/* НАПИС SCROLL - З'ЯВИТЬСЯ ТІЛЬКИ ЯКЩО ВАРІАНТІВ > 3 */}
+            {filteredOptions.length > 3 && (
+              <div className="lg:hidden flex items-center justify-center gap-2 text-red-600 py-2 shrink-0 bg-zinc-900/90 border-t border-white/5 rounded-b-[1.5rem]">
+                <span className="text-[8px] font-black uppercase tracking-widest italic animate-pulse">Scroll to more</span>
+                <ChevronsRight size={12} className="animate-slide-hint" />
+              </div>
+            )}
+          </div>
+
+          {/* --- FOOTER --- */}
       <div className="fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur-2xl border-t border-white/5 z-40 shrink-0">
         <div className="max-w-[1500px] mx-auto px-4 lg:px-6 py-4 lg:py-6 grid grid-cols-12 gap-2 items-center">
           <button onClick={() => currentStepIndex > 0 && setCurrentStepIndex(currentStepIndex - 1)} className="col-span-3 lg:col-span-2 flex items-center gap-1 text-zinc-500 hover:text-white transition-all font-black uppercase text-[10px] italic">
