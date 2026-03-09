@@ -517,33 +517,32 @@ const handleLoadBuild = (build: any) => {
 </main>
 
     {/* ПРАВА ЧАСТИНА: КАРТКИ ТОВАРІВ */}
-    <div className="lg:col-span-3 flex flex-col bg-zinc-900/40 rounded-[2.5rem] border border-white/5 p-3 lg:p-6 relative overflow-hidden order-2 shadow-2xl min-h-[180px] lg:h-full">
-      <div className="flex-1 overflow-x-auto lg:overflow-y-auto lg:overflow-x-hidden custom-scroll-container pb-2 lg:pb-0">
-        {/* w-[24%] робить картки дуже компактними в ряд */}
-        <div className="flex flex-row lg:flex-col gap-2 min-w-full">
-          <AnimatePresence mode="popLayout">
-            {filteredOptions.map((option) => (
-              <div key={option.id} className="w-[24%] min-w-[24%] lg:w-full lg:min-w-0 shrink-0">
-                <OptionCard 
-                  component={option} 
-                  isSelected={selections[currentStep.id] === option.id} 
-                  onClick={() => setSelections(prev => ({...prev, [currentStep.id]: option.id}))} 
-                />
-              </div>
-            ))}
-          </AnimatePresence>
+        <div className="lg:col-span-3 flex flex-col bg-zinc-900/40 rounded-[1.5rem] lg:rounded-[2.5rem] border border-white/5 p-2 lg:p-6 relative overflow-hidden order-2 shadow-2xl flex-1 min-h-0">
+          <div className="flex-1 overflow-x-auto lg:overflow-y-auto custom-scroll-container">
+            <div className="flex flex-row lg:flex-col gap-2 min-w-full">
+              <AnimatePresence mode="popLayout">
+                {filteredOptions.map((option) => (
+                  <div key={option.id} className="w-[32%] min-w-[32%] lg:w-full lg:min-w-0 shrink-0">
+                    <OptionCard 
+                      component={option} 
+                      isSelected={selections[currentStep.id] === option.id} 
+                      onClick={() => setSelections(prev => ({...prev, [currentStep.id]: option.id}))} 
+                    />
+                  </div>
+                ))}
+              </AnimatePresence>
+            </div>
+          </div>
+
+          {filteredOptions.length > 3 && (
+            <div className="lg:hidden mt-2 flex items-center justify-center gap-1 text-zinc-600 animate-slide-hint">
+              <span className="text-[7px] font-black uppercase tracking-[0.2em] italic">Scroll</span>
+              <ChevronsRight size={8} strokeWidth={3} />
+            </div>
+          )}
         </div>
       </div>
-
-      {filteredOptions.length > 3 && (
-        <div className="lg:hidden mt-2 flex items-center justify-center gap-1 text-zinc-600 animate-slide-hint">
-          <span className="text-[7px] font-black uppercase tracking-[0.2em] italic">Scroll</span>
-          <ChevronsRight size={8} strokeWidth={3} />
-        </div>
-      )}
-    </div>
-  </div>
-</main>
+    </main>
     
       {/* --- FOOTER --- */}
       <div className="fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur-2xl border-t border-white/5 z-40">
