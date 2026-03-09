@@ -235,10 +235,37 @@ const Visualizer = ({ selectedComponents, offsets, showGrid, gridSize, isZoomed,
 
 // --- OPTION CARD ---
 const OptionCard = ({ component, isSelected, onClick }: { component: Component, isSelected: boolean, onClick: () => void }) => (
-  <motion.button layout onClick={(e) => { e.preventDefault(); onClick(); }} className={cn("relative flex flex-col p-2 lg:p-3 rounded-xl lg:rounded-2xl border text-left transition-all group w-full shrink-0", isSelected ? "border-red-600 bg-red-600/5 ring-1 ring-red-600/20 shadow-[0_0_20px_rgba(255,0,0,0.1)]" : "border-white/5 bg-zinc-900/50 hover:border-white/20 hover:bg-zinc-900")}>
-    <div className="aspect-square w-full rounded-lg lg:rounded-xl bg-black/40 mb-2 lg:mb-3 overflow-hidden relative"><img src={component.cardImageUrl} alt={component.name} className="w-full h-full object-contain p-1 lg:p-2 group-hover:scale-110 transition duration-500" />{isSelected && <div className="absolute top-1 lg:top-2 right-1 lg:right-2 bg-red-600 p-1 lg:p-1.5 rounded-full shadow-lg z-10"><CheckCircle2 size={10} className="text-white" /></div>}</div>
-    <div className="flex-1 flex flex-col justify-between overflow-hidden"><div><h3 className="text-[6.5px] lg:text-[11px] font-bold leading-tight tracking-tighter line-clamp-2 text-zinc-300 uppercase text-zinc-300">{component.name}</h3><p className="text-[6px] lg:text-[9px] text-zinc-500 uppercase font-black">{component.brand}</p></div><div className="flex justify-between items-end mt-1 lg:mt-2"><p className="font-mono text-[10px] lg:text-sm text-red-600 tracking-tighter">€{component.price.toLocaleString()}</p><p className="text-[9px] lg:text-sm text-zinc-600 font-mono italic">{component.weight}g</p></div></div>
-  </motion.button>
+  <motion.button 
+    layout 
+    onClick={(e) => { e.preventDefault(); onClick(); }} 
+    className={cn(
+      "relative flex flex-col p-1 lg:p-3 rounded-xl lg:rounded-2xl border text-left transition-all group w-full shrink-0", 
+      isSelected ? "border-red-600 bg-red-600/5 ring-1 ring-red-600/20 shadow-[0_0_20px_rgba(255,0,0,0.1)]" : "border-white/5 bg-zinc-900/50 hover:border-white/20 hover:bg-zinc-900"
+    )}
+  >
+    {/* Зображення: менші відступи на мобайлі */}
+    <div className="aspect-square w-full rounded-lg lg:rounded-xl bg-black/40 mb-1 lg:mb-3 overflow-hidden relative">
+      <img src={component.cardImageUrl} alt={component.name} className="w-full h-full object-contain p-0.5 lg:p-2 group-hover:scale-110 transition duration-500" />
+      {isSelected && (
+        <div className="absolute top-1 right-1 lg:top-2 lg:right-2 bg-red-600 p-0.5 lg:p-1.5 rounded-full shadow-lg z-10">
+          <CheckCircle2 size={8} className="text-white lg:hidden" />
+          <CheckCircle2 size={10} className="hidden lg:block text-white" />
+        </div>
+      )}
+    </div>
+    
+    <div className="flex-1 flex flex-col justify-between overflow-hidden">
+      <div>
+        {/* Текст: у 2 рази менший на мобайлі */}
+        <h3 className="text-[6px] lg:text-[11px] font-bold leading-tight tracking-tighter line-clamp-2 text-zinc-300 uppercase">{component.name}</h3>
+        <p className="text-[5px] lg:text-[9px] text-zinc-500 uppercase font-black">{component.brand}</p>
+      </div>
+      <div className="flex justify-between items-end mt-0.5 lg:mt-2">
+        <p className="font-mono text-[8px] lg:text-sm text-red-600 tracking-tighter">€{component.price.toLocaleString()}</p>
+        <p className="text-[7px] lg:text-sm text-zinc-600 font-mono italic">{component.weight}g</p>
+      </div>
+    </div>
+  </motion.button>
 );
 
 // --- MAIN CONFIGURATOR ---
@@ -464,10 +491,11 @@ const handleLoadBuild = (build: any) => {
       )}
 
       <main className="max-w-[1500px] mx-auto px-4 lg:px-6 pt-2 lg:pt-3 flex-1 flex flex-col overflow-hidden">
-  <div className="flex flex-col lg:grid lg:grid-cols-12 gap-6 lg:gap-10 lg:h-[calc(100vh-180px)] items-stretch">
+  {/* lg:h-[calc(100vh-180px)] автоматично підтягує все до футера */}
+  <div className="flex flex-col lg:grid lg:grid-cols-12 gap-4 lg:gap-10 lg:h-[calc(100vh-180px)] items-stretch">
     
     {/* ЛІВА ЧАСТИНА: ВІЗУАЛІЗАТОР */}
-    <div className="lg:col-span-9 flex flex-col gap-2 order-1">
+    <div className="lg:col-span-9 flex flex-col gap-2 order-1 h-[260px] lg:h-full">
       <div ref={stepsNavRef} className="flex overflow-x-auto no-scrollbar steps-scroll-container gap-x-6 gap-y-2 pb-2 scroll-smooth">
         {steps.map((step, idx) => (
           <button 
@@ -479,18 +507,19 @@ const handleLoadBuild = (build: any) => {
           </button>
         ))}
       </div>
-      <div className="h-[280px] md:h-[400px] lg:flex-1 relative">
+      <div className="flex-1 relative">
         <Visualizer selectedComponents={selectedComponents} offsets={offsets} showGrid={showGrid} gridSize={gridSize} isZoomed={isZoomed} zoomScale={zoomScale} />
       </div>
     </div>
 
     {/* ПРАВА ЧАСТИНА: КАРТКИ ТОВАРІВ */}
-    <div className="lg:col-span-3 flex flex-col bg-zinc-900/40 rounded-[2.5rem] border border-white/5 p-4 lg:p-6 relative overflow-hidden order-2 shadow-2xl">
-      <div className="flex-1 overflow-x-auto lg:overflow-y-auto lg:overflow-x-hidden custom-scroll-container pb-2 lg:pb-0" style={{ display: 'flex', flexDirection: 'column' }}>
-        <div className="flex flex-row lg:flex-col gap-3 min-w-full">
+    <div className="lg:col-span-3 flex flex-col bg-zinc-900/40 rounded-[2.5rem] border border-white/5 p-3 lg:p-6 relative overflow-hidden order-2 shadow-2xl min-h-[180px] lg:h-full">
+      <div className="flex-1 overflow-x-auto lg:overflow-y-auto lg:overflow-x-hidden custom-scroll-container pb-2 lg:pb-0">
+        {/* w-[24%] робить картки дуже компактними в ряд */}
+        <div className="flex flex-row lg:flex-col gap-2 min-w-full">
           <AnimatePresence mode="popLayout">
             {filteredOptions.map((option) => (
-              <div key={option.id} className="w-[31%] min-w-[31%] lg:w-full lg:min-w-0 shrink-0">
+              <div key={option.id} className="w-[24%] min-w-[24%] lg:w-full lg:min-w-0 shrink-0">
                 <OptionCard 
                   component={option} 
                   isSelected={selections[currentStep.id] === option.id} 
@@ -504,15 +533,15 @@ const handleLoadBuild = (build: any) => {
 
       {/* ПІДКАЗКА Scroll >> */}
       {filteredOptions.length > 3 && (
-        <div className="lg:hidden mt-3 flex items-center justify-center gap-1 text-zinc-500 animate-slide-hint">
-          <span className="text-[8px] font-black uppercase tracking-[0.2em] italic">Scroll</span>
-          <ChevronsRight size={10} strokeWidth={3} />
+        <div className="lg:hidden mt-2 flex items-center justify-center gap-1 text-zinc-600 animate-slide-hint">
+          <span className="text-[7px] font-black uppercase tracking-[0.2em] italic">Scroll</span>
+          <ChevronsRight size={8} strokeWidth={3} />
         </div>
       )}
-    </div> {/* КІНЕЦЬ ПРАВОЇ ПАНЕЛІ */}
+    </div>
 
-  </div> {/* КІНЕЦЬ FLEX/GRID КОНТЕЙНЕРА */}
-</main> {/* КІНЕЦЬ MAIN */}
+  </div>
+</main>
 
       {/* --- FOOTER --- */}
       <div className="fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur-2xl border-t border-white/5 z-40">
