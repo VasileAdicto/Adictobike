@@ -546,12 +546,6 @@ const GaragePanel = ({ isOpen, onClose, builds, user, onLogout, onSelectBuild, o
   );
 };
 
-const GaragePanel = ({ isOpen, onClose, builds, user, onLogout, onSelectBuild, onDeleteBuild }: any) => {
-  const [exportingId, setExportingId] = useState<string | null>(null);
-  const [progress, setProgress] = useState(0);
-
-  if (!isOpen) return null;
-
   const handleDownloadPDF = async (build: any) => {
   setExportingId(build.id);
   setProgress(0);
