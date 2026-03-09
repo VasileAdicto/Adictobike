@@ -694,7 +694,7 @@ const GaragePanel = ({ isOpen, onClose, builds, user, onLogout, onSelectBuild, o
       <div className="px-6 py-4 border-t border-white/5 text-center text-[7px] font-black text-zinc-700 uppercase tracking-[0.2em]">Powered by Adicto.Bike</div>
     </motion.div>
   );
-};>
+};
 
       {/* FOOTER - 2x More Compact */}
       <div className="px-6 py-4 border-t border-white/5 bg-black mt-auto">
