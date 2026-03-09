@@ -653,7 +653,7 @@ const GaragePanel = ({ isOpen, onClose, builds, user, onLogout, onSelectBuild, o
   return (
     <motion.div 
       initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
-      className="fixed inset-0 z-[300] bg-black/98 backdrop-blur-3xl flex flex-col font-sans text-white"
+      className="fixed inset-0 z-[500] bg-black/98 backdrop-blur-3xl flex flex-col font-sans text-white"
     >
       {/* HEADER */}
       <div className="p-6 border-b border-white/5 flex justify-between items-start">
