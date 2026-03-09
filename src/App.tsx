@@ -485,9 +485,8 @@ const handleLoadBuild = (build: any) => {
       )}
 
       {/* ОСНОВНИЙ КОНТЕНТ */}
-      <main className="flex-1 max-w-[1500px] mx-auto px-2 lg:px-6 pt-1 w-full overflow-hidden flex flex-col">
-        {/* pb-[70px] на мобайлі резервує місце під футер, щоб картки були в 5px від нього */}
-        <div className="flex flex-col lg:grid lg:grid-cols-12 gap-1.5 lg:gap-10 h-full items-stretch pb-[75px] lg:pb-32">
+      <main className="flex-1 max-w-[1500px] mx-auto px-2 lg:px-6 pt-1 w-full overflow-hidden flex flex-col justify-start">
+  <div className="flex flex-col lg:grid lg:grid-cols-12 gap-1.5 lg:gap-10 h-full items-stretch pb-2 lg:pb-32">
           
           {/* ЛІВА ЧАСТИНА: ВІЗУАЛІЗАТОР (Збільшено висоту до 320px) */}
           <div className="lg:col-span-9 flex flex-col gap-1 order-1 h-[320px] md:h-[400px] lg:h-full shrink-0">
