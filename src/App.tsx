@@ -630,11 +630,11 @@ const GaragePanel = ({ isOpen, onClose, builds, user, onLogout, onSelectBuild, o
                   {/* Кружечок зліва */}
                   <label className="relative flex items-center justify-center cursor-pointer shrink-0">
                     <input type="checkbox" className="peer sr-only" />
-                    <div className="w-3 h-3 lg:w-3 lg:h-3 rounded-full border-2 border-white/10 peer-checked:border-red-600 peer-checked:bg-red-600/20 flex items-center justify-center transition-all">
+                    <div className="w-2 h-2 lg:w-2 lg:h-2 rounded-full border-2 border-white peer-checked:border-red-600 peer-checked:bg-red-600/20 flex items-center justify-center transition-all">
                       <div className="w-2 h-2 lg:w-2.5 lg:h-2.5 rounded-full bg-red-600 scale-0 peer-checked:scale-100 transition-transform" />
                     </div>
                   </label>
-                  <button onClick={() => onSelectBuild(build)} className="text-[12px] lg:text-[16px] font-black uppercase italic text-white hover:text-red-600 truncate text-left pr-1">{build.name}</button>
+                  <button onClick={() => onSelectBuild(build)} className="text-[12px] lg:text-[14px] font-black uppercase italic text-white hover:text-red-600 truncate text-left pr-1">{build.name}</button>
                 </div>
 
                 {/* Опис деталей (Мобайл + Десктоп) */}
@@ -741,11 +741,21 @@ function SummaryView({ selections, onReset, setSavedBuilds, user, onOpenGarage, 
 
           <button onClick={() => {
             const newBuild = {
-              id: Math.random().toString(36).substr(2, 9),
-              name: selections.find((c: any) => c.stepTitle === 'Frame')?.name || 'Custom Build',
-              date: new Date().toLocaleDateString('uk-UA'),
-              totalPrice, components: selections
-            };
+  id: Math.random().toString(36).substr(2, 9),
+  name: selections.find((c: any) => c.stepTitle === 'Frame')?.name || 'Custom Build',
+  date: new Date().toLocaleDateString('uk-UA'),
+  totalPrice: totalPrice,
+  // ТУТ ВАЖЛИВО: зберігаємо imageUrl та zIndex для PDF
+  components: selections.map((c: any) => ({ 
+    stepTitle: c.stepTitle, 
+    brand: c.brand, 
+    name: c.name,
+    price: c.price,
+    weight: c.weight,
+    imageUrl: c.imageUrl, // Потрібно для фото в PDF
+    zIndex: c.zIndex      // Потрібно для правильних шарів
+  }))
+};
             const current = JSON.parse(localStorage.getItem('adicto_saved_builds') || '[]');
             localStorage.setItem('adicto_saved_builds', JSON.stringify([...current, newBuild]));
             setSavedBuilds([...current, newBuild]);
@@ -795,16 +805,23 @@ const generateAdictoPDF = async (components: any[]) => {
     if (logoBase64) doc.addImage(logoBase64, 'PNG', (pageWidth / 2) - 15, 8, 10, 10);
   } catch (e) {}
 
-  // 2. Рендеримо Байк (Накладання шарів як у візуалізаторі)
-  try {
-    const sortedByZ = [...components].sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
-    for (const comp of sortedByZ) {
-      if (comp.imageUrl) {
-        const imgBase64 = await getBase64Image(comp.imageUrl);
-        if (imgBase64) doc.addImage(imgBase64, 'PNG', 15, 20, 180, 110, undefined, 'FAST');
+  // 2. Рендеримо Байк (Накладання шарів)
+try {
+  // Сортуємо, щоб рама була знизу, а кермо зверху
+  const sortedByZ = [...components].sort((a, b) => (Number(a.zIndex) || 0) - (Number(b.zIndex) || 0));
+  
+  for (const comp of sortedByZ) {
+    if (comp.imageUrl) {
+      const imgBase64 = await getBase64Image(comp.imageUrl);
+      if (imgBase64) {
+        // Малюємо шар за шаром
+        doc.addImage(imgBase64, 'PNG', 15, 20, 180, 110, undefined, 'FAST');
       }
     }
-  } catch (e) {}
+  }
+} catch (e) {
+  console.error("PDF Image Error:", e);
+}
 
   // 3. Таблиця специфікацій
   autoTable(doc, { 
