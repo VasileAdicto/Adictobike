@@ -570,8 +570,8 @@ const handleLoadBuild = (build: any) => {
     </div>
   );
 } //
- 
-// --- 1. GARAGE PANEL (Покращена версія з PDF та прогрес-баром) ---
+
+
 const GaragePanel = ({ isOpen, onClose, builds, user, onLogout, onSelectBuild, onDeleteBuild }: any) => {
   const [exportingId, setExportingId] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
@@ -584,13 +584,10 @@ const GaragePanel = ({ isOpen, onClose, builds, user, onLogout, onSelectBuild, o
     const interval = setInterval(() => setProgress(p => p >= 95 ? 95 : p + 5), 100);
 
     const doc = new jsPDF();
-    const cleanText = (t: string) => t ? String(t).replace(/[^\x00-\x7F]/g, "").toUpperCase() : "";
-
     autoTable(doc, {
       startY: 20,
       head: [['SECTION', 'COMPONENT']],
-      body: build.components.map((c: any) => [cleanText(c.stepTitle || ""), cleanText(c.name)]),
-      styles: { fontSize: 8 },
+      body: build.components.map((c: any) => [c.stepTitle?.toUpperCase() || "", c.name?.toUpperCase() || ""]),
       headStyles: { fillColor: [220, 38, 38] }
     });
 
@@ -611,41 +608,44 @@ const GaragePanel = ({ isOpen, onClose, builds, user, onLogout, onSelectBuild, o
             {user?.name?.[0].toUpperCase()}
           </div>
           <div className="flex flex-col">
-            <h2 className="text-[9px] lg:text-[10px] font-black uppercase italic tracking-[0.2em] text-white leading-none">MY ADICTO</h2>
+            <h2 className="text-[9px] lg:text-[10px] font-black uppercase italic text-white leading-none">MY ADICTO</h2>
             <h2 className="text-[9px] lg:text-[10px] font-black uppercase italic text-red-600 mt-1 leading-none">GARAGE</h2>
-            <button onClick={onLogout} className="mt-2 flex items-center gap-1 text-zinc-600 hover:text-white transition-all text-[7px] font-bold uppercase"><LogOut size={10}/> Logout</button>
+            <button onClick={onLogout} className="mt-2 text-zinc-600 hover:text-white text-[7px] font-bold uppercase flex items-center gap-1"><LogOut size={10}/> Logout</button>
           </div>
         </div>
 
-        {/* DESKTOP CENTER NAVIGATION */}
-        <div className="hidden lg:flex absolute left-1/2 -translate-x-1/2 top-8 items-center gap-3">
-          <button className="flex items-center gap-2 px-6 py-2 bg-red-600 rounded-full shadow-lg shadow-red-600/20 text-[10px] font-black uppercase italic">Compare</button>
-          <span className="text-[9px] font-black uppercase italic tracking-widest text-zinc-500">Choose to compare</span>
+        {/* DESKTOP: Compare в центрі */}
+        <div className="hidden lg:flex absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 items-center gap-4">
+          <button className="bg-red-600 px-6 py-2 rounded-full font-black uppercase italic text-[10px] tracking-widest shadow-lg shadow-red-600/20">Compare</button>
+          <span className="text-[10px] font-black uppercase italic text-zinc-500 tracking-widest">Choose to compare</span>
         </div>
 
         <div className="flex flex-col gap-2 items-end">
-          <button onClick={onClose} className="text-white bg-white/10 px-5 py-2 rounded-full border border-white/10 text-[9px] font-black italic">MAIN PAGE</button>
+          <button onClick={onClose} className="text-white uppercase text-[9px] font-black italic flex items-center gap-2 bg-white/10 px-5 py-2.5 rounded-full border border-white/10">MAIN PAGE <ChevronRight size={14} /></button>
+          <button className="lg:hidden bg-red-600 px-4 py-1.5 rounded-full text-white text-[9px] font-black italic">Compare</button>
         </div>
       </div>
 
-      {/* LIST OF BUILDS */}
       <div className="flex-1 overflow-y-auto p-4 lg:p-10 custom-scroll-container">
         <div className="space-y-4 max-w-5xl mx-auto">
           {builds.map((build: any) => (
-            <div key={build.id} className="bg-zinc-900/30 border border-white/5 rounded-[1.5rem] p-4 lg:p-6 group relative">
-              <div className="absolute top-2 lg:top-3 right-6 text-[7px] text-zinc-600 uppercase font-mono">{build.date}</div>
-              <div className="flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-8 mt-4 lg:mt-0">
+            <div key={build.id} className="bg-zinc-900/30 border border-white/5 rounded-[1.5rem] p-4 lg:p-6 hover:bg-zinc-900/50 transition-all relative">
+              {/* Дата вгорі */}
+              <div className="absolute top-2 lg:top-3 right-6 text-[7px] lg:text-[8px] font-mono text-zinc-600 uppercase tracking-widest">{build.date}</div>
+              
+              <div className="flex flex-col lg:flex-row lg:items-center gap-4 mt-4 lg:mt-0">
                 <div className="flex items-center gap-3 lg:gap-5 flex-1 min-w-0">
+                  {/* Кружечок зліва */}
                   <label className="relative flex items-center justify-center cursor-pointer shrink-0">
                     <input type="checkbox" className="peer sr-only" />
-                    <div className="w-5 h-5 rounded-full border-2 border-white/10 peer-checked:border-red-600 peer-checked:bg-red-600/20 flex items-center justify-center transition-all">
-                      <div className="w-2 h-2 rounded-full bg-red-600 scale-0 peer-checked:scale-100 transition-transform" />
+                    <div className="w-5 h-5 lg:w-6 lg:h-6 rounded-full border-2 border-white/10 peer-checked:border-red-600 peer-checked:bg-red-600/20 flex items-center justify-center transition-all">
+                      <div className="w-2 h-2 lg:w-2.5 lg:h-2.5 rounded-full bg-red-600 scale-0 peer-checked:scale-100 transition-transform" />
                     </div>
                   </label>
-                  <button onClick={() => onSelectBuild(build)} className="text-[14px] lg:text-[18px] font-black uppercase italic text-white hover:text-red-600 truncate">{build.name}</button>
+                  <button onClick={() => onSelectBuild(build)} className="text-[14px] lg:text-[18px] font-black uppercase italic text-white hover:text-red-600 truncate text-left">{build.name}</button>
                 </div>
 
-                {/* ОПИС КОМПОНЕНТІВ (Тепер і на мобайлі) */}
+                {/* Опис деталей (Мобайл + Десктоп) */}
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-1 lg:flex-[2] lg:border-l border-white/5 lg:pl-6">
                   {build.components?.slice(0, 8).map((c: any, i: number) => (
                     <div key={i} className="text-[7px] lg:text-[8px] uppercase text-zinc-500 truncate flex items-center">
@@ -655,14 +655,14 @@ const GaragePanel = ({ isOpen, onClose, builds, user, onLogout, onSelectBuild, o
                   ))}
                 </div>
 
-                {/* КНОПКИ PDF З ПРОГРЕСОМ */}
                 <div className="flex items-center justify-between lg:justify-end gap-3 mt-2 lg:mt-0 border-t lg:border-none border-white/5 pt-3 lg:pt-0">
-                  <div className="flex gap-2 w-full lg:w-auto">
-                    <button onClick={() => handleDownloadPDF(build)} disabled={exportingId !== null} className="relative flex-1 lg:flex-none flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 text-white px-4 py-2 rounded-lg text-[8px] font-black uppercase italic overflow-hidden transition-all">
-                      {exportingId === build.id && <motion.div className="absolute left-0 top-0 bottom-0 bg-red-600/40 z-0" initial={{ width: 0 }} animate={{ width: `${progress}%` }} />}
-                      <span className="relative z-10 flex items-center gap-1"><Download size={10} className="text-red-600"/> {exportingId === build.id ? `Loading ${progress}%` : 'PDF'}</span>
+                  <div className="lg:hidden flex items-center gap-2"><span className="text-[7px] font-black uppercase italic text-zinc-600">Choose to compare</span></div>
+                  <div className="flex gap-2">
+                    <button onClick={() => handleDownloadPDF(build)} disabled={exportingId !== null} className="relative bg-white/5 text-white px-3 py-1.5 rounded-lg text-[8px] font-black uppercase italic overflow-hidden flex items-center gap-1">
+                      {exportingId === build.id && <motion.div className="absolute left-0 top-0 bottom-0 bg-red-600/40" initial={{ width: 0 }} animate={{ width: `${progress}%` }} />}
+                      <span className="relative z-10 flex items-center gap-1"><Download size={10} className="text-red-600"/> {exportingId === build.id ? `${progress}%` : 'PDF'}</span>
                     </button>
-                    <button onClick={() => onDeleteBuild(build.id)} className="bg-red-600/10 text-red-600 px-4 py-2 rounded-lg text-[8px] font-black uppercase italic hover:bg-red-700 hover:text-white transition-all">Delete</button>
+                    <button onClick={() => onDeleteBuild(build.id)} className="bg-red-600/10 text-red-600 px-3 py-1.5 rounded-lg text-[8px] font-black uppercase italic">Delete</button>
                   </div>
                 </div>
               </div>
@@ -670,23 +670,22 @@ const GaragePanel = ({ isOpen, onClose, builds, user, onLogout, onSelectBuild, o
           ))}
         </div>
       </div>
-      <div className="px-6 py-4 border-t border-white/5 bg-black text-center text-[7px] font-black text-zinc-700 uppercase tracking-[0.2em]">Powered by Adicto.Bike</div>
+      <div className="px-6 py-4 border-t border-white/5 bg-black text-center"><p className="text-[7px] font-black uppercase italic text-zinc-600 tracking-widest leading-none opacity-50">Powered by Adicto.Bike | 2026</p></div>
     </motion.div>
   );
 };
 
-// --- 2. AUTH MODAL (Окремо) ---
 const AuthModal = ({ isOpen, onClose, onLogin }: any) => {
   const [email, setEmail] = useState('');
   if (!isOpen) return null;
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xl">
-      <div className="bg-zinc-900 border border-white/5 p-8 rounded-[2.5rem] max-w-sm w-full relative shadow-2xl">
+      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-zinc-900 border border-white/5 p-8 rounded-[2.5rem] max-w-sm w-full relative shadow-2xl">
         <h2 className="text-white font-black uppercase italic tracking-widest text-center mb-6">Garage Access</h2>
-        <input type="email" placeholder="EMAIL" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full bg-black border border-white/10 p-4 rounded-xl text-white mb-4 outline-none focus:border-red-600 font-mono text-xs text-center" />
-        <button onClick={() => onLogin({ email, name: email.split('@')[0] })} className="w-full bg-red-600 py-4 rounded-xl text-white font-black uppercase italic text-xs hover:bg-red-700 transition-all">Access Garage</button>
+        <input type="email" placeholder="EMAIL" value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-black border border-white/10 p-4 rounded-xl text-white mb-4 outline-none focus:border-red-600 font-mono text-xs text-center" />
+        <button onClick={() => onLogin({ email, name: email.split('@')[0] })} className="w-full bg-red-600 py-4 rounded-xl text-white font-black uppercase italic text-xs">Access Garage</button>
         <button onClick={onClose} className="w-full text-zinc-500 text-[10px] mt-4 uppercase font-black">Close</button>
-      </div>
+      </motion.div>
     </div>
   );
 };
