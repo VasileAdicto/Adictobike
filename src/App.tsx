@@ -578,7 +578,7 @@ const handleLoadBuild = (build: any) => {
   );
 }
 
-const GaragePanel = ({ isOpen, onClose, builds, user, onLogout, onSelectBuild, onDeleteBuild }: any) => {
+  const GaragePanel = ({ isOpen, onClose, builds, user, onLogout, onSelectBuild, onDeleteBuild }: any) => {
   const [exportingId, setExportingId] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
 
