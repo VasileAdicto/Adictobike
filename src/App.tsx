@@ -497,83 +497,65 @@ const handleLoadBuild = (build: any) => {
           </div>
 
           {/* ПРАВА ЧАСТИНА: КАРТКИ ТОВАРІВ */}
-<div className="lg:col-span-3 flex flex-col bg-zinc-900/40 rounded-[1.5rem] lg:rounded-[2.5rem] border border-white/5 p-2 lg:p-6 relative overflow-hidden order-2 shadow-2xl flex-1 min-h-[140px]">
-  
-  {/* Скрол-контейнер: додано pb-4, щоб було місце для скролбару */}
-  <div className="flex-1 overflow-x-auto lg:overflow-y-auto custom-scroll-container pb-4">
-    <div className="flex flex-row lg:flex-col gap-2 min-w-full">
-      <AnimatePresence mode="popLayout">
-        {filteredOptions.map((option) => (
-          <div key={option.id} className="w-[32%] min-w-[32%] lg:w-full lg:min-w-0 shrink-0">
-            <OptionCard 
-              component={option} 
-              isSelected={selections[currentStep.id] === option.id} 
-              onClick={() => setSelections(prev => ({...prev, [currentStep.id]: option.id}))} 
-            />
+          <div className="lg:col-span-3 flex flex-col bg-zinc-900/40 rounded-[1.5rem] lg:rounded-[2.5rem] border border-white/5 p-2 lg:p-6 relative overflow-hidden order-2 shadow-2xl flex-1 min-h-[140px]">
+            {/* Скрол-контейнер */}
+            <div className="flex-1 overflow-x-auto lg:overflow-y-auto custom-scroll-container pb-4">
+              <div className="flex flex-row lg:flex-col gap-2 min-w-full">
+                <AnimatePresence mode="popLayout">
+                  {filteredOptions.map((option) => (
+                    <div key={option.id} className="w-[32%] min-w-[32%] lg:w-full lg:min-w-0 shrink-0">
+                      <OptionCard 
+                        component={option} 
+                        isSelected={selections[currentStep.id] === option.id} 
+                        onClick={() => setSelections(prev => ({...prev, [currentStep.id]: option.id}))} 
+                      />
+                    </div>
+                  ))}
+                </AnimatePresence>
+              </div>
+            </div>
+
+            {/* ПІДКАЗКА СКРОЛУ */}
+            <div className="lg:hidden h-6 flex items-center justify-center gap-1.5 text-red-600 animate-slide-hint mt-1">
+              <span className="text-[8px] font-black uppercase tracking-[0.2em] italic">Scroll</span>
+              <ChevronsRight size={10} strokeWidth={3} />
+            </div>
           </div>
-        ))}
-      </AnimatePresence>
-    </div>
-  </div>
+        </div>
+      </main>
 
-  {/* ПІДКАЗКА: Вона має бути ТУТ, всередині div зrounded-[1.5rem] */}
-  <div className="lg:hidden h-6 flex items-center justify-center gap-1.5 text-red-600 animate-slide-hint mt-1">
-    <span className="text-[8px] font-black uppercase tracking-[0.2em] italic">Scroll</span>
-    <ChevronsRight size={10} strokeWidth={3} />
-  </div>
-</div>
-    
-      {/* --- FOOTER --- */}
-      <div className="fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur-2xl border-t border-white/5 z-40">
-        <div className="max-w-[1500px] mx-auto px-4 lg:px-6 py-6 grid grid-cols-12 gap-2 items-center">
-          
-          {/* BACK BUTTON */}
-          <button 
-            type="button"
-            onClick={() => currentStepIndex > 0 && setCurrentStepIndex(currentStepIndex - 1)} 
-            className="col-span-3 lg:col-span-2 flex items-center gap-1 text-zinc-500 hover:text-white transition-all font-black uppercase text-[10px] italic"
-          >
-            <ChevronLeft size={20} /> Back
+      {/* --- FOOTER --- */}
+      <div className="fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur-2xl border-t border-white/5 z-40 shrink-0">
+        <div className="max-w-[1500px] mx-auto px-4 lg:px-6 py-4 lg:py-6 grid grid-cols-12 gap-2 items-center">
+          <button onClick={() => currentStepIndex > 0 && setCurrentStepIndex(currentStepIndex - 1)} className="col-span-3 lg:col-span-2 flex items-center gap-1 text-zinc-500 hover:text-white transition-all font-black uppercase text-[10px] italic">
+            <ChevronLeft size={16} /> Back
           </button>
-
-          {/* STATS (WEIGHT & PRICE) */}
           <div className="col-span-6 lg:col-span-7 flex justify-center lg:justify-end items-center gap-4 lg:gap-10">
             <div className="text-center lg:text-right text-zinc-300">
               <p className="text-[7px] text-zinc-600 uppercase font-black mb-0.5 italic">Weight</p>
-              <p className="font-mono text-xs">{selectedComponents.reduce((acc, c) => acc + c.weight, 0)}g</p>
+              <p className="font-mono text-[10px] lg:text-xs">{selectedComponents.reduce((acc, c) => acc + c.weight, 0)}g</p>
             </div>
             <div className="h-8 w-px bg-white/10" />
             <div className="text-center lg:text-right text-zinc-300">
               <p className="text-[7px] text-zinc-600 uppercase font-black mb-0.5 italic">Price</p>
-              <p className="font-mono text-xs text-red-600">€{selectedComponents.reduce((acc, c) => acc + c.price, 0).toLocaleString()}</p>
+              <p className="font-mono text-[10px] lg:text-xs text-red-600">€{selectedComponents.reduce((acc, c) => acc + c.price, 0).toLocaleString()}</p>
             </div>
           </div>
-
-          {/* NEXT / FINISH BUTTON */}
-          <div className="col-span-3 flex justify-end items-center">
-            <button 
-              type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                if (filteredOptions.length > 0 && !selections[currentStep.id]) { 
-                  setError("Select!"); 
-                  return; 
-                }
-                setError(null);
+          <div className="col-span-3 flex justify-end">
+            <button onClick={() => {
+                if (filteredOptions.length > 0 && !selections[currentStep.id]) { setError("Select!"); return; }
                 currentStepIndex < steps.length - 1 ? setCurrentStepIndex(currentStepIndex + 1) : setIsFinished(true);
-              }} 
-              className={cn(
-                "flex items-center gap-2 font-black uppercase text-[10px] italic transition-all active:scale-95",
-                "bg-transparent text-red-600 px-0 shadow-none border-none outline-none",
-                "lg:bg-red-600 lg:text-white lg:h-[32px] lg:px-6 lg:rounded-lg lg:hover:bg-red-700 lg:shadow-lg lg:shadow-red-600/20"
-              )}
-            >
-              <span>{currentStepIndex === steps.length - 1 ? 'Finish' : 'Next'}</span>
-              <ChevronRight size={14} strokeWidth={3} className="shrink-0" />
+              }} className="bg-red-600 hover:bg-red-700 text-white h-[32px] px-4 lg:px-6 rounded-lg font-black uppercase text-[10px] italic flex items-center gap-2 active:scale-95 shadow-lg shadow-red-600/20">
+              {currentStepIndex === steps.length - 1 ? 'Finish' : 'Next'} <ChevronRight size={14} />
             </button>
           </div>
-        </div> {/* закриває внутрішній grid футера */}
-      </div> {/* закриває fixed контейнер футера */}
+        </div>
+      </div>
+
+      <GaragePanel isOpen={isGarageOpen} onClose={() => setIsGarageOpen(false)} builds={savedBuilds} user={user} onLogout={handleLogout} onSelectBuild={handleLoadBuild} onDeleteBuild={(id: string) => { const newB = savedBuilds.filter(b => b.id !== id); setSavedBuilds(newB); localStorage.setItem('adicto_saved_builds', JSON.stringify(newB)); }} />
+    </div>
+  );
+}
    
       <GaragePanel isOpen={isGarageOpen} onClose={() => setIsGarageOpen(false)} builds={savedBuilds} user={user} onLogout={handleLogout} onSelectBuild={handleLoadBuild} onDeleteBuild={(id: string) => { const newB = savedBuilds.filter(b => b.id !== id); setSavedBuilds(newB); localStorage.setItem('adicto_saved_builds', JSON.stringify(newB)); }} />
     </div>
