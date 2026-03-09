@@ -581,20 +581,14 @@ const GaragePanel = ({ isOpen, onClose, builds, user, onLogout, onSelectBuild, o
   const handleDownloadPDF = async (build: any) => {
   setExportingId(build.id);
   setProgress(0);
-  const interval = setInterval(() => setProgress(p => p >= 95 ? 95 : p + 5), 100);
+  const interval = setInterval(() => setProgress(p => p >= 95 ? 95 : p + 5), 150);
 
-  // Вираховуємо суми, якщо вони не збережені
-  const totalP = build.components.reduce((acc: number, c: any) => acc + (c.price || 0), 0);
-  const totalW = build.components.reduce((acc: number, c: any) => acc + (c.weight || 0), 0);
+  // Передаємо компоненти зі збереженої збірки
+  await generateAdictoPDF(build.components);
 
-  // ВИКЛИК УНІВЕРСАЛЬНОЇ ФУНКЦІЇ
-  await generateAdictoPDF(build.components, build.name, totalP, totalW);
-
-  setTimeout(() => {
-    clearInterval(interval);
-    setProgress(100);
-    setExportingId(null);
-  }, 800);
+  clearInterval(interval);
+  setProgress(100);
+  setTimeout(() => { setExportingId(null); setProgress(0); }, 1000);
 };
 
   return (
@@ -697,20 +691,17 @@ function SummaryView({ selections, onReset, setSavedBuilds, user, onOpenGarage, 
   const totalWeight = selections.reduce((acc: number, c: any) => acc + (c.weight || 0), 0);
 
   const handleExport = async () => {
-    setIsExporting(true);
-    setProgress(0);
-    const interval = setInterval(() => setProgress(prev => (prev >= 95 ? 95 : prev + 5)), 100);
+  setIsExporting(true);
+  setProgress(0);
+  const interval = setInterval(() => setProgress(prev => (prev >= 95 ? 95 : prev + 5)), 150);
 
-    // ВИКЛИК ТВОЄЇ УНІВЕРСАЛЬНОЇ ФУНКЦІЇ
-    const buildName = selections.find((c: any) => c.stepTitle === 'Frame')?.name || 'Custom Build';
-    await generateAdictoPDF(selections, buildName, totalPrice, totalWeight);
+  // Викликаємо нову універсальну функцію
+  await generateAdictoPDF(selections);
 
-    setTimeout(() => {
-      clearInterval(interval);
-      setProgress(100);
-      setIsExporting(false);
-    }, 800);
-  };
+  clearInterval(interval);
+  setProgress(100);
+  setTimeout(() => { setIsExporting(false); setProgress(0); }, 1000);
+};
 
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-red-600 flex flex-col">
@@ -772,32 +763,81 @@ function SummaryView({ selections, onReset, setSavedBuilds, user, onOpenGarage, 
   );
 }
 
-// УНІВЕРСАЛЬНИЙ ГЕНЕРАТОР PDF
-const generateAdictoPDF = async (components: any[], buildName: string, totalPrice: number, totalWeight: number) => {
+// УНІВЕРСАЛЬНИЙ ГЕНЕРАТОР PDF З ФОТО ТА ЛОГО
+const generateAdictoPDF = async (components: any[]) => {
   const doc = new jsPDF();
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  
+  const totalPrice = components.reduce((acc, c) => acc + (c.price || 0), 0);
+  const totalWeight = components.reduce((acc, c) => acc + (c.weight || 0), 0);
+  const buildName = components.find((c: any) => c.stepTitle === 'Frame')?.name || 'CUSTOM BUILD';
+
   const cleanText = (text: string) => text ? String(text).replace(/[^\x00-\x7F]/g, "").toUpperCase() : "";
 
-  doc.setFontSize(18);
-  doc.setTextColor(220, 38, 38);
-  doc.text("ADICTO BIKE CONFIGURATOR", 14, 20);
-  
-  doc.setFontSize(10);
-  doc.setTextColor(100);
-  doc.text(`BUILD: ${cleanText(buildName)}`, 14, 30);
-  doc.text(`DATE: ${new Date().toLocaleDateString('uk-UA')}`, 14, 35);
+  // Функція для отримання зображення
+  const getBase64Image = async (url: string): Promise<string> => {
+    try {
+      const res = await fetch(url);
+      const blob = await res.blob();
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    } catch (e) { return ""; }
+  };
 
-  autoTable(doc, {
-    startY: 45,
+  // 1. Додаємо Логотип
+  try {
+    const logoBase64 = await getBase64Image("/design/Logo.png");
+    if (logoBase64) doc.addImage(logoBase64, 'PNG', (pageWidth / 2) - 15, 8, 10, 10);
+  } catch (e) {}
+
+  // 2. Рендеримо Байк (Накладання шарів як у візуалізаторі)
+  try {
+    const sortedByZ = [...components].sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
+    for (const comp of sortedByZ) {
+      if (comp.imageUrl) {
+        const imgBase64 = await getBase64Image(comp.imageUrl);
+        if (imgBase64) doc.addImage(imgBase64, 'PNG', 15, 20, 180, 110, undefined, 'FAST');
+      }
+    }
+  } catch (e) {}
+
+  // 3. Таблиця специфікацій
+  autoTable(doc, { 
+    startY: 135,
     head: [['SECTION', 'COMPONENT', 'BRAND', 'WEIGHT', 'PRICE']],
     body: components.map((c: any) => [
-      cleanText(c.stepTitle || ""), cleanText(c.name), cleanText(c.brand),
-      `${c.weight} g`, `${c.price} €`
+      cleanText(c.stepTitle || ""), 
+      cleanText(c.name), 
+      cleanText(c.brand), 
+      `${c.weight} g`, 
+      `${c.price?.toLocaleString()} €`
     ]),
-    foot: [['TOTAL', '', '', `${totalWeight} g`, `${totalPrice} €`]],
-    styles: { fontSize: 7 },
-    headStyles: { fillColor: [220, 38, 38] },
-    footStyles: { fillColor: [220, 38, 38] }
+    styles: { font: "helvetica", fontSize: 6, cellPadding: 2 },
+    headStyles: { fillColor: [20, 20, 20], textColor: [255, 255, 255] },
+    foot: [['TOTAL', '', '', `${totalWeight} g`, `${totalPrice?.toLocaleString()} €`]],
+    footStyles: { fillColor: [220, 38, 38], textColor: [255, 255, 255], fontSize: 8, fontStyle: 'bold' },
+    theme: 'grid'
   });
+
+  // 4. Дисклеймер
+  const finalY = (doc as any).lastAutoTable.finalY + 10;
+  doc.setFontSize(6); doc.setTextColor(100);
+  const disclaimer = "NOTICE: THE WEIGHT AND PRICE INDICATED ARE PRELIMINARY AND SUBJECT TO MINOR CHANGES BASED ON COMPONENT AVAILABILITY. ADICTO.BIKE RESERVES THE RIGHT TO MODIFY SPECIFICATIONS WITHOUT PRIOR NOTICE.";
+  doc.text(doc.splitTextToSize(disclaimer, pageWidth - 30), 15, finalY);
+
+  // 5. Футер з QR-кодом
+  doc.setFontSize(7); doc.setTextColor(20);
+  doc.text("WWW.ADICTO.BIKE  |  @ADICTO.BIKE", pageWidth / 2, pageHeight - 15, { align: 'center' });
+  
+  try {
+    const qrBase64 = await getBase64Image("/design/qr-code.png");
+    if (qrBase64) doc.addImage(qrBase64, 'PNG', pageWidth - 45, pageHeight - 45, 30, 30);
+  } catch (e) {}
 
   doc.save(`ADICTO_${buildName.replace(/\s+/g, '_')}.pdf`);
 };
