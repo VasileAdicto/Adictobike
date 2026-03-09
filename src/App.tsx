@@ -366,7 +366,7 @@ const handleLoadBuild = (build: any) => {
   const activeComponentForTuning = useMemo(() => currentStep?.options.find(o => o.id === selections[currentStep?.id]), [currentStep, selections]);
 
   return (
-    <div className="min-h-screen bg-black text-white font-sans selection:bg-red-600 pb-28 lg:pb-24 overflow-x-hidden">
+    <div className="h-screen bg-black text-white font-sans selection:bg-red-600 overflow-hidden flex flex-col">
       {/* АВТОРИЗАЦІЯ */}
       <AuthModal 
         isOpen={isAuthModalOpen} 
@@ -463,8 +463,8 @@ const handleLoadBuild = (build: any) => {
 </nav>
       )}
 
-      <main className="max-w-[1500px] mx-auto px-4 lg:px-6 pt-2 lg:pt-3">
-  <div className="flex flex-col lg:grid lg:grid-cols-12 gap-6 lg:gap-10 lg:h-[550px] items-stretch">
+      <main className="max-w-[1500px] mx-auto px-4 lg:px-6 pt-2 lg:pt-3 flex-1 flex flex-col overflow-hidden">
+  <div className="flex flex-col lg:grid lg:grid-cols-12 gap-6 lg:gap-10 lg:h-[calc(100vh-180px)] items-stretch">
     
     {/* ЛІВА ЧАСТИНА: ВІЗУАЛІЗАТОР */}
     <div className="lg:col-span-9 flex flex-col gap-2 order-1">
