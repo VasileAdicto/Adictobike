@@ -690,10 +690,6 @@ const AuthModal = ({ isOpen, onClose, onLogin }: any) => {
   );
 };
 
-// --- 3. SUMMARY VIEW (Окремо) ---
-function SummaryView({ selections, onReset, setSavedBuilds, user, onOpenGarage, onOpenAuth }: any) {
-  // ... ваш існуючий код SummaryView ...
-}
 // --- SUMMARY VIEW (ФІНАЛЬНА СТОРІНКА) ---
 function SummaryView({ selections, onReset, setSavedBuilds, user, onOpenGarage, onOpenAuth }: any) {
   const [isExporting, setIsExporting] = useState(false);
