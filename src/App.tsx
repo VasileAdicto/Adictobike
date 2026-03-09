@@ -576,7 +576,7 @@ const handleLoadBuild = (build: any) => {
       />
     </div>
   );
-} // <--- Ця дужка ТЕПЕР ПРАВИЛЬНО закриває BikeConfigurator
+}
 
   const GaragePanel = ({ isOpen, onClose, builds, user, onLogout, onSelectBuild, onDeleteBuild }: any) => {
   const [exportingId, setExportingId] = useState<string | null>(null);
