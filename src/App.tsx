@@ -530,16 +530,12 @@ const handleLoadBuild = (build: any) => {
     </div>
   </div>
 
-  {/* ПІДКАЗКА СКРОЛУ */}
-          {filteredOptions.length > 3 && (
-            <div className="lg:hidden h-6 flex items-center justify-center gap-2 text-red-600 pt-2 pb-1 bg-gradient-to-t from-zinc-900/80 to-transparent shrink-0">
-              <span className="text-[8px] font-black uppercase tracking-[0.2em] italic animate-pulse">Scroll</span>
-              <ChevronsRight size={12} className="animate-slide-hint" />
-            </div>
-          )}
-        </div> {/* закриває lg:col-span-3 (праву панель) */}
-      </div> {/* закриває внутрішній flex/grid контейнер */}
-    </main>
+  {/* ПІДКАЗКА СКРОЛУ (ВСТАВТЕ ЦЕЙ БЛОК) */}
+  <div className="lg:hidden flex items-center justify-center gap-2 text-red-600 py-2 shrink-0 bg-zinc-900/90 backdrop-blur-sm rounded-b-[1.5rem]">
+    <span className="text-[8px] font-black uppercase tracking-widest italic animate-pulse">Scroll for more</span>
+    <ChevronsRight size={12} className="animate-slide-hint" />
+  </div>
+</div> {/* це закриває lg:col-span-3 (праву панель) */}
 
       {/* --- FOOTER --- */}
       <div className="fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur-2xl border-t border-white/5 z-40 shrink-0">
