@@ -579,25 +579,23 @@ const GaragePanel = ({ isOpen, onClose, builds, user, onLogout, onSelectBuild, o
   if (!isOpen) return null;
 
   const handleDownloadPDF = async (build: any) => {
-    setExportingId(build.id);
-    setProgress(0);
-    const interval = setInterval(() => setProgress(p => p >= 95 ? 95 : p + 5), 100);
+  setExportingId(build.id);
+  setProgress(0);
+  const interval = setInterval(() => setProgress(p => p >= 95 ? 95 : p + 5), 100);
 
-    const doc = new jsPDF();
-    autoTable(doc, {
-      startY: 20,
-      head: [['SECTION', 'COMPONENT']],
-      body: build.components.map((c: any) => [c.stepTitle?.toUpperCase() || "", c.name?.toUpperCase() || ""]),
-      headStyles: { fillColor: [220, 38, 38] }
-    });
+  // Вираховуємо суми, якщо вони не збережені
+  const totalP = build.components.reduce((acc: number, c: any) => acc + (c.price || 0), 0);
+  const totalW = build.components.reduce((acc: number, c: any) => acc + (c.weight || 0), 0);
 
-    setTimeout(() => {
-      clearInterval(interval);
-      setProgress(100);
-      doc.save(`ADICTO_${build.name.replace(/\s+/g, '_')}.pdf`);
-      setExportingId(null);
-    }, 1000);
-  };
+  // ВИКЛИК УНІВЕРСАЛЬНОЇ ФУНКЦІЇ
+  await generateAdictoPDF(build.components, build.name, totalP, totalW);
+
+  setTimeout(() => {
+    clearInterval(interval);
+    setProgress(100);
+    setExportingId(null);
+  }, 800);
+};
 
   return (
     <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} className="fixed inset-0 z-[999] bg-black/98 backdrop-blur-3xl flex flex-col font-sans text-white">
@@ -695,164 +693,77 @@ function SummaryView({ selections, onReset, setSavedBuilds, user, onOpenGarage, 
   const [isExporting, setIsExporting] = useState(false);
   const [progress, setProgress] = useState(0);
 
-  const totalPrice = selections.reduce((acc: number, c: any) => acc + c.price, 0);
-  const totalWeight = selections.reduce((acc: number, c: any) => acc + c.weight, 0);
-
-  const getBase64Image = async (url: string): Promise<string> => {
-    try {
-      const res = await fetch(url);
-      const blob = await res.blob();
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result as string);
-        reader.onerror = reject;
-        reader.readAsDataURL(blob);
-      });
-    } catch (e) { return ""; }
-  };
+  const totalPrice = selections.reduce((acc: number, c: any) => acc + (c.price || 0), 0);
+  const totalWeight = selections.reduce((acc: number, c: any) => acc + (c.weight || 0), 0);
 
   const handleExport = async () => {
     setIsExporting(true);
     setProgress(0);
-    const interval = setInterval(() => {
-      setProgress(prev => (prev >= 95 ? 95 : prev + 5));
-    }, 100);
+    const interval = setInterval(() => setProgress(prev => (prev >= 95 ? 95 : prev + 5)), 100);
 
-    const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
-    const cleanText = (text: string) => text ? String(text).replace(/[^\x00-\x7F]/g, "").toUpperCase() : "";
-
-    // 1. Логотип
-    try {
-      const logoBase64 = await getBase64Image("/design/Logo.png");
-      if (logoBase64) {
-        doc.setGState(new (doc as any).GState({ opacity: 0.3 }));
-        doc.addImage(logoBase64, 'PNG', (pageWidth / 2) - 15, 8, 10, 10);
-        doc.setGState(new (doc as any).GState({ opacity: 1 }));
-      }
-    } catch (e) {}
-
-    // 2. Зображення байка (сортування за z-index)
-    try {
-      const sortedByZ = [...selections].sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
-      for (const comp of sortedByZ) {
-        if (comp.imageUrl) {
-          const imgBase64 = await getBase64Image(comp.imageUrl);
-          if (imgBase64) doc.addImage(imgBase64, 'PNG', 15, 20, 180, 110, undefined, 'FAST');
-        }
-      }
-    } catch (e) {}
-
-    // 3. Таблиця
-    autoTable(doc, {
-      startY: 135,
-      head: [['SECTION', 'COMPONENT', 'BRAND', 'WEIGHT', 'PRICE']],
-      body: selections.map((c: any) => [
-        cleanText(c.stepTitle || ""),
-        cleanText(c.name),
-        cleanText(c.brand),
-        `${c.weight} g`,
-        `${c.price.toLocaleString()} €`
-      ]),
-      styles: { fontSize: 6 },
-      foot: [['TOTAL', '', '', `${totalWeight} g`, `${totalPrice.toLocaleString()} €`]],
-      footStyles: { fillColor: [220, 38, 38] }
-    });
+    // ВИКЛИК ТВОЄЇ УНІВЕРСАЛЬНОЇ ФУНКЦІЇ
+    const buildName = selections.find((c: any) => c.stepTitle === 'Frame')?.name || 'Custom Build';
+    await generateAdictoPDF(selections, buildName, totalPrice, totalWeight);
 
     setTimeout(() => {
       clearInterval(interval);
       setProgress(100);
-      doc.save('ADICTO_BUILD.pdf');
       setIsExporting(false);
-    }, 1200);
+    }, 800);
   };
 
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-red-600 flex flex-col">
-      {/* HEADER: Копія навігації для цілісності */}
       <nav className="border-b border-white/5 px-4 lg:px-6 py-3 flex justify-between items-center bg-black/80 backdrop-blur-2xl sticky top-0 z-50 w-full">
         <div className="flex items-center gap-3">
           <img src="/design/Logo.png" alt="Logo" className="h-5 lg:h-6 w-auto object-contain" />
-          <div className="text-zinc-600 font-mono text-[8px] lg:text-[9px] uppercase tracking-widest italic border-l border-white/10 pl-3 mt-0.5">
-            Build by Vasile & AI
-          </div>
+          <div className="text-zinc-600 font-mono text-[8px] lg:text-[9px] uppercase tracking-widest italic border-l border-white/10 pl-3 mt-0.5">Build by Vasile & AI</div>
         </div>
-
         <div className="flex items-center gap-4">
           {user ? (
-            <button onClick={onOpenGarage} className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full border border-white/5 hover:border-red-600/50 transition-all group active:scale-95">
-              <User size={12} className="text-red-600 group-hover:scale-110 transition-transform"/> 
-              <span className="text-[9px] font-black uppercase italic text-white tracking-widest">Garage: {user.name}</span>
+            <button onClick={onOpenGarage} className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full border border-white/5 text-[9px] font-black uppercase italic text-white tracking-widest active:scale-95">
+              Garage: {user.name}
             </button>
           ) : (
-            <button onClick={onOpenAuth} className="flex items-center gap-2 bg-red-600 px-4 py-1.5 rounded-full text-[9px] font-black uppercase italic tracking-widest text-white active:scale-95 transition-all">
-              <LogIn size={12}/> Login
-            </button>
+            <button onClick={onOpenAuth} className="flex items-center gap-2 bg-red-600 px-4 py-1.5 rounded-full text-[9px] font-black uppercase italic tracking-widest text-white active:scale-95">Login</button>
           )}
         </div>
       </nav>
 
-      {/* ОСНОВНИЙ КОНТЕНТ */}
       <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
         <h2 className="text-[20px] lg:text-[22px] font-black italic uppercase tracking-tighter mb-6 leading-[1.1]">
           Your bike is <br/> <span className="text-red-600 uppercase">Ready</span>
         </h2>
 
         <div className="flex justify-center gap-10 my-8 bg-zinc-900/40 p-6 rounded-[2rem] border border-white/5 shadow-2xl backdrop-blur-md">
-          <div>
-            <p className="text-zinc-600 text-[7px] uppercase font-black mb-1 italic tracking-widest">Price</p>
-            <p className="text-[14px] font-mono text-red-600 font-black tracking-tighter italic">€{totalPrice.toLocaleString()}</p>
-          </div>
-          <div>
-            <p className="text-zinc-600 text-[7px] uppercase font-black mb-1 italic tracking-widest">Weight</p>
-            <p className="text-[14px] font-mono text-white/80 font-black tracking-tighter italic">{totalWeight}g</p>
-          </div>
+          <div><p className="text-zinc-600 text-[7px] uppercase font-black mb-1 italic tracking-widest">Price</p><p className="text-[14px] font-mono text-red-600 font-black tracking-tighter italic">€{totalPrice.toLocaleString()}</p></div>
+          <div><p className="text-zinc-600 text-[7px] uppercase font-black mb-1 italic tracking-widest">Weight</p><p className="text-[14px] font-mono text-white/80 font-black tracking-tighter italic">{totalWeight}g</p></div>
         </div>
 
         <div className="flex flex-col gap-4 w-full max-w-[280px]">
-          {/* PDF EXPORT */}
-          <button 
-            onClick={handleExport} 
-            disabled={isExporting}
-            className="relative h-14 bg-zinc-900 border border-white/10 rounded-2xl font-black uppercase text-[10px] italic overflow-hidden transition-all active:scale-95 group shadow-xl"
-          >
-            <motion.div 
-              className="absolute left-0 top-0 bottom-0 bg-red-600/80 z-0"
-              animate={{ width: `${progress}%` }}
-              transition={{ ease: "linear" }}
-            />
+          <button onClick={handleExport} disabled={isExporting} className="relative h-14 bg-zinc-900 border border-white/10 rounded-2xl font-black uppercase text-[10px] italic overflow-hidden transition-all active:scale-95 group shadow-xl">
+            {isExporting && <motion.div className="absolute left-0 top-0 bottom-0 bg-red-600/80 z-0" animate={{ width: `${progress}%` }} transition={{ ease: "linear" }} />}
             <span className="relative z-10 flex items-center justify-center gap-2 text-white">
               {isExporting ? `SAVING ${progress}%` : <><Download size={14} /> EXPORT PDF</>}
             </span>
           </button>
 
-          {/* SAVE TO GARAGE */}
-          <button 
-            onClick={() => {
-              const newBuild = {
-                id: Math.random().toString(36).substr(2, 9),
-                name: selections.find((c: any) => c.stepTitle === 'Frame')?.name || 'Custom Build',
-                date: new Date().toLocaleDateString('uk-UA'),
-                totalPrice: totalPrice,
-                components: selections.map((c: any) => ({ stepTitle: c.stepTitle, brand: c.brand, name: c.name }))
-              };
-              const current = JSON.parse(localStorage.getItem('adicto_saved_builds') || '[]');
-              const updated = [...current, newBuild];
-              localStorage.setItem('adicto_saved_builds', JSON.stringify(updated));
-              setSavedBuilds(updated); // Миттєве оновлення кабінету
-              alert("Build saved to your Garage!");
-            }} 
-            className="h-14 border border-red-600/30 text-red-600 rounded-2xl font-black uppercase text-[10px] italic hover:bg-red-600/10 transition-all active:scale-95 shadow-lg shadow-red-600/5"
-          >
+          <button onClick={() => {
+            const newBuild = {
+              id: Math.random().toString(36).substr(2, 9),
+              name: selections.find((c: any) => c.stepTitle === 'Frame')?.name || 'Custom Build',
+              date: new Date().toLocaleDateString('uk-UA'),
+              totalPrice, components: selections
+            };
+            const current = JSON.parse(localStorage.getItem('adicto_saved_builds') || '[]');
+            localStorage.setItem('adicto_saved_builds', JSON.stringify([...current, newBuild]));
+            setSavedBuilds([...current, newBuild]);
+            alert("Build saved to your Garage!");
+          }} className="h-14 border border-red-600/30 text-red-600 rounded-2xl font-black uppercase text-[10px] italic hover:bg-red-600/10 transition-all active:scale-95 shadow-lg shadow-red-600/5">
             Save to Garage
           </button>
 
-          {/* RESET */}
-          <button 
-            onClick={onReset} 
-            className="px-8 py-4 bg-transparent border border-white/10 text-white rounded-2xl font-black uppercase text-[10px] italic hover:bg-white/5 hover:border-white/20 transition-all active:scale-95 shadow-xl"
-          >
+          <button onClick={onReset} className="px-8 py-4 bg-transparent border border-white/10 text-white rounded-2xl font-black uppercase text-[10px] italic hover:bg-white/5 hover:border-white/20 transition-all active:scale-95 shadow-xl">
             Build another one
           </button>
         </div>
@@ -860,3 +771,33 @@ function SummaryView({ selections, onReset, setSavedBuilds, user, onOpenGarage, 
     </div>
   );
 }
+
+// УНІВЕРСАЛЬНИЙ ГЕНЕРАТОР PDF
+const generateAdictoPDF = async (components: any[], buildName: string, totalPrice: number, totalWeight: number) => {
+  const doc = new jsPDF();
+  const cleanText = (text: string) => text ? String(text).replace(/[^\x00-\x7F]/g, "").toUpperCase() : "";
+
+  doc.setFontSize(18);
+  doc.setTextColor(220, 38, 38);
+  doc.text("ADICTO BIKE CONFIGURATOR", 14, 20);
+  
+  doc.setFontSize(10);
+  doc.setTextColor(100);
+  doc.text(`BUILD: ${cleanText(buildName)}`, 14, 30);
+  doc.text(`DATE: ${new Date().toLocaleDateString('uk-UA')}`, 14, 35);
+
+  autoTable(doc, {
+    startY: 45,
+    head: [['SECTION', 'COMPONENT', 'BRAND', 'WEIGHT', 'PRICE']],
+    body: components.map((c: any) => [
+      cleanText(c.stepTitle || ""), cleanText(c.name), cleanText(c.brand),
+      `${c.weight} g`, `${c.price} €`
+    ]),
+    foot: [['TOTAL', '', '', `${totalWeight} g`, `${totalPrice} €`]],
+    styles: { fontSize: 7 },
+    headStyles: { fillColor: [220, 38, 38] },
+    footStyles: { fillColor: [220, 38, 38] }
+  });
+
+  doc.save(`ADICTO_${buildName.replace(/\s+/g, '_')}.pdf`);
+};
