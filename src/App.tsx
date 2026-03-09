@@ -385,117 +385,77 @@ const handleLoadBuild = (build: any) => {
   const activeComponentForTuning = useMemo(() => currentStep?.options.find(o => o.id === selections[currentStep?.id]), [currentStep, selections]);
 
   return (
-    <div className="h-[100dvh] bg-black text-white font-sans selection:bg-red-600 overflow-hidden flex flex-col relative">
-      <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} onLogin={(u: any) => { setUser(u); localStorage.setItem('adicto_user', JSON.stringify(u)); setIsAuthModalOpen(false); }} />
-
-      <AnimatePresence>
-        {isFinished && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[150]">
-            <SummaryView selections={selectedComponents} onReset={() => window.location.reload()} setSavedBuilds={setSavedBuilds} user={user} onOpenGarage={() => setIsGarageOpen(true)} onOpenAuth={() => setIsAuthModalOpen(true)} />
-          </motion.div>
-        )}
-      </AnimatePresence>
-
+    <div className="min-h-screen bg-black text-white font-sans selection:bg-red-600 pb-28 lg:pb-24 overflow-x-hidden">
       <style>{`
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .custom-scroll-container::-webkit-scrollbar { display: none; }
-        @keyframes slideHint { 0%, 100% { transform: translateX(0); opacity: 0.3; } 50% { transform: translateX(8px); opacity: 0.8; } }
-        .animate-slide-hint { animation: slideHint 1.5s infinite; }
+        .custom-scroll-container::-webkit-scrollbar { width: 4px; height: 4px; }
+        .custom-scroll-container::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); border-radius: 10px; }
+        .custom-scroll-container::-webkit-scrollbar-thumb { background: #ef4444; border-radius: 10px; }
+        .custom-scroll-container { scrollbar-width: thin; scrollbar-color: #ef4444 rgba(255, 255, 255, 0.05); }
       `}</style>
-      
-      {/* 1. ВЕРХНЯ СТРОКА (Логотип + Автор) */}
-      <nav className="fixed top-0 left-0 right-0 h-[70px] px-6 flex justify-between items-center z-[100] bg-gradient-to-b from-black to-transparent pointer-events-none">
-        <div className="flex items-center gap-4 pointer-events-auto">
-          <img src="/design/Logo.png" alt="Logo" className="h-6 lg:h-7 w-auto object-contain" />
-          <div className="text-zinc-500 font-mono text-[9px] uppercase tracking-[0.2em] italic border-l border-white/10 pl-4 py-1">
-            Build by Vasile & AI
+
+      {isLoggedIn ? (
+        <AdminPanel categories={INITIAL_STEPS.map(s => s.title)} offsets={offsets} setOffsets={setOffsets} activeComponent={activeComponentForTuning} showGrid={showGrid} setShowGrid={setShowGrid} gridSize={gridSize} setGridSize={setGridSize} isZoomed={isZoomed} setIsZoomed={setIsZoomed} zoomScale={zoomScale} setZoomScale={setZoomScale} onLogout={handleLogout} />
+      ) : (
+        <nav className="border-b border-white/5 px-4 lg:px-8 py-2 flex justify-between items-center bg-black/80 backdrop-blur-2xl sticky top-0 z-50">
+          <div className="flex items-center gap-4 pl-2">
+            <img src="/design/Logo.png" alt="Logo" className="h-4 lg:h-6 w-auto object-contain" />
           </div>
-        </div>
-        <div className="pointer-events-auto">
-          {user ? (
-            <button onClick={() => setIsGarageOpen(true)} className="flex items-center gap-2 bg-white/5 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 hover:border-red-600/50 transition-all">
-              <User size={14} className="text-red-600"/><span className="text-[10px] font-black uppercase italic tracking-widest">{user.name}</span>
-            </button>
-          ) : (
-            <button onClick={() => setIsAuthModalOpen(true)} className="bg-red-600 px-5 py-2 rounded-full text-[10px] font-black uppercase italic tracking-widest shadow-lg active:scale-95 transition-all">Login</button>
-          )}
-        </div>
-      </nav>
+          <div className="text-zinc-400 font-mono text-[7px] pr-2 opacity-70 uppercase tracking-widest italic">Build by Vasile & AI</div>
+        </nav>
+      )}
 
-      {/* 2. ВІЗУАЛІЗАТОР (Опущений нижче для кращого вигляду) */}
-      <div className="absolute inset-0 z-0 flex items-center justify-center pt-[40px] h-[60dvh]">
-        <Visualizer selectedComponents={selectedComponents} offsets={offsets} showGrid={showGrid} gridSize={gridSize} isZoomed={isZoomed} zoomScale={zoomScale} />
-      </div>
-
-      {/* 3. КОНТЕНТ: СТЕПИ ТА ТОВАРИ */}
-      <main className="relative z-10 h-full w-full flex flex-col pt-[80px] pointer-events-none">
-        {/* СТЕПИ (Фіксовані зверху) */}
-        <div ref={stepsNavRef} className="flex overflow-x-auto no-scrollbar gap-x-6 px-6 py-4 shrink-0 pointer-events-auto">
-          {steps.map((step, idx) => (
-            <button key={step.id} onClick={() => setCurrentStepIndex(idx)} className={cn("transition-all text-[10px] font-black uppercase tracking-[0.25em] pb-1 border-b-2 whitespace-nowrap", idx === currentStepIndex ? "text-red-600 border-red-600" : "text-white opacity-25 border-transparent")}>
-              {step.title}
-            </button>
-          ))}
-        </div>
-
-        {/* ПУСТИЙ ПРОСТІР ДЛЯ ВЕЛОСИПЕДА */}
-        <div className="flex-1"></div>
-
-        {/* ПАНЕЛЬ ТОВАРІВ */}
-        <div className="shrink-0 flex flex-col pointer-events-auto relative">
-          {/* ФІКСОВАНА ПІДКАЗКА СКРОЛУ (Тепер вона не рухається) */}
-          {filteredOptions.length > 3 && (
-            <div className="absolute -top-6 left-0 right-0 flex items-center justify-center gap-2 text-zinc-500/60 pointer-events-none">
-              <span className="text-[8px] font-black uppercase italic tracking-widest">Scroll to more</span>
-              <ChevronsRight size={10} className="animate-slide-hint" />
+      <main className="max-w-[1500px] mx-auto px-4 lg:px-6 pt-2 lg:pt-3">
+        <div className="flex flex-col lg:grid lg:grid-cols-12 gap-6 lg:gap-10 lg:h-[550px] items-stretch">
+          <div className="lg:col-span-9 flex flex-col gap-2 order-1">
+            <div className="flex overflow-x-auto no-scrollbar gap-x-6 gap-y-2 pb-2">
+              {steps.map((step, idx) => (
+                <button key={step.id} onClick={() => setCurrentStepIndex(idx)} className={cn("transition-all duration-300 text-[10px] font-black italic uppercase tracking-widest pb-1 border-b-2 whitespace-nowrap", idx === currentStepIndex ? "text-red-600 border-red-600 drop-shadow-[0_0_9px_rgba(255,0,0,0.3)]" : "text-white opacity-20 border-transparent hover:opacity-100")}>{step.title}</button>
+              ))}
             </div>
-          )}
-
-          <div className="overflow-x-auto no-scrollbar custom-scroll-container px-4 pb-[110px]">
-            <div className="flex flex-row lg:flex-col gap-3 min-w-full items-end">
-              <AnimatePresence mode="popLayout">
-                {filteredOptions.map((option) => (
-                  <div key={option.id} className="w-[32%] min-w-[32%] lg:w-full lg:min-w-0 shrink-0">
-                    <OptionCard component={option} isSelected={selections[currentStep.id] === option.id} onClick={() => setSelections(prev => ({...prev, [currentStep.id]: option.id}))} />
-                  </div>
-                ))}
-              </AnimatePresence>
+            <div className="h-[280px] md:h-[400px] lg:flex-1 relative">
+              <Visualizer selectedComponents={selectedComponents} offsets={offsets} showGrid={showGrid} gridSize={gridSize} isZoomed={isZoomed} zoomScale={zoomScale} />
+            </div>
+          </div>
+          <div className="lg:col-span-3 flex flex-col bg-zinc-900/40 rounded-[2.5rem] border border-white/5 p-4 lg:p-6 relative overflow-hidden order-2 shadow-2xl">
+            <div className="flex-1 overflow-x-auto lg:overflow-y-auto lg:overflow-x-hidden custom-scroll-container pb-2 lg:pb-0" style={{ display: 'flex', flexDirection: 'column' }}>
+                <div className="flex flex-row lg:flex-col gap-3 min-w-full">
+                  <AnimatePresence mode="popLayout">
+                    {filteredOptions.map((option) => (
+                      <div key={option.id} className="w-[31%] min-w-[31%] lg:w-full lg:min-w-0 shrink-0">
+                        <OptionCard component={option} isSelected={selections[currentStep.id] === option.id} onClick={() => setSelections(prev => ({...prev, [currentStep.id]: option.id}))} />
+                      </div>
+                    ))}
+                  </AnimatePresence>
+                </div>
             </div>
           </div>
         </div>
       </main>
 
-      {/* 4. КЕРУВАННЯ (Кнопки Back/Next повернуто до класичного вигляду) */}
-      <div className="fixed bottom-8 left-0 right-0 z-[100] px-6 pointer-events-none">
-        <div className="flex items-center justify-between max-w-[1500px] mx-auto pointer-events-auto">
-          {/* BACK BUTTON */}
-          <button onClick={() => currentStepIndex > 0 && setCurrentStepIndex(currentStepIndex - 1)} className="flex items-center gap-2 text-zinc-400 font-black uppercase text-[11px] italic hover:text-white transition-colors">
-            <ChevronLeft size={18} /> BACK
-          </button>
-
-          {/* STATS PANEL */}
-          <div className="flex items-center gap-8 bg-zinc-900/60 backdrop-blur-3xl border border-white/10 px-8 py-3.5 rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
-            <div className="text-center">
-              <p className="text-[7px] text-zinc-500 uppercase font-black italic mb-0.5">Weight</p>
-              <p className="font-mono text-[11px] text-white font-bold">{selectedComponents.reduce((acc, c) => acc + c.weight, 0)}g</p>
+      <div className="fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur-2xl border-t border-white/5 z-40">
+        <div className="max-w-[1500px] mx-auto px-4 lg:px-6 py-6 grid grid-cols-12 gap-2 items-center">
+          <button onClick={() => currentStepIndex > 0 && setCurrentStepIndex(currentStepIndex - 1)} className="col-span-3 lg:col-span-2 flex items-center gap-1 text-zinc-500 hover:text-white transition-all font-black uppercase text-[10px] italic"><ChevronLeft size={20} /> Back</button>
+          <div className="col-span-6 lg:col-span-7 flex justify-center lg:justify-end items-center gap-4 lg:gap-10">
+            <div className="text-center lg:text-right text-zinc-300">
+              <p className="text-[7px] text-zinc-600 uppercase font-black mb-0.5 italic">Weight</p>
+              <p className="font-mono text-xs">{selectedComponents.reduce((acc, c) => acc + c.weight, 0)}g</p>
             </div>
-            <div className="w-px h-7 bg-white/10" />
-            <div className="text-center">
-              <p className="text-[7px] text-zinc-600 uppercase font-black italic mb-0.5">Price</p>
-              <p className="font-mono text-[11px] text-red-600 font-bold">€{selectedComponents.reduce((acc, c) => acc + c.price, 0).toLocaleString()}</p>
+            <div className="h-8 w-px bg-white/10" />
+            <div className="text-center lg:text-right text-zinc-300">
+              <p className="text-[7px] text-zinc-600 uppercase font-black mb-0.5 italic">Price</p>
+              <p className="font-mono text-xs text-red-600">€{selectedComponents.reduce((acc, c) => acc + c.price, 0).toLocaleString()}</p>
             </div>
           </div>
-
-          {/* NEXT BUTTON */}
-          <button onClick={() => {
-              if (filteredOptions.length > 0 && !selections[currentStep.id]) return;
-              currentStepIndex < steps.length - 1 ? setCurrentStepIndex(currentStepIndex + 1) : setIsFinished(true);
-            }} className="flex items-center gap-2 bg-red-600 text-white px-6 py-3 rounded-full font-black uppercase text-[11px] italic shadow-lg shadow-red-600/30 active:scale-95 transition-all">
-            {currentStepIndex === steps.length - 1 ? 'FINISH' : 'NEXT'} <ChevronRight size={18} />
-          </button>
+          <div className="col-span-3 flex justify-end">
+            <button onClick={() => {
+                if (filteredOptions.length > 0 && !selections[currentStep.id]) { setError("Select!"); return; }
+                currentStepIndex < steps.length - 1 ? setCurrentStepIndex(currentStepIndex + 1) : setIsFinished(true);
+              }} className="bg-red-600 hover:bg-red-700 text-white h-[32px] px-6 rounded-lg font-black uppercase text-[10px] italic flex items-center gap-2 active:scale-95 shadow-lg shadow-red-600/20">{currentStepIndex === steps.length - 1 ? 'Finish' : 'Next'} <ChevronRight size={14} /></button>
+          </div>
         </div>
       </div>
-
+      
+      {/* ПАНЕЛЬ ГАРАЖУ */}
       <GaragePanel isOpen={isGarageOpen} onClose={() => setIsGarageOpen(false)} builds={savedBuilds} user={user} onLogout={handleLogout} onSelectBuild={handleLoadBuild} onDeleteBuild={(id: string) => { const newB = savedBuilds.filter(b => b.id !== id); setSavedBuilds(newB); localStorage.setItem('adicto_saved_builds', JSON.stringify(newB)); }} />
     </div>
   );
