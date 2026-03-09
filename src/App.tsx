@@ -536,6 +536,8 @@ const handleLoadBuild = (build: any) => {
               </div>
             )}
           </div>
+         </div> {/* закриває внутрішній flex/grid контейнер */}
+    </main>
 
           {/* --- FOOTER --- */}
       <div className="fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur-2xl border-t border-white/5 z-40 shrink-0">
