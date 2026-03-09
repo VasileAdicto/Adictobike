@@ -590,22 +590,21 @@ const GaragePanel = ({ isOpen, onClose, builds, user, onLogout, onSelectBuild, o
           </div>
         </div>
 
-        {/* DESKTOP CENTER TEXT */}
+        {/* DESKTOP CENTER NAVIGATION */}
         <div className="hidden lg:flex absolute left-1/2 -translate-x-1/2 top-8 items-center gap-3">
-          <div className="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-full border border-white/10">
-            <div className="w-2 h-2 rounded-full bg-red-600 animate-pulse" />
-            <span className="text-[10px] font-black uppercase italic tracking-widest text-zinc-400">Compare builds</span>
-            <span className="text-[10px] font-black uppercase italic tracking-widest text-white ml-2">Choose to compare</span>
-          </div>
+          <button className="flex items-center gap-2 px-6 py-2 bg-red-600 rounded-full shadow-lg shadow-red-600/20 hover:bg-red-700 transition-all">
+            <span className="text-[10px] font-black uppercase italic tracking-widest text-white">Compare</span>
+          </button>
+          <span className="text-[9px] font-black uppercase italic tracking-widest text-zinc-500">Choose to compare</span>
         </div>
 
         {/* RIGHT ACTIONS */}
         <div className="flex flex-col gap-2 items-end">
-          <button onClick={onClose} className="text-white transition-all uppercase text-[9px] font-black italic flex items-center gap-2 bg-red-600 px-4 py-2 rounded-full shadow-lg shadow-red-600/20">
-            Main Page <ChevronRight size={14} />
+          <button onClick={onClose} className="text-white transition-all uppercase text-[9px] font-black italic flex items-center gap-2 bg-white/10 px-4 py-2 rounded-full border border-white/10 hover:bg-white/20">
+            MAIN PAGE <ChevronRight size={14} />
           </button>
           {/* MOBILE COMPARE BUTTON */}
-          <button className="lg:hidden flex items-center gap-2 bg-white/5 border border-white/10 px-4 py-2 rounded-full text-[9px] font-black uppercase italic text-zinc-400">
+          <button className="lg:hidden flex items-center gap-2 bg-red-600 px-4 py-1.5 rounded-full text-[9px] font-black uppercase italic text-white shadow-lg shadow-red-600/20">
              Compare
           </button>
         </div>
@@ -623,52 +622,49 @@ const GaragePanel = ({ isOpen, onClose, builds, user, onLogout, onSelectBuild, o
             {builds.map((build: any) => (
               <div key={build.id} className="bg-zinc-900/30 border border-white/5 rounded-[1.5rem] p-4 lg:p-6 hover:bg-zinc-900/50 transition-all group relative">
                 
-                {/* DATE: Raised slightly for space */}
-                <div className="absolute top-3 lg:top-4 right-6 text-[7px] lg:text-[8px] font-mono text-zinc-600 uppercase tracking-widest">
+                {/* DATE: Raised higher */}
+                <div className="absolute top-2 lg:top-3 right-6 text-[7px] lg:text-[8px] font-mono text-zinc-600 uppercase tracking-widest">
                   {build.date || '09/03/2026'}
                 </div>
 
-                <div className="flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-8 mt-2 lg:mt-0">
+                <div className="flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-8 mt-4 lg:mt-0">
                   
                   {/* SELECT & NAME SECTION */}
                   <div className="flex items-center gap-3 lg:gap-4 flex-1">
-                    {/* Circle selector moved to left of name on Desktop */}
-                    <label className="relative flex items-center justify-center cursor-pointer group/check shrink-0">
+                    {/* Circle selector left of name */}
+                    <label className="relative flex items-center justify-center cursor-pointer shrink-0">
                       <input type="checkbox" className="peer sr-only" />
                       <div className="w-5 h-5 lg:w-6 lg:h-6 rounded-full border-2 border-white/10 peer-checked:border-red-600 peer-checked:bg-red-600/20 transition-all flex items-center justify-center">
                         <div className="w-2 h-2 lg:w-2.5 lg:h-2.5 rounded-full bg-red-600 scale-0 peer-checked:scale-100 transition-transform" />
                       </div>
                     </label>
 
-                    <div className="flex flex-col min-w-0">
-                      <button 
-                        onClick={() => onSelectBuild(build)} 
-                        className="text-[15px] lg:text-[18px] font-black uppercase italic text-white hover:text-red-600 transition-colors text-left leading-none tracking-tight truncate max-w-[200px] lg:max-w-none"
-                      >
-                        {build.name || 'Custom Build'}
-                      </button>
-                    </div>
+                    <button 
+                      onClick={() => onSelectBuild(build)} 
+                      className="text-[14px] lg:text-[18px] font-black uppercase italic text-white hover:text-red-600 transition-colors text-left leading-none tracking-tight truncate flex-1"
+                    >
+                      {build.name || 'Custom Build'}
+                    </button>
                   </div>
 
-                  {/* CONFIGURATION LIST - Simplified name line-up */}
-                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-1 flex-[2] border-l border-white/5 pl-4 hidden lg:grid">
+                  {/* CONFIGURATION LIST - Line-up naming */}
+                  <div className="hidden lg:grid grid-cols-4 gap-x-4 gap-y-1 flex-[2] border-l border-white/5 pl-4">
                     {build.components?.slice(0, 8).map((c: any, i: number) => (
                       <div key={i} className="text-[7px] uppercase text-zinc-500 truncate tracking-tight flex items-center">
-                        <span className="w-1 h-1 bg-red-600 rounded-full mr-2 opacity-50" />
+                        <span className="w-1 h-1 bg-red-600 rounded-full mr-2 opacity-40" />
                         <span className="truncate">{c.name}</span>
                       </div>
                     ))}
                   </div>
 
-                  {/* ACTIONS: Bottom left on Mobile, Side on Desktop */}
+                  {/* ACTIONS */}
                   <div className="flex items-center justify-between lg:justify-end gap-3 mt-2 lg:mt-0 border-t lg:border-none border-white/5 pt-3 lg:pt-0">
-                    {/* Mobile Only labels for compare */}
                     <div className="lg:hidden flex items-center gap-2">
                        <span className="text-[7px] font-black uppercase italic text-zinc-600">Choose to compare</span>
                     </div>
 
                     <div className="flex gap-2">
-                      <button className="flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 text-white px-3 py-1.5 lg:px-4 lg:py-2 rounded-lg text-[8px] font-black uppercase italic transition-all group/pdf">
+                      <button className="flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 text-white px-3 py-1.5 lg:px-4 lg:py-2 rounded-lg text-[8px] font-black uppercase italic transition-all">
                         <Download size={10} className="text-red-600"/> PDF
                       </button>
                       <button 
@@ -686,29 +682,22 @@ const GaragePanel = ({ isOpen, onClose, builds, user, onLogout, onSelectBuild, o
         )}
       </div>
 
-      {/* FOOTER - 2x More Compact on Mobile */}
-      <div className="p-4 lg:p-8 border-t border-white/5 bg-black mt-auto">
-        <div className="max-w-5xl mx-auto flex flex-row justify-between items-center gap-2">
-          <div className="text-left">
-            <p className="text-[7px] lg:text-[8px] font-black uppercase italic text-zinc-500 tracking-widest leading-none">
-              Powered by Adicto.Bike
-            </p>
-            <p className="text-[6px] lg:text-[7px] text-zinc-700 uppercase font-bold mt-1 tracking-tighter">
-              All Rights Reserved © 2026
-            </p>
+      {/* FOOTER - 2x More Compact */}
+      <div className="px-6 py-4 border-t border-white/5 bg-black mt-auto">
+        <div className="max-w-5xl mx-auto flex flex-row justify-between items-center">
+          <div className="flex flex-col">
+            <p className="text-[7px] font-black uppercase italic text-zinc-500 tracking-widest leading-none">Powered by Adicto.Bike</p>
+            <p className="text-[6px] text-zinc-700 uppercase font-bold mt-1">All Rights Reserved © 2026</p>
           </div>
-
-          <div className="text-right">
-            <a href="mailto:hello@adicto.bike" className="text-[8px] lg:text-[10px] font-black text-red-600 hover:text-white transition-all italic tracking-widest border-b border-red-600/20">
-              hello@adicto.bike
-            </a>
-          </div>
+          <a href="mailto:hello@adicto.bike" className="text-[8px] lg:text-[9px] font-black text-red-600 hover:text-white transition-all italic tracking-widest">
+            hello@adicto.bike
+          </a>
         </div>
       </div>
     </motion.div>
   );
 };
-
+      
 // --- SUMMARY VIEW (ФІНАЛЬНА СТОРІНКА) ---
 function SummaryView({ selections, onReset, setSavedBuilds, user, onOpenGarage, onOpenAuth }: any) {
   const [isExporting, setIsExporting] = useState(false);
