@@ -385,7 +385,7 @@ const handleLoadBuild = (build: any) => {
   const activeComponentForTuning = useMemo(() => currentStep?.options.find(o => o.id === selections[currentStep?.id]), [currentStep, selections]);
 
   return (
-    <div className="h-screen bg-black text-white font-sans selection:bg-red-600 overflow-hidden flex flex-col">
+    <div className="h-[100dvh] bg-black text-white font-sans selection:bg-red-600 overflow-hidden flex flex-col relative">
       {/* АВТОРИЗАЦІЯ */}
       <AuthModal 
         isOpen={isAuthModalOpen} 
@@ -456,7 +456,7 @@ const handleLoadBuild = (build: any) => {
       {isLoggedIn ? (
         <AdminPanel categories={INITIAL_STEPS.map(s => s.title)} offsets={offsets} setOffsets={setOffsets} activeComponent={activeComponentForTuning} showGrid={showGrid} setShowGrid={setShowGrid} gridSize={gridSize} setGridSize={setGridSize} isZoomed={isZoomed} setIsZoomed={setIsZoomed} zoomScale={zoomScale} setZoomScale={setZoomScale} onLogout={handleLogout} />
       ) : (
-        <nav className="border-b border-white/5 px-4 lg:px-6 py-3 flex justify-between items-center bg-black/80 backdrop-blur-2xl sticky top-0 z-50">
+        <nav className="border-b border-white/5 px-4 lg:px-6 py-3 flex justify-between items-center bg-black/80 backdrop-blur-2xl sticky top-0 z-50 shrink-0">
   {/* ГРУПА ЗЛІВА: ЛОГО + НАПИС */}
   <div className="flex items-center gap-3">
     <img src="/design/Logo.png" alt="Logo" className="h-5 lg:h-6 w-auto object-contain" />
@@ -485,12 +485,13 @@ const handleLoadBuild = (build: any) => {
       )}
 
       {/* ОСНОВНИЙ КОНТЕНТ */}
-      <main className="flex-1 max-w-[1500px] mx-auto px-2 lg:px-6 pt-1 w-full overflow-hidden flex flex-col justify-start">
-  <div className="flex flex-col lg:grid lg:grid-cols-12 gap-1.5 lg:gap-10 h-full items-stretch pb-2 lg:pb-32">
+<main className="flex-1 max-w-[1500px] mx-auto px-2 lg:px-6 pt-1 w-full overflow-hidden flex flex-col justify-start">
+  {/* pb-0 замість pb-2, щоб не було дірки перед футером */}
+  <div className="flex flex-col lg:grid lg:grid-cols-12 gap-1.5 lg:gap-10 h-full items-stretch pb-0 lg:pb-32">
           
-          {/* ЛІВА ЧАСТИНА: ВІЗУАЛІЗАТОР (Збільшено висоту до 320px) */}
-          <div className="lg:col-span-9 flex flex-col gap-1 order-1 h-[45vh] lg:h-full shrink-0">
-            <div ref={stepsNavRef} className="flex overflow-x-auto no-scrollbar gap-x-4 pb-1 shrink-0">
+    {/* ЛІВА ЧАСТИНА: ВІЗУАЛІЗАТОР (Зменшуємо висоту до 38-40vh) */}
+    <div className="lg:col-span-9 flex flex-col gap-1 order-1 h-[38dvh] lg:h-full shrink-0 min-h-0">
+      <div ref={stepsNavRef} className="flex overflow-x-auto no-scrollbar gap-x-4 pb-1 shrink-0">
               {steps.map((step, idx) => (
                 <button 
                   key={step.id} 
@@ -542,7 +543,7 @@ const handleLoadBuild = (build: any) => {
     </main>
 
           {/* --- FOOTER --- */}
-      <div className="fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur-2xl border-t border-white/5 z-40 shrink-0">
+      <div className="fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur-2xl border-t border-white/5 z-40 shrink-0 pb-[safe-area-inset-bottom]">
         <div className="max-w-[1500px] mx-auto px-4 lg:px-6 py-4 lg:py-6 grid grid-cols-12 gap-2 items-center">
           <button onClick={() => currentStepIndex > 0 && setCurrentStepIndex(currentStepIndex - 1)} className="col-span-3 lg:col-span-2 flex items-center gap-1 text-zinc-500 hover:text-white transition-all font-black uppercase text-[10px] italic">
             <ChevronLeft size={16} /> Back
