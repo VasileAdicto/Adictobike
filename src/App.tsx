@@ -550,7 +550,7 @@ const handleLoadBuild = (build: any) => {
               <p className="font-mono text-[10px] lg:text-xs text-red-600">€{selectedComponents.reduce((acc, c) => acc + c.price, 0).toLocaleString()}</p>
             </div>
           </div>
-          <<div className="col-span-3 flex justify-end">
+          <div className="col-span-3 flex justify-end">
             <button onClick={() => {
                 if (filteredOptions.length > 0 && !selections[currentStep.id]) { setError("Select!"); return; }
                 currentStepIndex < steps.length - 1 ? setCurrentStepIndex(currentStepIndex + 1) : setIsFinished(true);
