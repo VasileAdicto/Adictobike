@@ -419,7 +419,7 @@ const handleLoadBuild = (build: any) => {
       {isLoggedIn ? (
         <AdminPanel categories={INITIAL_STEPS.map(s => s.title)} offsets={offsets} setOffsets={setOffsets} activeComponent={activeComponentForTuning} showGrid={showGrid} setShowGrid={setShowGrid} gridSize={gridSize} setGridSize={setGridSize} isZoomed={isZoomed} setIsZoomed={setIsZoomed} zoomScale={zoomScale} setZoomScale={setZoomScale} onLogout={handleLogout} />
       ) : (
-        <nav className="border-b border-white/5 px-4 lg:px-6 py-3 flex justify-between items-center bg-black/80 backdrop-blur-2xl sticky top-0 z-50 shrink-0">
+        <nav className=<nav className="fixed top-0 left-0 right-0 h-[60px] border-b border-white/5 px-4 lg:px-6 py-3 flex justify-between items-center bg-black/90 backdrop-blur-2xl z-[100] shrink-0">
           <div className="flex items-center gap-3">
             <img src="/design/Logo.png" alt="Logo" className="h-5 lg:h-6 w-auto object-contain" />
             <div className="text-zinc-600 font-mono text-[8px] lg:text-[9px] uppercase tracking-widest italic border-l border-white/10 pl-3 mt-0.5">Build by Vasile & AI</div>
@@ -437,48 +437,36 @@ const handleLoadBuild = (build: any) => {
       )}
 
       {/* ОСНОВНИЙ КОНТЕНТ */}
-      <main className="flex-1 max-w-[1500px] mx-auto px-2 lg:px-6 w-full overflow-hidden flex flex-col justify-start">
-        <div className="flex flex-col lg:grid lg:grid-cols-12 gap-1 h-full items-stretch pb-0 lg:pb-32">
-          
-          {/* ЛІВА ЧАСТИНА: ВІЗУАЛІЗАТОР (Байк зафіксовано на 38% висоти) */}
-          <div className="lg:col-span-9 flex flex-col gap-1 order-1 h-[38dvh] lg:h-full shrink-0 min-h-0">
-            <div ref={stepsNavRef} className="flex overflow-x-auto no-scrollbar gap-x-4 pb-1 shrink-0">
-              {steps.map((step, idx) => (
-                <button key={step.id} onClick={() => setCurrentStepIndex(idx)} className={cn("transition-all text-[9px] font-black uppercase tracking-widest pb-1 border-b-2 whitespace-nowrap", idx === currentStepIndex ? "text-red-600 border-red-600" : "text-white opacity-20 border-transparent")}>{step.title}</button>
-              ))}
-            </div>
-            <div className="flex-1 relative min-h-0">
-              <Visualizer selectedComponents={selectedComponents} offsets={offsets} showGrid={showGrid} gridSize={gridSize} isZoomed={isZoomed} zoomScale={zoomScale} />
-            </div>
-          </div>
+     <main className="flex-1 w-full max-w-[1500px] mx-auto px-2 lg:px-6 pt-[65px] pb-[85px] overflow-hidden flex flex-col justify-start h-[100dvh]">
+  <div className="flex flex-col lg:grid lg:grid-cols-12 gap-1 h-full items-stretch overflow-hidden">
+    
+    {/* ЛІВА ЧАСТИНА: ВІЗУАЛІЗАТОР (Байк) */}
+    <div className="lg:col-span-9 flex flex-col gap-1 order-1 h-[40dvh] shrink-0 min-h-0">
+       {/* Твій візуалізатор... */}
+    </div>
 
-          {/* ПРАВА ЧАСТИНА: КАРТКИ ТОВАРІВ */}
-          <div className="lg:col-span-3 flex flex-col bg-zinc-900/40 rounded-[1.5rem] lg:rounded-[2.5rem] border border-white/5 p-2 lg:p-6 relative order-2 shadow-2xl min-h-0 flex-1">
-            <div className="overflow-x-auto lg:overflow-y-auto lg:overflow-x-hidden custom-scroll-container">
-              <div className="flex flex-row lg:flex-col gap-2 min-w-full">
-                <AnimatePresence mode="popLayout">
-                  {filteredOptions.map((option) => (
-                    <div key={option.id} className="w-[32%] min-w-[32%] lg:w-full lg:min-w-0 shrink-0">
-                      <OptionCard component={option} isSelected={selections[currentStep.id] === option.id} onClick={() => setSelections(prev => ({...prev, [currentStep.id]: option.id}))} />
-                    </div>
-                  ))}
-                </AnimatePresence>
-              </div>
+    {/* ПРАВА ЧАСТИНА: КАРТКИ ТОВАРІВ */}
+    <div className="lg:col-span-3 flex flex-col bg-zinc-900/40 rounded-[1.5rem] border border-white/5 p-2 relative order-2 shadow-2xl overflow-hidden flex-1">
+      {/* Контейнер скролу */}
+      <div className="flex-1 overflow-x-auto lg:overflow-y-auto lg:overflow-x-hidden custom-scroll-container">
+         <div className="flex flex-row lg:flex-col gap-2 min-w-full pb-2">
+            {/* Твій map карток */}
+         </div>
+      </div>
 
-              {/* НАПИС SCROLL */}
-              {filteredOptions.length > 3 && (
-                <div className="lg:hidden flex items-center justify-center gap-1.5 py-1 text-zinc-500/40">
-                  <span className="text-[7px] font-black uppercase tracking-widest italic">Scroll to more</span>
-                  <ChevronsRight size={10} className="animate-slide-hint" />
-                </div>
-              )}
-            </div>
-          </div>
+      {/* НАПИС SCROLL - ТЕПЕР ВІН ФІКСОВАНИЙ ВНИЗУ КАРТОК */}
+      {filteredOptions.length > 3 && (
+        <div className="lg:hidden flex items-center justify-center gap-1.5 py-2 text-zinc-500/60 bg-zinc-900/90 border-t border-white/5 rounded-b-[1.5rem] shrink-0">
+          <span className="text-[7px] font-black uppercase tracking-widest italic">Scroll to more</span>
+          <ChevronsRight size={10} className="animate-slide-hint" />
         </div>
-      </main>
+      )}
+    </div>
+  </div>
+</main>
 
       {/* --- FOOTER (Закріплений і враховує меню браузера) --- */}
-      <div className="fixed bottom-0 left-0 right-0 bg-black/90 backdrop-blur-2xl border-t border-white/5 z-40 shrink-0 pb-[env(safe-area-inset-bottom)]">
+      <div className="fixed bottom-0 left-0 right-0 h-[80px] bg-black/90 backdrop-blur-2xl border-t border-white/5 z-[100] shrink-0 pb-[env(safe-area-inset-bottom)]">
         <div className="max-w-[1500px] mx-auto px-4 lg:px-6 py-4 lg:py-6 grid grid-cols-12 gap-2 items-center">
           <button onClick={() => currentStepIndex > 0 && setCurrentStepIndex(currentStepIndex - 1)} className="col-span-3 lg:col-span-2 flex items-center gap-1 text-zinc-500 hover:text-white font-black uppercase text-[10px] italic">
             <ChevronLeft size={16} /> Back
