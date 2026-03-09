@@ -638,11 +638,11 @@ const GaragePanel = ({ isOpen, onClose, builds, user, onLogout, onSelectBuild, o
                   {/* Кружечок зліва */}
                   <label className="relative flex items-center justify-center cursor-pointer shrink-0">
                     <input type="checkbox" className="peer sr-only" />
-                    <div className="w-5 h-5 lg:w-6 lg:h-6 rounded-full border-2 border-white/10 peer-checked:border-red-600 peer-checked:bg-red-600/20 flex items-center justify-center transition-all">
+                    <div className="w-3 h-3 lg:w-3 lg:h-3 rounded-full border-2 border-white/10 peer-checked:border-red-600 peer-checked:bg-red-600/20 flex items-center justify-center transition-all">
                       <div className="w-2 h-2 lg:w-2.5 lg:h-2.5 rounded-full bg-red-600 scale-0 peer-checked:scale-100 transition-transform" />
                     </div>
                   </label>
-                  <button onClick={() => onSelectBuild(build)} className="text-[14px] lg:text-[18px] font-black uppercase italic text-white hover:text-red-600 truncate text-left">{build.name}</button>
+                  <button onClick={() => onSelectBuild(build)} className="text-[12px] lg:text-[16px] font-black uppercase italic text-white hover:text-red-600 truncate text-left pr-1">{build.name}</button>
                 </div>
 
                 {/* Опис деталей (Мобайл + Десктоп) */}
