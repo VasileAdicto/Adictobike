@@ -419,36 +419,33 @@ const handleLoadBuild = (build: any) => {
       </AnimatePresence>
 
       <style>{`
-        /* Надтонкий скролбар для ПК (2px) */
+        /* Тонка лінія для ПК */
         .custom-scroll-container::-webkit-scrollbar { 
-          width: 2px !important; 
-          height: 2px !important; 
-          display: block !important;
-        }
-        .custom-scroll-container::-webkit-scrollbar-track { 
-          background: transparent !important; 
+          width: 2px; 
+          height: 2px; 
         }
         .custom-scroll-container::-webkit-scrollbar-thumb { 
-          background: #ef4444 !important; 
+          background: #ef4444; 
           border-radius: 10px; 
         }
-
-        /* Налаштування для мобайла */
+        
+        /* Мобільний скрол: робимо його видимим через підсвітку треку */
         @media (max-width: 1024px) {
           .custom-scroll-container {
-            overflow-x: auto !important;
+            overflow-x: scroll;
             -webkit-overflow-scrolling: touch;
-            padding-bottom: 12px !important; /* Місце для скролбару */
           }
-          .custom-scroll-container::-webkit-scrollbar { 
-            height: 3px !important; /* Трішки товстіший для пальця */
-            display: block !important;
+          .custom-scroll-container::-webkit-scrollbar {
+            height: 3px;
+          }
+          .custom-scroll-container::-webkit-scrollbar-track {
+            background: rgba(239, 68, 68, 0.1); /* Ледь помітна червона доріжка */
           }
         }
 
         @keyframes slideHint { 
-          0%, 100% { transform: translateX(0); opacity: 0.3; } 
-          50% { transform: translateX(10px); opacity: 1; } 
+          0%, 100% { transform: translateX(0); } 
+          50% { transform: translateX(5px); } 
         }
         .animate-slide-hint { animation: slideHint 1.5s infinite; }
       `}</style>
@@ -511,36 +508,28 @@ const handleLoadBuild = (build: any) => {
           </div>
 
           {/* ПРАВА ЧАСТИНА: КАРТКИ ТОВАРІВ */}
-<div className="lg:col-span-3 flex flex-col bg-zinc-900/40 rounded-[1.5rem] lg:rounded-[2.5rem] border border-white/5 p-2 lg:p-6 relative order-2 shadow-2xl flex-1 min-h-0">
-  
-  {/* Обгортка для скролу */}
-  <div className="flex-1 overflow-x-auto lg:overflow-y-auto lg:overflow-x-hidden custom-scroll-container">
-    <div className="flex flex-row lg:flex-col gap-2 min-w-full pb-2">
-      <AnimatePresence mode="popLayout">
-        {filteredOptions.map((option) => (
-          <div key={option.id} className="w-[32%] min-w-[32%] lg:w-full lg:min-w-0 shrink-0">
-            <OptionCard 
-              component={option} 
-              isSelected={selections[currentStep.id] === option.id} 
-              onClick={() => setSelections(prev => ({...prev, [currentStep.id]: option.id}))} 
-            />
-          </div>
-        ))}
-      </AnimatePresence>
-    </div>
-  </div>
+          <div className="lg:col-span-3 flex flex-col bg-zinc-900/40 rounded-[1.5rem] lg:rounded-[2.5rem] border border-white/5 p-2 lg:p-6 relative order-2 shadow-2xl flex-1 min-h-[160px]">
+            
+            <div className="flex-1 overflow-x-auto lg:overflow-y-auto custom-scroll-container">
+              {/* pb-6 додає простір для природного скролбару */}
+              <div className="flex flex-row lg:flex-col gap-2 min-w-full pb-6">
+                <AnimatePresence mode="popLayout">
+                  {filteredOptions.map((option) => (
+                    <div key={option.id} className="w-[32%] min-w-[32%] lg:w-full lg:min-w-0 shrink-0">
+                      <OptionCard component={option} isSelected={selections[currentStep.id] === option.id} onClick={() => setSelections(prev => ({...prev, [currentStep.id]: option.id}))} />
+                    </div>
+                  ))}
+                </AnimatePresence>
+              </div>
+            </div>
 
-  {/* ПІДКАЗКА СКРОЛУ */}
-          {filteredOptions.length > 3 && (
-            <div className="lg:hidden h-6 flex items-center justify-center gap-2 text-red-600 pt-2 pb-1 bg-gradient-to-t from-zinc-900/80 to-transparent shrink-0">
-              <span className="text-[8px] font-black uppercase tracking-[0.2em] italic animate-pulse">Scroll</span>
+            {/* НАПИС SCROLL (Тепер без жорсткої умови довжини масиву) */}
+            <div className="lg:hidden flex items-center justify-center gap-2 text-red-600 py-1 shrink-0 bg-zinc-900">
+              <span className="text-[8px] font-black uppercase tracking-widest italic animate-pulse">Scroll</span>
               <ChevronsRight size={12} className="animate-slide-hint" />
             </div>
-          )}
-        </div> {/* закриває lg:col-span-3 (праву панель) */}
-      </div> {/* закриває внутрішній flex/grid контейнер */}
-    </main>
-
+          </div>
+          
       {/* --- FOOTER --- */}
       <div className="fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur-2xl border-t border-white/5 z-40 shrink-0">
         <div className="max-w-[1500px] mx-auto px-4 lg:px-6 py-4 lg:py-6 grid grid-cols-12 gap-2 items-center">
