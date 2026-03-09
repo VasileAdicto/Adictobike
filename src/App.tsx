@@ -541,12 +541,10 @@ const handleLoadBuild = (build: any) => {
           <span className="text-[7px] font-black uppercase tracking-[0.2em] italic">Scroll</span>
           <ChevronsRight size={8} strokeWidth={3} />
         </div>
-      )}
     </div>
-
   </div>
 </main>
-
+    
       {/* --- FOOTER --- */}
       <div className="fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur-2xl border-t border-white/5 z-40">
         <div className="max-w-[1500px] mx-auto px-4 lg:px-6 py-6 grid grid-cols-12 gap-2 items-center">
