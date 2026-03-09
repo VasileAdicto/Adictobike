@@ -399,93 +399,99 @@ const handleLoadBuild = (build: any) => {
       <style>{`
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .custom-scroll-container::-webkit-scrollbar { display: none; }
-        @keyframes slideHint { 0%, 100% { transform: translateX(0); opacity: 0.2; } 50% { transform: translateX(5px); opacity: 0.6; } }
+        @keyframes slideHint { 0%, 100% { transform: translateX(0); opacity: 0.3; } 50% { transform: translateX(8px); opacity: 0.8; } }
         .animate-slide-hint { animation: slideHint 1.5s infinite; }
       `}</style>
       
-      {/* 1. ВЕРХНЯ СТРОКА (ПРОЗОРА) */}
-      <nav className="absolute top-0 left-0 right-0 h-[60px] px-4 flex justify-between items-center z-[100] pointer-events-none">
-        <div className="pointer-events-auto">
-          <img src="/design/Logo.png" alt="Logo" className="h-4 w-auto object-contain opacity-80" />
+      {/* 1. ВЕРХНЯ СТРОКА (Логотип + Автор) */}
+      <nav className="fixed top-0 left-0 right-0 h-[70px] px-6 flex justify-between items-center z-[100] bg-gradient-to-b from-black to-transparent pointer-events-none">
+        <div className="flex items-center gap-4 pointer-events-auto">
+          <img src="/design/Logo.png" alt="Logo" className="h-6 lg:h-7 w-auto object-contain" />
+          <div className="text-zinc-500 font-mono text-[9px] uppercase tracking-[0.2em] italic border-l border-white/10 pl-4 py-1">
+            Build by Vasile & AI
+          </div>
         </div>
-        <div className="flex items-center gap-3 pointer-events-auto">
+        <div className="pointer-events-auto">
           {user ? (
-            <button onClick={() => setIsGarageOpen(true)} className="flex items-center gap-2 bg-white/10 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
-              <User size={12} className="text-red-600"/><span className="text-[9px] font-black uppercase italic tracking-widest text-white">{user.name}</span>
+            <button onClick={() => setIsGarageOpen(true)} className="flex items-center gap-2 bg-white/5 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 hover:border-red-600/50 transition-all">
+              <User size={14} className="text-red-600"/><span className="text-[10px] font-black uppercase italic tracking-widest">{user.name}</span>
             </button>
           ) : (
-            <button onClick={() => setIsAuthModalOpen(true)} className="bg-red-600 px-4 py-1.5 rounded-full text-[9px] font-black uppercase italic tracking-widest text-white shadow-lg">Login</button>
+            <button onClick={() => setIsAuthModalOpen(true)} className="bg-red-600 px-5 py-2 rounded-full text-[10px] font-black uppercase italic tracking-widest shadow-lg active:scale-95 transition-all">Login</button>
           )}
         </div>
       </nav>
 
-      {/* 2. ВІЗУАЛІЗАТОР (ЗАФІКСОВАНИЙ ФОН) */}
-      <div className="absolute inset-0 z-0 h-[55dvh] lg:h-full">
+      {/* 2. ВІЗУАЛІЗАТОР (Опущений нижче для кращого вигляду) */}
+      <div className="absolute inset-0 z-0 flex items-center justify-center pt-[40px] h-[60dvh]">
         <Visualizer selectedComponents={selectedComponents} offsets={offsets} showGrid={showGrid} gridSize={gridSize} isZoomed={isZoomed} zoomScale={zoomScale} />
       </div>
 
-      {/* 3. КОНТЕНТ (СКРОЛ ТОВАРІВ) */}
-      <main className="relative z-10 h-full w-full flex flex-col pt-[70px] pointer-events-none">
-        {/* СТЕПИ (ПРОЗОРІ) */}
-        <div ref={stepsNavRef} className="flex overflow-x-auto no-scrollbar gap-x-5 px-6 py-2 shrink-0 pointer-events-auto">
+      {/* 3. КОНТЕНТ: СТЕПИ ТА ТОВАРИ */}
+      <main className="relative z-10 h-full w-full flex flex-col pt-[80px] pointer-events-none">
+        {/* СТЕПИ (Фіксовані зверху) */}
+        <div ref={stepsNavRef} className="flex overflow-x-auto no-scrollbar gap-x-6 px-6 py-4 shrink-0 pointer-events-auto">
           {steps.map((step, idx) => (
-            <button key={step.id} onClick={() => setCurrentStepIndex(idx)} className={cn("transition-all text-[9px] font-black uppercase tracking-[0.2em] pb-1 border-b-2 whitespace-nowrap", idx === currentStepIndex ? "text-red-600 border-red-600" : "text-white opacity-30 border-transparent")}>{step.title}</button>
+            <button key={step.id} onClick={() => setCurrentStepIndex(idx)} className={cn("transition-all text-[10px] font-black uppercase tracking-[0.25em] pb-1 border-b-2 whitespace-nowrap", idx === currentStepIndex ? "text-red-600 border-red-600" : "text-white opacity-25 border-transparent")}>
+              {step.title}
+            </button>
           ))}
         </div>
 
-        {/* ПУСТИЙ ПРОСТІР (Щоб бачити байк) */}
-        <div className="flex-1 min-h-[30dvh]"></div>
+        {/* ПУСТИЙ ПРОСТІР ДЛЯ ВЕЛОСИПЕДА */}
+        <div className="flex-1"></div>
 
-        {/* КАРТКИ ТОВАРІВ */}
-        <div className="shrink-0 flex flex-col pointer-events-auto pb-[100px]">
-          <div className="overflow-x-auto no-scrollbar custom-scroll-container px-4">
-            <div className="flex flex-row lg:flex-col gap-2.5 min-w-full items-end">
+        {/* ПАНЕЛЬ ТОВАРІВ */}
+        <div className="shrink-0 flex flex-col pointer-events-auto relative">
+          {/* ФІКСОВАНА ПІДКАЗКА СКРОЛУ (Тепер вона не рухається) */}
+          {filteredOptions.length > 3 && (
+            <div className="absolute -top-6 left-0 right-0 flex items-center justify-center gap-2 text-zinc-500/60 pointer-events-none">
+              <span className="text-[8px] font-black uppercase italic tracking-widest">Scroll to more</span>
+              <ChevronsRight size={10} className="animate-slide-hint" />
+            </div>
+          )}
+
+          <div className="overflow-x-auto no-scrollbar custom-scroll-container px-4 pb-[110px]">
+            <div className="flex flex-row lg:flex-col gap-3 min-w-full items-end">
               <AnimatePresence mode="popLayout">
                 {filteredOptions.map((option) => (
-                  <div key={option.id} className="w-[30%] min-w-[30%] lg:w-full lg:min-w-0 shrink-0">
+                  <div key={option.id} className="w-[32%] min-w-[32%] lg:w-full lg:min-w-0 shrink-0">
                     <OptionCard component={option} isSelected={selections[currentStep.id] === option.id} onClick={() => setSelections(prev => ({...prev, [currentStep.id]: option.id}))} />
                   </div>
                 ))}
               </AnimatePresence>
             </div>
-            {/* SCROLL HINT ПРЯМО ПІД КАРТКАМИ */}
-            {filteredOptions.length > 3 && (
-              <div className="flex items-center justify-center gap-1.5 py-1.5 text-zinc-500/50">
-                <span className="text-[6px] font-black uppercase italic tracking-tighter">Scroll to more</span>
-                <ChevronsRight size={8} className="animate-slide-hint" />
-              </div>
-            )}
           </div>
         </div>
       </main>
 
-      {/* 4. КНОПКИ КЕРУВАННЯ (ЗАМІСТЬ ФУТЕРА) */}
-      <div className="fixed bottom-6 left-0 right-0 z-[100] px-4 pointer-events-none">
-        <div className="flex items-end justify-between max-w-[1500px] mx-auto pointer-events-auto">
-          {/* BACK */}
-          <button onClick={() => currentStepIndex > 0 && setCurrentStepIndex(currentStepIndex - 1)} className="w-12 h-12 bg-white/5 backdrop-blur-xl border border-white/10 rounded-full flex items-center justify-center text-zinc-400 active:scale-90 transition-all">
-            <ChevronLeft size={20} />
+      {/* 4. КЕРУВАННЯ (Кнопки Back/Next повернуто до класичного вигляду) */}
+      <div className="fixed bottom-8 left-0 right-0 z-[100] px-6 pointer-events-none">
+        <div className="flex items-center justify-between max-w-[1500px] mx-auto pointer-events-auto">
+          {/* BACK BUTTON */}
+          <button onClick={() => currentStepIndex > 0 && setCurrentStepIndex(currentStepIndex - 1)} className="flex items-center gap-2 text-zinc-400 font-black uppercase text-[11px] italic hover:text-white transition-colors">
+            <ChevronLeft size={18} /> BACK
           </button>
 
-          {/* STATS (ПРОЗОРА ПАНЕЛЬ) */}
-          <div className="flex items-center gap-6 bg-black/40 backdrop-blur-2xl border border-white/5 px-6 py-3 rounded-[2rem] shadow-2xl">
+          {/* STATS PANEL */}
+          <div className="flex items-center gap-8 bg-zinc-900/60 backdrop-blur-3xl border border-white/10 px-8 py-3.5 rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
             <div className="text-center">
-              <p className="text-[6px] text-zinc-500 uppercase font-black italic mb-0.5">Weight</p>
-              <p className="font-mono text-[10px] text-white/90">{selectedComponents.reduce((acc, c) => acc + c.weight, 0)}g</p>
+              <p className="text-[7px] text-zinc-500 uppercase font-black italic mb-0.5">Weight</p>
+              <p className="font-mono text-[11px] text-white font-bold">{selectedComponents.reduce((acc, c) => acc + c.weight, 0)}g</p>
             </div>
-            <div className="w-px h-6 bg-white/10" />
+            <div className="w-px h-7 bg-white/10" />
             <div className="text-center">
-              <p className="text-[6px] text-zinc-500 uppercase font-black italic mb-0.5">Price</p>
-              <p className="font-mono text-[10px] text-red-600">€{selectedComponents.reduce((acc, c) => acc + c.price, 0).toLocaleString()}</p>
+              <p className="text-[7px] text-zinc-600 uppercase font-black italic mb-0.5">Price</p>
+              <p className="font-mono text-[11px] text-red-600 font-bold">€{selectedComponents.reduce((acc, c) => acc + c.price, 0).toLocaleString()}</p>
             </div>
           </div>
 
-          {/* NEXT */}
+          {/* NEXT BUTTON */}
           <button onClick={() => {
               if (filteredOptions.length > 0 && !selections[currentStep.id]) return;
               currentStepIndex < steps.length - 1 ? setCurrentStepIndex(currentStepIndex + 1) : setIsFinished(true);
-            }} className="w-14 h-14 bg-red-600 rounded-full flex items-center justify-center text-white shadow-[0_0_30px_rgba(220,38,38,0.4)] active:scale-90 transition-all">
-            {currentStepIndex === steps.length - 1 ? <CheckCircle2 size={24}/> : <ChevronRight size={24} />}
+            }} className="flex items-center gap-2 bg-red-600 text-white px-6 py-3 rounded-full font-black uppercase text-[11px] italic shadow-lg shadow-red-600/30 active:scale-95 transition-all">
+            {currentStepIndex === steps.length - 1 ? 'FINISH' : 'NEXT'} <ChevronRight size={18} />
           </button>
         </div>
       </div>
@@ -493,7 +499,7 @@ const handleLoadBuild = (build: any) => {
       <GaragePanel isOpen={isGarageOpen} onClose={() => setIsGarageOpen(false)} builds={savedBuilds} user={user} onLogout={handleLogout} onSelectBuild={handleLoadBuild} onDeleteBuild={(id: string) => { const newB = savedBuilds.filter(b => b.id !== id); setSavedBuilds(newB); localStorage.setItem('adicto_saved_builds', JSON.stringify(newB)); }} />
     </div>
   );
-} 
+}
   
   
 // --- ГАРАЖ ---
