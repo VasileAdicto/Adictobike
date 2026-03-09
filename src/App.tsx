@@ -892,7 +892,7 @@ function SummaryView({ selections, onReset, setSavedBuilds }: any) {
       </div>
 
       <div className="flex flex-col gap-4 w-full max-w-[280px]">
-        {/* UI: КНОПКА ЕКСПОРТУ З ЧЕРВОНИМ ПРОГРЕСОМ */}
+        {/* UI: КНОПКА ЕКСПОРТУ PDF (з динамічним червоним прогресом) */}
         <button 
           onClick={handleExport} 
           disabled={isExporting}
@@ -904,44 +904,36 @@ function SummaryView({ selections, onReset, setSavedBuilds }: any) {
             animate={{ width: `${progress}%` }}
             transition={{ ease: "linear" }}
           />
-          
           <span className="relative z-10 flex items-center justify-center gap-2 text-white">
             {isExporting ? `SAVING ${progress}%` : <><Download size={14} /> EXPORT PDF</>}
           </span>
         </button>
-<button 
-  onClick={() => {
-    const newBuild = {
-      id: Math.random().toString(36).substr(2, 9),
-      name: selections.find((c: any) => c.stepTitle === 'Frame')?.name || 'Custom Build',
-      date: new Date().toLocaleDateString('uk-UA'),
-      totalPrice: selections.reduce((acc: number, c: any) => acc + c.price, 0),
-      components: selections.map((c: any) => ({
-        stepTitle: c.stepTitle,
-        brand: c.brand,
-        name: c.name
-      }))
-    };
 
-    // 1. Отримуємо актуальні дані з пам'яті
-    const currentRaw = localStorage.getItem('adicto_saved_builds') || '[]';
-    const updatedBuilds = [...JSON.parse(currentRaw), newBuild];
+        {/* UI: КНОПКА SAVE TO GARAGE (з червоним написом) */}
+        <button 
+          onClick={() => {
+            const newBuild = {
+              id: Math.random().toString(36).substr(2, 9),
+              name: selections.find((c: any) => c.stepTitle === 'Frame')?.name || 'Custom Build',
+              date: new Date().toLocaleDateString('uk-UA'),
+              totalPrice: selections.reduce((acc: number, c: any) => acc + c.price, 0),
+              components: selections.map((c: any) => ({ stepTitle: c.stepTitle, brand: c.brand, name: c.name }))
+            };
+            const currentRaw = localStorage.getItem('adicto_saved_builds') || '[]';
+            const updatedBuilds = [...JSON.parse(currentRaw), newBuild];
+            localStorage.setItem('adicto_saved_builds', JSON.stringify(updatedBuilds));
+            setSavedBuilds(updatedBuilds); 
+            alert("Build saved to your Garage!");
+          }}
+          className="px-8 py-4 border border-red-600/30 text-red-600 rounded-2xl font-black uppercase text-[10px] italic hover:bg-red-600/10 transition-all active:scale-95 shadow-lg shadow-red-600/5"
+        >
+          Save to Garage
+        </button>
 
-    // 2. Зберігаємо в браузер
-    localStorage.setItem('adicto_saved_builds', JSON.stringify(updatedBuilds));
-
-    // 3. ОНОВЛЮЄМО СТАН (щоб у Гаражі з'явилося миттєво)
-    setSavedBuilds(updatedBuilds); 
-
-    alert("Build saved to your Garage!");
-  }}
-  className="px-8 py-4 border border-red-600/30 text-red-600 rounded-xl font-black uppercase text-[10px] italic hover:bg-red-600/10 transition-all active:scale-95 shadow-lg shadow-red-600/5"
->
-  Save to Garage
-</button>
+        {/* UI: ОНОВЛЕНА КНОПКА BUILD ANOTHER ONE (з тонкою білою обводкою) */}
         <button 
           onClick={onReset} 
-          className="text-zinc-600 hover:text-white transition-colors text-[9px] font-black uppercase tracking-[0.3em] py-2 italic"
+          className="px-8 py-4 bg-transparent border border-white/10 text-white rounded-2xl font-black uppercase text-[10px] italic hover:bg-white/5 hover:border-white/20 transition-all active:scale-95 shadow-xl"
         >
           Build another one
         </button>
