@@ -245,31 +245,64 @@ const OptionCard = ({ component, isSelected, onClick }: { component: Component, 
 const INITIAL_STEPS: Step[] = [ { id: 'frame', title: 'Frame', options: [] }, { id: 'wheelset', title: 'Wheelset', options: [] }, { id: 'tyres', title: 'Tyres', options: [] }, { id: 'cockpit', title: 'Cockpit', options: [] }, { id: 'tape', title: 'Tape', options: [] }, { id: 'saddle', title: 'Saddle', options: [] }, { id: 'shifters', title: 'Shifters', options: [] }, { id: 'crankset', title: 'Crankset', options: [] }, { id: 'derailleurs', title: 'Derailleurs', options: [] }, { id: 'cassette', title: 'Cassette', options: [] }, { id: 'discs', title: 'Discs', options: [] } ];
 
 export default function BikeConfigurator() {
-  const [isAdminMode, setIsAdminMode] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [offsets, setOffsets] = useState<Record<string, OffsetData>>({});
-  const [showGrid, setShowGrid] = useState(false);
-  const [gridSize, setGridSize] = useState(20);
-  const [zoomScale, setZoomScale] = useState(5);
-  const [isZoomed, setIsZoomed] = useState(false);
-  const [steps, setSteps] = useState<Step[]>(INITIAL_STEPS);
-  const [currentStepIndex, setCurrentStepIndex] = useState(0);
-  const [selections, setSelections] = useState<Record<string, string>>({});
-  const [isFinished, setIsFinished] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [isAdminMode, setIsAdminMode] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [offsets, setOffsets] = useState<Record<string, OffsetData>>({});
+  const [showGrid, setShowGrid] = useState(false);
+  const [gridSize, setGridSize] = useState(20);
+  const [zoomScale, setZoomScale] = useState(5);
+  const [isZoomed, setIsZoomed] = useState(false);
+  const [steps, setSteps] = useState<Step[]>(INITIAL_STEPS);
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const [selections, setSelections] = useState<Record<string, string>>({});
+  const [isFinished, setIsFinished] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const stepsNavRef = useRef<HTMLDivElement>(null);
+
+  // AUTH & GARAGE STATES
   const [user, setUser] = useState<any>(JSON.parse(localStorage.getItem('adicto_user') || 'null'));
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isGarageOpen, setIsGarageOpen] = useState(false);
+  const [savedBuilds, setSavedBuilds] = useState<any[]>(JSON.parse(localStorage.getItem('adicto_saved_builds') || '[]'));
 
-  const currentStep = steps[currentStepIndex] || steps[0];
+  const currentStep = steps[currentStepIndex] || steps[0];
 
-  const handleLogout = () => {
-    localStorage.removeItem('adicto_auth');
-    localStorage.removeItem('adicto_github_token');
-    setIsLoggedIn(false);
-    window.location.reload();
-  };
+  const handleLogout = () => {
+    localStorage.removeItem('adicto_auth');
+    localStorage.removeItem('adicto_github_token');
+    localStorage.removeItem('adicto_user');
+    setUser(null);
+    setIsLoggedIn(false);
+    setIsGarageOpen(false);
+    window.location.reload();
+  };
+const handleLoadBuild = (build: any) => {
+    let missingSome = false;
+    const newSelections: Record<string, string> = {};
 
+    // Проходимо по кожному компоненту зі збереженої збірки
+    build.components.forEach((savedComp: any) => {
+      // Шукаємо відповідний крок у поточній базі Excel
+      const step = steps.find(s => s.title.toUpperCase() === savedComp.stepTitle.toUpperCase());
+      const exists = step?.options.find(o => o.name === savedComp.name);
+      
+      if (exists) {
+        newSelections[step!.id] = exists.id;
+      } else {
+        missingSome = true;
+      }
+    });
+
+    if (missingSome) {
+      alert("Вибач, деякі компоненти вже недоступні, потрібно заново пройти процес зборки (Some components are no longer available in the database).");
+    }
+
+    // Оновлюємо вибір, закриваємо гараж і повертаємо користувача до конфігуратора
+    setSelections(newSelections);
+    setIsGarageOpen(false);
+    setIsFinished(false);
+  };
+  
   useEffect(() => {
     if (stepsNavRef.current) {
       const activeBtn = stepsNavRef.current.children[currentStepIndex] as HTMLElement;
@@ -333,7 +366,13 @@ export default function BikeConfigurator() {
   const activeComponentForTuning = useMemo(() => currentStep?.options.find(o => o.id === selections[currentStep?.id]), [currentStep, selections]);
 
   if (isAdminMode && !isLoggedIn) return <AdminLogin onLogin={() => setIsLoggedIn(true)} />;
-  if (isFinished) return <SummaryView selections={selectedComponents} onReset={() => window.location.reload()} />;
+  if (isFinished) return (
+    <SummaryView 
+      selections={selectedComponents} 
+      onReset={() => window.location.reload()} 
+      setSavedBuilds={setSavedBuilds} 
+    />
+  );
 
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-red-600 pb-28 lg:pb-24 overflow-x-hidden">
@@ -394,15 +433,15 @@ export default function BikeConfigurator() {
   {/* ПРАВА ЧАСТИНА: КНОПКА LOGIN */}
 <div className="flex items-center gap-4">
   {user ? (
-    <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full border border-white/5">
-      <User size={12} className="text-red-600"/> 
-      <span className="text-[9px] font-black uppercase italic text-white">{user.name}</span>
-    </div>
-  ) : (
     <button 
-      onClick={() => setIsAuthModalOpen(true)} 
-      className="flex items-center gap-2 bg-red-600 px-4 py-1.5 rounded-full text-[9px] font-black uppercase italic tracking-widest text-white shadow-lg shadow-red-600/20 active:scale-95 transition-all"
+      onClick={() => setIsGarageOpen(true)}
+      className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full border border-white/5 hover:border-red-600/50 transition-all group active:scale-95"
     >
+      <User size={12} className="text-red-600 group-hover:scale-110 transition-transform"/> 
+      <span className="text-[9px] font-black uppercase italic text-white tracking-widest">Garage: {user.name}</span>
+    </button>
+  ) : (
+    <button onClick={() => setIsAuthModalOpen(true)} className="flex items-center gap-2 bg-red-600 px-4 py-1.5 rounded-full text-[9px] font-black uppercase italic tracking-widest text-white">
       <LogIn size={12}/> Login
     </button>
   )}
@@ -510,10 +549,28 @@ export default function BikeConfigurator() {
               <ChevronRight size={14} strokeWidth={3} className="shrink-0" />
             </button>
           </div>
+        </div> {/* закриває внутрішній grid футера */}
+      </div> {/* закриває fixed контейнер футера */}
 
-        </div>
-      </div>
-    </div>
+      {/* ГАРАЖ ПАНЕЛЬ */}
+      <GaragePanel 
+        isOpen={isGarageOpen} 
+        onClose={() => setIsGarageOpen(false)} 
+        builds={savedBuilds} 
+        user={user}
+        onLogout={() => { 
+          setUser(null); 
+          localStorage.removeItem('adicto_user'); 
+          setIsGarageOpen(false); 
+        }}
+        onSelectBuild={handleLoadBuild}
+        onDeleteBuild={(id: string) => {
+          const newBuilds = savedBuilds.filter(b => b.id !== id);
+          setSavedBuilds(newBuilds);
+          localStorage.setItem('adicto_saved_builds', JSON.stringify(newBuilds));
+        }}
+      />
+    </div> 
   );
 }
 // --- CLIENT AUTH MODAL ---
@@ -569,7 +626,7 @@ const AuthModal = ({ isOpen, onClose, onLogin }: any) => {
                   const newOtp = [...otp]; newOtp[i] = e.target.value; setOtp(newOtp);
                   if (e.target.nextSibling && e.target.value) (e.target.nextSibling as HTMLElement).focus();
                 }} 
-                className="w-10 h-14 bg-black border border-white/5 rounded-xl text-center text-red-600 font-bold outline-none focus:border-red-600 shadow-inner" 
+                className="w-10 h-12 bg-black border border-white/5 rounded-xl text-center text-red-600 font-bold outline-none focus:border-red-600 shadow-inner" 
               />
             ))}
           </div>
@@ -586,7 +643,131 @@ const AuthModal = ({ isOpen, onClose, onLogin }: any) => {
   );
 };
 
-function SummaryView({ selections, onReset }: any) {
+// --- GARAGE PANEL COMPONENT ---
+const GaragePanel = ({ isOpen, onClose, builds, user, onLogout, onSelectBuild, onDeleteBuild }: any) => {
+  if (!isOpen) return null;
+
+  return (
+    <motion.div 
+      initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
+      className="fixed inset-0 z-[300] bg-black/98 backdrop-blur-3xl flex flex-col font-sans text-white"
+    >
+      {/* HEADER */}
+      <div className="p-6 border-b border-white/5 flex justify-between items-start">
+        <div className="flex gap-4">
+          <div className="w-12 h-12 bg-zinc-900 border border-white/10 rounded-full flex items-center justify-center font-black italic text-red-600 text-[14px] shadow-xl">
+            {user?.name?.[0].toUpperCase()}
+          </div>
+          <div className="flex flex-col">
+            <h2 className="text-[10px] font-black uppercase italic leading-none tracking-[0.2em] text-white">MY ADICTO</h2>
+            <h2 className="text-[10px] font-black uppercase italic leading-none tracking-[0.2em] text-red-600 mt-1">GARAGE</h2>
+            <button onClick={onLogout} className="mt-3 flex items-center gap-1 text-zinc-600 hover:text-white transition-all text-[8px] font-bold uppercase tracking-tighter">
+              <LogOut size={10}/> Logout from system
+            </button>
+          </div>
+        </div>
+        <button onClick={onClose} className="text-zinc-500 hover:text-white transition-all uppercase text-[9px] font-black italic flex items-center gap-2 bg-white/5 px-4 py-2 rounded-full">
+          Close <ChevronRight size={14} />
+        </button>
+      </div>
+
+     {/* LIST OF BUILDS */}
+<div className="flex-1 overflow-y-auto p-4 lg:p-10 custom-scroll-container">
+  {builds.length === 0 ? (
+    <div className="h-full flex flex-col items-center justify-center opacity-20">
+      <Database size={30} className="mb-4" />
+      <p className="text-[9px] font-black uppercase italic tracking-[0.3em]">Garage is empty</p>
+    </div>
+  ) : (
+    <div className="space-y-4 max-w-5xl mx-auto">
+      {builds.map((build: any) => (
+        <div key={build.id} className="bg-zinc-900/30 border border-white/5 rounded-[1.5rem] p-5 hover:bg-zinc-900/50 transition-all group relative">
+          
+          {/* DATE: ПРАВИЙ ВЕРХНІЙ КУТ */}
+          <div className="absolute top-5 right-6 text-[8px] font-mono text-zinc-600 uppercase tracking-widest">
+            {build.date || '09/03/2026'}
+          </div>
+
+          <div className="flex flex-col lg:flex-row gap-6">
+            <div className="flex-1">
+              <div className="flex items-center gap-3 mb-4">
+                {/* НАЗВА БАЙКУ: КЛІКАБЕЛЬНА */}
+                <button 
+                  onClick={() => onSelectBuild(build)} 
+                  className="text-[16px] lg:text-[18px] font-black uppercase italic text-white hover:text-red-600 transition-colors text-left leading-none tracking-tighter"
+                >
+                  {build.name || 'Custom Build'}
+                </button>
+                
+                {/* COMPARE CHECKBOX */}
+                <div className="flex items-center gap-2 ml-4">
+                  <input type="checkbox" className="w-3 h-3 accent-red-600 bg-black border-white/10 rounded cursor-pointer" />
+                  <span className="text-[7px] text-zinc-500 font-bold uppercase tracking-tighter">Choose to compare</span>
+                </div>
+              </div>
+
+              {/* CONFIGURATION: МАЛЕНЬКИЙ ШРИФТ */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-1 opacity-40">
+                {build.components?.map((c: any, i: number) => (
+                  <div key={i} className="text-[7px] uppercase text-zinc-400 truncate tracking-tight">
+                    <span className="text-zinc-600 mr-1">{c.stepTitle}:</span> {c.brand} {c.name}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* ACTIONS: PDF ТА DELETE */}
+            <div className="flex lg:flex-col justify-end gap-2 shrink-0">
+              <button className="flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 text-white px-4 py-2 rounded-lg text-[8px] font-black uppercase italic transition-all group/pdf">
+                <Download size={12} className="text-red-600 group-hover/pdf:scale-110 transition-transform"/> PDF
+              </button>
+              <button 
+                onClick={() => onDeleteBuild(build.id)} 
+                className="flex items-center justify-center gap-2 bg-red-600/10 hover:bg-red-600 text-red-600 hover:text-white px-4 py-2 rounded-lg text-[8px] font-black uppercase italic transition-all"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  )}
+</div>
+
+     {/* FOOTER / МІНІ ПІДВАЛ КАБІНЕТУ */}
+      <div className="p-8 border-t border-white/5 bg-black mt-auto">
+        <div className="max-w-5xl mx-auto flex flex-col lg:flex-row justify-between items-center gap-6">
+          
+          {/* ЗЛІВА: БРЕНДИНГ */}
+          <div className="text-left">
+            <p className="text-[8px] font-black uppercase italic text-zinc-500 tracking-widest leading-none">
+              Powered by Adicto.Bike
+            </p>
+            <p className="text-[7px] text-zinc-700 uppercase font-bold mt-2 tracking-tighter text-center lg:text-left">
+              All Rights Reserved © 2026
+            </p>
+          </div>
+
+          {/* СПРАВА: КОНТАКТИ ТА БАГИ */}
+          <div className="text-center lg:text-right">
+            <p className="text-[8px] text-zinc-500 uppercase font-bold italic tracking-tighter leading-none mb-2">
+              Please contact us if you have any questions or bugs
+            </p>
+            <a 
+              href="mailto:hello@adicto.bike" 
+              className="text-[10px] font-black text-red-600 hover:text-white transition-all duration-300 italic tracking-widest border-b border-red-600/20 hover:border-white"
+            >
+              hello@adicto.bike
+            </a>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+function SummaryView({ selections, onReset, setSavedBuilds }: any) {
   const [isExporting, setIsExporting] = useState(false);
   const [progress, setProgress] = useState(0);
 
@@ -728,7 +909,36 @@ function SummaryView({ selections, onReset }: any) {
             {isExporting ? `SAVING ${progress}%` : <><Download size={14} /> EXPORT PDF</>}
           </span>
         </button>
+<button 
+  onClick={() => {
+    const newBuild = {
+      id: Math.random().toString(36).substr(2, 9),
+      name: selections.find((c: any) => c.stepTitle === 'Frame')?.name || 'Custom Build',
+      date: new Date().toLocaleDateString('uk-UA'),
+      totalPrice: selections.reduce((acc: number, c: any) => acc + c.price, 0),
+      components: selections.map((c: any) => ({
+        stepTitle: c.stepTitle,
+        brand: c.brand,
+        name: c.name
+      }))
+    };
 
+    // 1. Отримуємо актуальні дані з пам'яті
+    const currentRaw = localStorage.getItem('adicto_saved_builds') || '[]';
+    const updatedBuilds = [...JSON.parse(currentRaw), newBuild];
+
+    // 2. Зберігаємо в браузер
+    localStorage.setItem('adicto_saved_builds', JSON.stringify(updatedBuilds));
+
+    // 3. ОНОВЛЮЄМО СТАН (щоб у Гаражі з'явилося миттєво)
+    setSavedBuilds(updatedBuilds); 
+
+    alert("Build saved to your Garage!");
+  }}
+  className="px-8 py-4 border border-red-600/30 text-red-600 rounded-xl font-black uppercase text-[10px] italic hover:bg-red-600/10 transition-all active:scale-95 shadow-lg shadow-red-600/5"
+>
+  Save to Garage
+</button>
         <button 
           onClick={onReset} 
           className="text-zinc-600 hover:text-white transition-colors text-[9px] font-black uppercase tracking-[0.3em] py-2 italic"
