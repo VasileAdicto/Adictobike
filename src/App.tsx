@@ -520,7 +520,7 @@ const handleLoadBuild = (build: any) => {
       />
     </div>
   );
-} // Кінець BikeConfigurator
+}
 
 // --- ГАРАЖ ---
 const GaragePanel = ({ isOpen, onClose, builds, user, onLogout, onSelectBuild, onDeleteBuild }: any) => {
