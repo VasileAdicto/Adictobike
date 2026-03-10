@@ -511,24 +511,34 @@ const handleLoadBuild = (build: any) => {
           </div>
 
           {/* ПРАВА ЧАСТИНА: КАРТКИ ТОВАРІВ */}
-<div className="lg:col-span-3 flex flex-col bg-zinc-900/40 rounded-[1.5rem] lg:rounded-[2.5rem] border border-white/5 p-2 lg:p-6 relative order-2 shadow-2xl flex-1 min-h-0">
+{/* Контейнер карток товарів */}
+<div className="shrink-0 flex flex-col pointer-events-auto relative">
   
-  {/* Обгортка для скролу */}
-  <div className="flex-1 overflow-x-auto lg:overflow-y-auto lg:overflow-x-hidden custom-scroll-container">
-    <div className="flex flex-row lg:flex-col gap-2 min-w-full pb-2">
+  {/* Напис Scroll тепер ближче до карток */}
+  {filteredOptions.length > 3 && (
+    <div className="absolute -top-5 left-0 right-0 flex items-center justify-center gap-1 text-zinc-500/60 pointer-events-none">
+      <span className="text-[7px] font-black uppercase italic tracking-widest">Scroll</span>
+      <ChevronsRight size={8} className="animate-slide-hint" />
+    </div>
+  )}
+
+  {/* Обмежуємо висоту на мобільних пристроях (max-h) */}
+  <div className="overflow-x-auto no-scrollbar custom-scroll-container px-4 pb-[90px] lg:pb-0 max-h-[140px] lg:max-h-none">
+    <div className="flex flex-row lg:flex-col gap-2 min-w-full items-end">
       <AnimatePresence mode="popLayout">
         {filteredOptions.map((option) => (
-          <div key={option.id} className="w-[32%] min-w-[32%] lg:w-full lg:min-w-0 shrink-0">
+          <div key={option.id} className="w-[28%] min-w-[28%] lg:w-full lg:min-w-0 shrink-0">
             <OptionCard 
               component={option} 
               isSelected={selections[currentStep.id] === option.id} 
-              onClick={() => setSelections(prev => ({...prev, [currentStep.id]: option.id}))} 
+              onClick={() => setSelections({...selections, [currentStep.id]: option.id})} 
             />
           </div>
         ))}
       </AnimatePresence>
     </div>
   </div>
+</div>
 
   {/* ПІДКАЗКА СКРОЛУ */}
           {filteredOptions.length > 3 && (
