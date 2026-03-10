@@ -905,10 +905,16 @@ const GaragePanel = ({ isOpen, onClose, builds, user, onLogout, onSelectBuild, o
               <div className="absolute top-2 lg:top-3 right-6 text-[8px] lg:text-[10px] font-mono text-zinc-500 uppercase tracking-widest">{build.date}</div>
               <div className="flex flex-col lg:flex-row lg:items-center gap-4 mt-4 lg:mt-0">
                 <div className="flex items-center gap-3 lg:gap-5 flex-1 min-w-0">
-                  <label className="relative flex items-center justify-center cursor-pointer shrink-0" onClick={(e) => { e.stopPropagation(); toggleCompare(build.id); }}>
-                    <input type="checkbox" className="peer sr-only" readOnly checked={compareIds.includes(build.id)} />
-                    <div className={cn("w-3 h-3 lg:w-3.5 lg:h-3.5 rounded-full border transition-all duration-150", compareIds.includes(build.id) ? "border-red-600 bg-red-600" : "border-white/30")} />
-                  </label>
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); e.preventDefault(); toggleCompare(build.id); }}
+                    className={cn(
+                      "w-5 h-5 lg:w-6 lg:h-6 rounded-full border-2 flex items-center justify-center shrink-0 transition-all duration-150 active:scale-90",
+                      compareIds.includes(build.id) ? "border-red-600 bg-red-600 shadow-lg shadow-red-600/30" : "border-white/20 bg-white/5 hover:border-red-600/50"
+                    )}
+                  >
+                    {compareIds.includes(build.id) && <CheckCircle2 size={12} className="text-white" />}
+                  </button>
                   <button onClick={() => onSelectBuild(build)} className="text-[12px] lg:text-[14px] font-black uppercase italic text-white hover:text-red-600 truncate text-left pr-1">{build.name}</button>
                 </div>
 
@@ -986,7 +992,12 @@ function SummaryView({ selections, onReset, setSavedBuilds, user, onOpenGarage, 
   const handleSaveBuild = () => {
     const newBuild = {
       id: Math.random().toString(36).substr(2, 9),
-      name: selections.find((c: any) => c.stepTitle === 'Frame')?.name || 'Custom Build',
+      name: (() => {
+        const frameName = selections.find((c: any) => c.stepTitle === 'Frame')?.name || '';
+        const shifterName = selections.find((c: any) => c.stepTitle === 'Shifters')?.name || '';
+        const parts = [frameName, shifterName].filter(Boolean);
+        return parts.length > 0 ? parts.join(' + ') : 'Custom Build';
+      })(),
       date: new Date().toLocaleDateString('uk-UA'),
       totalPrice,
       components: selections.map((c: any) => ({
@@ -1000,13 +1011,19 @@ function SummaryView({ selections, onReset, setSavedBuilds, user, onOpenGarage, 
       })),
     };
     const current = JSON.parse(localStorage.getItem('adicto_saved_builds') || '[]');
-    // FIX #7: basic duplicate guard by frame name + date
-    const isDuplicate = current.some((b: any) => b.name === newBuild.name && b.date === newBuild.date);
-    if (isDuplicate) { alert("This build is already saved in your Garage!"); return; }
+    // Auto-rename duplicate names: append " 2", " 3", etc.
+    let finalName = newBuild.name;
+    const existingNames = current.map((b: any) => b.name);
+    if (existingNames.includes(finalName)) {
+      let counter = 2;
+      while (existingNames.includes(`${finalName} ${counter}`)) counter++;
+      finalName = `${finalName} ${counter}`;
+    }
+    newBuild.name = finalName;
     const updated = [...current, newBuild];
     localStorage.setItem('adicto_saved_builds', JSON.stringify(updated));
     setSavedBuilds(updated);
-    alert("Build saved to your Garage!");
+    alert(`Build "${finalName}" saved to your Garage!`);
   };
 
   return (
