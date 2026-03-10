@@ -117,11 +117,12 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>, isFolder: boolean) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
+    if (!token) { setStatus("❌ Token Required"); return; }
     const fileArray = Array.from(files);
-    setStatus(`⏳ Loading 0/${fileArray.length}...`);
+    setStatus(`⏳ 0/${fileArray.length}...`);
     for (let i = 0; i < fileArray.length; i++) {
       const file = fileArray[i];
-      setStatus(`⏳ Sending ${i + 1}/${fileArray.length}...`);
+      setStatus(`⏳ ${i + 1}/${fileArray.length} — ${file.name}`);
       const contentBase64 = await new Promise<string>((resolve) => {
         const reader = new FileReader();
         reader.readAsDataURL(file);
@@ -130,10 +131,29 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
       const fileName = isFolder ? file.webkitRelativePath : file.name;
       const path = selectedCat === 'excel' ? "public/data.xlsx" : `public/parts/${selectedCat}/${fileName}`;
       const success = await saveToGithub(path, contentBase64);
-      if (!success) { setStatus(`❌ Error at ${file.name}`); return; }
+      if (!success) { setStatus(`❌ Error: ${file.name}`); return; }
     }
-    setStatus("✅ Success!");
+    setStatus("✅ Done!");
     setTimeout(() => setStatus(''), 3000);
+    e.target.value = "";
+  };
+
+  const handleSingleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !token) { setStatus("❌ No file or token"); return; }
+    setStatus(`⏳ Uploading ${file.name}...`);
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const content = (reader.result as string).split(',')[1];
+      const path = selectedCat === 'excel'
+        ? "public/data.xlsx"
+        : `public/parts/${selectedCat}/${file.name}`;
+      const success = await saveToGithub(path, content);
+      setStatus(success ? "✅ Uploaded!" : "❌ Upload failed");
+      if (success) localStorage.setItem('adicto_github_token', token);
+      setTimeout(() => setStatus(''), 3000);
+    };
+    reader.readAsDataURL(file);
     e.target.value = "";
   };
 
@@ -157,15 +177,18 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
           <input type="password" placeholder="TOKEN" value={token} onChange={(e) => setToken(e.target.value)} className="bg-transparent text-[9px] w-20 outline-none font-mono text-white" />
         </div>
         <select value={selectedCat} onChange={(e) => setSelectedCat(e.target.value)} className="bg-black border border-white/10 text-[9px] px-2 py-1 rounded uppercase font-bold outline-none focus:border-red-600 transition-all text-white">
-          <option value="excel">📁 EXCEL</option>
-          {categories?.map((cat: string) => <option key={cat} value={cat}>🖼️ {cat.toUpperCase()}</option>)}
+          <option value="excel">📊 Excel (prices)</option>
+          {categories?.map((cat: string) => <option key={cat} value={cat}>🖼️ {cat}</option>)}
         </select>
         <div className="flex gap-1">
-          <label className="cursor-pointer bg-zinc-800 text-zinc-300 px-2 py-1 rounded text-[9px] font-bold uppercase hover:bg-zinc-700 flex items-center gap-1 italic">
-            <Upload size={10} /> Files
-            <input type="file" className="hidden" multiple onChange={(e) => handleUpload(e, false)} />
+          <label className="cursor-pointer bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-[9px] font-black uppercase flex items-center gap-1 italic transition-all">
+            <Upload size={10} /> Upload
+            <input type="file" className="hidden" onChange={handleSingleUpload} accept={selectedCat === 'excel' ? ".xlsx,.xls" : "image/*"} />
           </label>
-          {/* FIX #10: cast webkitdirectory as any to satisfy TypeScript */}
+          <label className="cursor-pointer bg-zinc-800 text-zinc-300 px-2 py-1 rounded text-[9px] font-bold uppercase hover:bg-zinc-700 flex items-center gap-1 italic">
+            <Upload size={10} /> Multi
+            <input type="file" className="hidden" multiple onChange={(e) => handleUpload(e, false)} accept={selectedCat === 'excel' ? ".xlsx,.xls" : "image/*"} />
+          </label>
           <label className="cursor-pointer bg-zinc-800 text-zinc-300 px-2 py-1 rounded text-[9px] font-bold uppercase hover:bg-zinc-700 flex items-center gap-1 italic">
             <FolderOpen size={10} /> Folder
             <input type="file" className="hidden" {...{ webkitdirectory: "" } as any} onChange={(e: any) => handleUpload(e, true)} />
@@ -440,32 +463,21 @@ export default function BikeConfigurator() {
       </AnimatePresence>
 
       <style>{`
-        .custom-scroll-container::-webkit-scrollbar { width: 2px !important; height: 2px !important; display: block !important; }
-        .custom-scroll-container::-webkit-scrollbar-track { background: transparent !important; }
-        .custom-scroll-container::-webkit-scrollbar-thumb { background: #ef4444 !important; border-radius: 10px; }
-        @media (max-width: 1024px) {
-          .mobile-cards-scroll {
-            overflow-x: auto !important;
-            overflow-y: hidden !important;
-            -webkit-overflow-scrolling: touch;
-            scrollbar-width: thin;
-            scrollbar-color: #ef4444 transparent;
-          }
-          .mobile-cards-scroll::-webkit-scrollbar { height: 2px !important; display: block !important; }
-          .mobile-cards-scroll::-webkit-scrollbar-track { background: transparent !important; }
-          .mobile-cards-scroll::-webkit-scrollbar-thumb { background: #ef4444 !important; border-radius: 10px; }
-        }
-        /* Desktop thin right scrollbar for cards */
-        @media (min-width: 1024px) {
-          .desktop-cards-scroll {
-            scrollbar-width: thin;
-            scrollbar-color: #ef4444 transparent;
-          }
-          .desktop-cards-scroll::-webkit-scrollbar { width: 3px !important; display: block !important; }
-          .desktop-cards-scroll::-webkit-scrollbar-track { background: transparent !important; }
-          .desktop-cards-scroll::-webkit-scrollbar-thumb { background: #ef4444 !important; border-radius: 10px; }
-          .desktop-cards-scroll::-webkit-scrollbar-thumb:hover { background: #dc2626 !important; }
-        }
+        /* Mobile horizontal scroll */
+        .mob-scroll { overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; }
+        .mob-scroll::-webkit-scrollbar { height: 2px; }
+        .mob-scroll::-webkit-scrollbar-track { background: transparent; }
+        .mob-scroll::-webkit-scrollbar-thumb { background: #ef4444; border-radius: 10px; }
+        /* Desktop vertical scroll — CARDS */
+        .desk-scroll { overflow-y: auto; overflow-x: hidden; }
+        .desk-scroll::-webkit-scrollbar { width: 3px; }
+        .desk-scroll::-webkit-scrollbar-track { background: transparent; }
+        .desk-scroll::-webkit-scrollbar-thumb { background: #ef4444; border-radius: 10px; }
+        .desk-scroll::-webkit-scrollbar-thumb:hover { background: #dc2626; }
+        /* Garage panel scrollbar */
+        .custom-scroll-container::-webkit-scrollbar { width: 2px; height: 2px; }
+        .custom-scroll-container::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll-container::-webkit-scrollbar-thumb { background: #ef4444; border-radius: 10px; }
         /* Allow pull-to-refresh on mobile only */
         @media (max-width: 1024px) {
           html { overscroll-behavior-y: auto; }
@@ -525,7 +537,7 @@ export default function BikeConfigurator() {
         <div className="flex flex-col lg:grid lg:grid-cols-12 gap-0 lg:gap-6 h-full items-stretch pb-[75px] lg:pb-24">
 
           {/* LEFT: VISUALIZER — on mobile fixed height with more bottom margin */}
-          <div className="lg:col-span-9 flex flex-col gap-1 order-1 h-[350px] md:h-[350px] lg:h-full shrink-0 mb-3 lg:mb-0">
+          <div className="lg:col-span-10 flex flex-col gap-1 order-1 h-[350px] md:h-[350px] lg:h-full shrink-0 mb-3 lg:mb-0">
             <div ref={stepsNavRef} className="flex overflow-x-auto no-scrollbar gap-x-3 pb-3 lg:pb-1 mt-2 lg:mt-0 shrink-0 px-2 lg:px-0">
               {steps.map((step, idx) => (
                 <button
@@ -546,20 +558,27 @@ export default function BikeConfigurator() {
           </div>
 
           {/* RIGHT: OPTION CARDS — on mobile fixed height, horizontal scroll only */}
-          <div className="lg:col-span-3 flex flex-col order-2 shrink-0 lg:h-full min-h-0">
-            <div className="shrink-0 flex flex-col pointer-events-auto relative">
+          <div className="lg:col-span-2 flex flex-col order-2 shrink-0 lg:h-full min-h-0">
+            <div className="flex flex-col pointer-events-auto relative h-full">
               {/* Mobile: fixed-height container, cards scroll horizontally, no vertical movement */}
-              <div className="overflow-x-auto overflow-y-hidden mobile-cards-scroll custom-scroll-container px-2 lg:px-0 lg:pr-2 pb-[6px] lg:pb-2 h-[160px] lg:h-full lg:overflow-x-hidden lg:overflow-y-scroll desktop-cards-scroll">
-                <div className="flex flex-row lg:flex-col gap-2 h-full lg:h-auto items-stretch">
+              {/* Mobile: horizontal scroll; Desktop: vertical scroll with red scrollbar */}
+              <div className="mob-scroll lg:hidden px-2 pb-1 h-[160px]">
+                <div className="flex flex-row gap-2 h-full items-stretch">
                   <AnimatePresence mode="popLayout">
                     {filteredOptions.map((option) => (
-                      /* Mobile: calc(33.33% - gap) so exactly 3 fit on screen; desktop: full width */
-                      <div key={option.id} className="w-[calc(33.333%-6px)] min-w-[calc(33.333%-6px)] lg:w-full lg:min-w-0 shrink-0 h-full lg:h-auto">
-                        <OptionCard
-                          component={option}
-                          isSelected={selections[currentStep.id] === option.id}
-                          onClick={() => setSelections({ ...selections, [currentStep.id]: option.id })}
-                        />
+                      <div key={option.id} className="w-[calc(33.333%-6px)] min-w-[calc(33.333%-6px)] shrink-0 h-full">
+                        <OptionCard component={option} isSelected={selections[currentStep.id] === option.id} onClick={() => setSelections({ ...selections, [currentStep.id]: option.id })} />
+                      </div>
+                    ))}
+                  </AnimatePresence>
+                </div>
+              </div>
+              <div className="hidden lg:block desk-scroll h-full pr-1">
+                <div className="flex flex-col gap-2">
+                  <AnimatePresence mode="popLayout">
+                    {filteredOptions.map((option) => (
+                      <div key={option.id} className="w-full">
+                        <OptionCard component={option} isSelected={selections[currentStep.id] === option.id} onClick={() => setSelections({ ...selections, [currentStep.id]: option.id })} />
                       </div>
                     ))}
                   </AnimatePresence>
