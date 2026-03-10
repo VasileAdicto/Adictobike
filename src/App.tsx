@@ -578,12 +578,25 @@ const handleLoadBuild = (build: any) => {
           </div>
         </div>
       </div>
+    </> // Цей тег закриває фрагмент, що почався перед навігацією
+    )}
 
-      <GaragePanel isOpen={isGarageOpen} onClose={() => setIsGarageOpen(false)} builds={savedBuilds} user={user} onLogout={handleLogout} onSelectBuild={handleLoadBuild} onDeleteBuild={(id: string) => { const newB = savedBuilds.filter(b => b.id !== id); setSavedBuilds(newB); localStorage.setItem('adicto_saved_builds', JSON.stringify(newB)); }} />
-    </div>
+    <GaragePanel 
+      isOpen={isGarageOpen} 
+      onClose={() => setIsGarageOpen(false)} 
+      builds={savedBuilds} 
+      user={user} 
+      onLogout={handleLogout} 
+      onSelectBuild={handleLoadBuild} 
+      onDeleteBuild={(id: string) => { 
+        const newB = savedBuilds.filter(b => b.id !== id); 
+        setSavedBuilds(newB); 
+        localStorage.setItem('adicto_saved_builds', JSON.stringify(newB)); 
+      }} 
+    />
+  </div>
   );
-} //
-
+}
 
 const GaragePanel = ({ isOpen, onClose, builds, user, onLogout, onSelectBuild, onDeleteBuild }: any) => {
   const [exportingId, setExportingId] = useState<string | null>(null);
