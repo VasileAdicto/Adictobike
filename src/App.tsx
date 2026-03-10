@@ -423,7 +423,7 @@ export default function BikeConfigurator() {
 
   // FIX #1 & #2: Removed erroneous </> fragment close. The return now correctly opens and closes a single <div>.
   return (
-    <div className="h-screen bg-black text-white font-sans selection:bg-red-600 overflow-hidden flex flex-col">
+    <div className="h-screen bg-black text-white font-sans selection:bg-red-600 overflow-hidden flex flex-col overscroll-none touch-none">
       {/* AUTH MODAL */}
       <AuthModal
         isOpen={isAuthModalOpen}
@@ -483,6 +483,8 @@ export default function BikeConfigurator() {
           .desktop-cards-scroll::-webkit-scrollbar-thumb { background: #3f3f46 !important; border-radius: 10px; }
           .desktop-cards-scroll::-webkit-scrollbar-thumb:hover { background: #ef4444 !important; }
         }
+        /* Prevent pull-to-refresh / overscroll on mobile */
+        html, body { overscroll-behavior: none; overflow: hidden; height: 100%; }
         @keyframes slideHint { 0%, 100% { transform: translateX(0); opacity: 0.3; } 50% { transform: translateX(10px); opacity: 1; } }
         .animate-slide-hint { animation: slideHint 1.5s infinite; }
       `}</style>
@@ -515,13 +517,13 @@ export default function BikeConfigurator() {
             {user ? (
               <button
                 onClick={() => setIsGarageOpen(true)}
-                className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full border border-white/5 hover:border-red-600/50 transition-all group active:scale-95"
+                className="flex items-center gap-1.5 bg-white/5 px-2.5 py-1 lg:px-3 lg:py-1.5 rounded-full border border-white/5 hover:border-red-600/50 transition-all group active:scale-95"
               >
                 <User size={12} className="text-red-600 group-hover:scale-110 transition-transform" />
-                <span className="text-[9px] font-black uppercase italic text-white tracking-widest">Garage: {user.name}</span>
+                <span className="text-[9px] font-black uppercase italic text-white tracking-widest leading-none">Garage: {user.name}</span>
               </button>
             ) : (
-              <button onClick={() => setIsAuthModalOpen(true)} className="flex items-center gap-2 bg-red-600 px-4 py-1.5 rounded-full text-[9px] font-black uppercase italic tracking-widest text-white">
+              <button onClick={() => setIsAuthModalOpen(true)} className="flex items-center gap-1.5 bg-red-600 px-2.5 py-1 lg:px-4 lg:py-1.5 rounded-full text-[9px] font-black uppercase italic tracking-widest text-white">
                 <LogIn size={12} /> Login
               </button>
             )}
@@ -531,17 +533,17 @@ export default function BikeConfigurator() {
 
       {/* MAIN CONTENT */}
       <main className="flex-1 max-w-[1500px] mx-auto px-2 lg:px-6 pt-1 w-full overflow-hidden flex flex-col">
-        <div className="flex flex-col lg:grid lg:grid-cols-12 gap-0 lg:gap-10 h-full items-stretch pb-[75px] lg:pb-32">
+        <div className="flex flex-col lg:grid lg:grid-cols-12 gap-0 lg:gap-10 h-full items-stretch pb-[75px] lg:pb-28">
 
           {/* LEFT: VISUALIZER — on mobile fixed height with more bottom margin */}
-          <div className="lg:col-span-9 flex flex-col gap-1 order-1 h-[340px] md:h-[300px] lg:h-full shrink-0 mb-3 lg:mb-0">
-            <div ref={stepsNavRef} className="flex overflow-x-auto no-scrollbar gap-x-4 pb-1 shrink-0">
+          <div className="lg:col-span-9 flex flex-col gap-1 order-1 h-[230px] md:h-[300px] lg:h-full shrink-0 mb-3 lg:mb-0">
+            <div ref={stepsNavRef} className="flex overflow-x-auto no-scrollbar gap-x-4 pb-3 lg:pb-1 shrink-0">
               {steps.map((step, idx) => (
                 <button
                   key={step.id}
                   onClick={() => setCurrentStepIndex(idx)}
                   className={cn(
-                    "transition-all text-[9px] lg:text-[11px] font-black uppercase tracking-widest pb-1 border-b-2 whitespace-nowrap",
+                    "transition-all text-[9px] lg:text-[11px] font-black uppercase italic tracking-widest pb-1 border-b-2 whitespace-nowrap",
                     idx === currentStepIndex ? "text-red-600 border-red-600" : "text-white opacity-20 border-transparent"
                   )}
                 >
@@ -588,12 +590,12 @@ export default function BikeConfigurator() {
           <div className="col-span-6 lg:col-span-7 flex justify-center lg:justify-end items-center gap-4 lg:gap-10">
             <div className="text-center lg:text-right text-zinc-300">
               <p className="text-[7px] text-zinc-600 uppercase font-black mb-0.5 italic">Weight</p>
-              <p className="font-mono text-[10px] lg:text-xs">{selectedComponents.reduce((acc, c) => acc + c.weight, 0)}g</p>
+              <p className="font-mono text-[11px] lg:text-xs">{selectedComponents.reduce((acc, c) => acc + c.weight, 0)}g</p>
             </div>
             <div className="h-8 w-px bg-white/10" />
             <div className="text-center lg:text-right text-zinc-300">
               <p className="text-[7px] text-zinc-600 uppercase font-black mb-0.5 italic">Price</p>
-              <p className="font-mono text-[10px] lg:text-xs text-red-600">€{selectedComponents.reduce((acc, c) => acc + c.price, 0).toLocaleString()}</p>
+              <p className="font-mono text-[11px] lg:text-xs text-red-600">€{selectedComponents.reduce((acc, c) => acc + c.price, 0).toLocaleString()}</p>
             </div>
           </div>
           <div className="col-span-3 flex justify-end">
@@ -676,13 +678,13 @@ const GaragePanel = ({ isOpen, onClose, builds, user, onLogout, onSelectBuild, o
         <div className="space-y-4 max-w-5xl mx-auto">
           {builds.map((build: any) => (
             <div key={build.id} className="bg-zinc-900/30 border border-white/5 rounded-[1.5rem] p-4 lg:p-6 hover:bg-zinc-900/50 transition-all relative">
-              <div className="absolute top-2 lg:top-3 right-6 text-[7px] lg:text-[8px] font-mono text-zinc-600 uppercase tracking-widest">{build.date}</div>
+              <div className="absolute top-2 lg:top-3 right-6 text-[8px] lg:text-[10px] font-mono text-zinc-500 uppercase tracking-widest">{build.date}</div>
               <div className="flex flex-col lg:flex-row lg:items-center gap-4 mt-4 lg:mt-0">
                 <div className="flex items-center gap-3 lg:gap-5 flex-1 min-w-0">
                   <label className="relative flex items-center justify-center cursor-pointer shrink-0">
                     <input type="checkbox" className="peer sr-only" />
-                    <div className="w-2 h-2 lg:w-2 lg:h-2 rounded-full border-2 border-white peer-checked:border-red-600 peer-checked:bg-red-600/20 flex items-center justify-center transition-all">
-                      <div className="w-2 h-2 lg:w-2.5 lg:h-2.5 rounded-full bg-red-600 scale-0 peer-checked:scale-100 transition-transform" />
+                    <div className="w-2.5 h-2.5 lg:w-3 lg:h-3 rounded-full border border-white/40 peer-checked:border-red-600 peer-checked:bg-red-600/20 flex items-center justify-center transition-all">
+                      <div className="w-1.5 h-1.5 lg:w-2 lg:h-2 rounded-full bg-red-600 scale-0 peer-checked:scale-100 transition-transform" />
                     </div>
                   </label>
                   <button onClick={() => onSelectBuild(build)} className="text-[12px] lg:text-[14px] font-black uppercase italic text-white hover:text-red-600 truncate text-left pr-1">{build.name}</button>
@@ -690,7 +692,7 @@ const GaragePanel = ({ isOpen, onClose, builds, user, onLogout, onSelectBuild, o
 
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-1 lg:flex-[2] lg:border-l border-white/5 lg:pl-6">
                   {build.components?.slice(0, 8).map((c: any, i: number) => (
-                    <div key={i} className="text-[7px] lg:text-[8px] uppercase text-zinc-500 truncate flex items-center">
+                    <div key={i} className="text-[8px] lg:text-[9px] uppercase text-zinc-400 truncate flex items-center">
                       <span className="w-1 h-1 bg-red-600/50 rounded-full mr-2 shrink-0" />
                       <span className="truncate">{c.name}</span>
                     </div>
