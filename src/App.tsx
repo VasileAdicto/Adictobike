@@ -1255,7 +1255,7 @@ const GaragePanel = ({ isOpen, onClose, builds, user, onLogout, onSelectBuild, o
           ))}
         </div>
       </div>
-      <div className="px-6 py-3 border-t border-white/5 bg-black flex items-center justify-between gap-4">
+      <div className="px-6 py-3 border-t border-white/5 bg-black flex items-center justify-center gap-6">
         {/* WhatsApp business */}
         <a
           href="https://wa.me/34674262622"
