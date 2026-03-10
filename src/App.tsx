@@ -586,7 +586,7 @@ const useSounds = () => {
       o.type = 'sine';
       o.frequency.setValueAtTime(900, ac.currentTime);
       o.frequency.exponentialRampToValueAtTime(600, ac.currentTime + 0.06);
-      g.gain.setValueAtTime(0.08, ac.currentTime);
+      g.gain.setValueAtTime(0.04, ac.currentTime);
       g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.08);
       o.start(ac.currentTime);
       o.stop(ac.currentTime + 0.08);
@@ -617,7 +617,7 @@ const useSounds = () => {
       lp.frequency.setValueAtTime(7000, ac.currentTime);
       lp.frequency.linearRampToValueAtTime(12000, ac.currentTime + dur);
       const g = ac.createGain();
-      g.gain.setValueAtTime(0.055, ac.currentTime);
+      g.gain.setValueAtTime(0.09, ac.currentTime);
       g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + dur);
       noise.connect(hp); hp.connect(lp); lp.connect(g); g.connect(ac.destination);
       noise.start();
