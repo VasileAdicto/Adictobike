@@ -536,7 +536,7 @@ export default function BikeConfigurator() {
         <div className="flex flex-col lg:grid lg:grid-cols-12 gap-0 lg:gap-6 h-full items-start pb-[75px] lg:pb-28">
 
           {/* LEFT: VISUALIZER — on mobile fixed height with more bottom margin */}
-          <div className="lg:col-span-9 flex flex-col gap-1 order-1 h-[350px] md:h-[350px] lg:h-[58vh] shrink-0 mb-3 lg:mb-0">
+          <div className="lg:col-span-9 flex flex-col gap-1 order-1 h-[230px] md:h-[350px] lg:h-[58vh] shrink-0 mb-3 lg:mb-0">
             <div ref={stepsNavRef} className="flex overflow-x-auto no-scrollbar gap-x-4 pb-3 lg:pb-1 mt-2 lg:mt-0 shrink-0">
               {steps.map((step, idx) => (
                 <button
