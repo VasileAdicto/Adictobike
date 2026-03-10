@@ -231,7 +231,7 @@ const Visualizer = ({ selectedComponents, offsets, showGrid, gridSize, isZoomed,
         <AnimatePresence mode="popLayout">
           {selectedComponents?.map((comp: any) => {
             const tune = (offsets && offsets[comp.id]) || { s: 1, x: 0, y: 0 };
-            return <motion.img key={comp.id} src={comp.imageUrl} crossOrigin="anonymous" loading="eager" alt={comp.name} initial={{ opacity: 0 }} animate={{ opacity: 1, scale: tune.s, x: tune.x, y: tune.y }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }} className="absolute inset-0 w-full h-full object-contain pointer-events-none" style={{ zIndex: Number(comp.zIndex) }} />;
+            return <motion.img key={comp.id} src={comp.imageUrl} crossOrigin="anonymous" loading="eager" alt={comp.name} initial={{ opacity: 0 }} animate={{ opacity: 1, scale: tune.s, x: tune.x, y: tune.y }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full object-contain pointer-events-none" style={{ zIndex: Number(comp.zIndex) }} />;
           })}
         </AnimatePresence>
       </motion.div>
@@ -246,22 +246,22 @@ const OptionCard = ({ component, isSelected, onClick }: { component: Component, 
     layout
     onClick={(e) => { e.preventDefault(); onClick(); }}
     className={cn(
-      "relative flex flex-col p-1.5 lg:p-2 rounded-xl lg:rounded-xl border text-left transition-all group w-full shrink-0",
+      "relative flex flex-col p-1 lg:p-1.5 rounded-lg border text-left transition-all group w-full shrink-0",
       isSelected ? "border-red-600 bg-red-600/5 ring-1 ring-red-600/20" : "border-white/5 bg-zinc-900/50 hover:border-white/20"
     )}
   >
-    <div className="aspect-square w-full rounded-lg bg-black/40 mb-1 lg:mb-1.5 overflow-hidden relative">
+    <div className="aspect-square w-full rounded-md bg-black/40 mb-1 overflow-hidden relative">
       <img src={component.cardImageUrl} alt={component.name} className="w-full h-full object-contain p-1" />
       {isSelected && <div className="absolute top-0.5 right-0.5 bg-red-600 p-0.5 rounded-full shadow-lg z-10"><CheckCircle2 size={8} className="text-white" /></div>}
     </div>
     <div className="flex-1 flex flex-col justify-between overflow-hidden">
       <div>
-        <h3 className="text-[7px] lg:text-[9px] font-bold leading-none line-clamp-1 text-zinc-300 uppercase">{component.name}</h3>
-        <p className="text-[6px] lg:text-[7px] text-zinc-500 uppercase font-black truncate">{component.brand}</p>
+        <h3 className="text-[7px] lg:text-[8px] font-bold leading-none line-clamp-1 text-zinc-300 uppercase">{component.name}</h3>
+        <p className="text-[6px] lg:text-[6px] text-zinc-500 uppercase font-black truncate">{component.brand}</p>
       </div>
-      <div className="flex justify-between items-center mt-0.5 lg:mt-1">
-        <p className="font-mono text-[8px] lg:text-[10px] text-red-600 tracking-tighter">€{component.price}</p>
-        <p className="text-[7px] lg:text-[9px] text-zinc-600 font-mono italic">{component.weight}g</p>
+      <div className="flex justify-between items-center mt-0.5">
+        <p className="font-mono text-[8px] lg:text-[9px] text-red-600 tracking-tighter">€{component.price}</p>
+        <p className="text-[7px] lg:text-[8px] text-zinc-600 font-mono italic">{component.weight}g</p>
       </div>
     </div>
   </motion.button>
@@ -476,12 +476,12 @@ export default function BikeConfigurator() {
         @media (min-width: 1024px) {
           .desktop-cards-scroll {
             scrollbar-width: thin;
-            scrollbar-color: #27272a transparent;
+            scrollbar-color: #ef4444 transparent;
           }
-          .desktop-cards-scroll::-webkit-scrollbar { width: 2px !important; display: block !important; }
+          .desktop-cards-scroll::-webkit-scrollbar { width: 3px !important; display: block !important; }
           .desktop-cards-scroll::-webkit-scrollbar-track { background: transparent !important; }
-          .desktop-cards-scroll::-webkit-scrollbar-thumb { background: #3f3f46 !important; border-radius: 10px; }
-          .desktop-cards-scroll::-webkit-scrollbar-thumb:hover { background: #ef4444 !important; }
+          .desktop-cards-scroll::-webkit-scrollbar-thumb { background: #ef4444 !important; border-radius: 10px; }
+          .desktop-cards-scroll::-webkit-scrollbar-thumb:hover { background: #dc2626 !important; }
         }
         /* Prevent pull-to-refresh / overscroll on mobile */
         html, body { overscroll-behavior: none; overflow: hidden; height: 100%; }
@@ -532,12 +532,12 @@ export default function BikeConfigurator() {
       )}
 
       {/* MAIN CONTENT */}
-      <main className="flex-1 max-w-[1500px] mx-auto px-2 lg:px-6 pt-1 w-full overflow-hidden flex flex-col">
-        <div className="flex flex-col lg:grid lg:grid-cols-12 gap-0 lg:gap-10 h-full items-stretch pb-[75px] lg:pb-28">
+      <main className="flex-1 max-w-[1500px] mx-auto px-2 lg:px-6 pt-3 lg:pt-1 w-full overflow-hidden flex flex-col">
+        <div className="flex flex-col lg:grid lg:grid-cols-12 gap-0 lg:gap-6 h-full items-start pb-[75px] lg:pb-28">
 
           {/* LEFT: VISUALIZER — on mobile fixed height with more bottom margin */}
-          <div className="lg:col-span-9 flex flex-col gap-1 order-1 h-[350px] md:h-[300px] lg:h-full shrink-0 mb-3 lg:mb-0">
-            <div ref={stepsNavRef} className="flex overflow-x-auto no-scrollbar gap-x-4 pb-3 lg:pb-1 shrink-0">
+          <div className="lg:col-span-9 flex flex-col gap-1 order-1 h-[350px] md:h-[350px] lg:h-[58vh] shrink-0 mb-3 lg:mb-0">
+            <div ref={stepsNavRef} className="flex overflow-x-auto no-scrollbar gap-x-4 pb-3 lg:pb-1 mt-2 lg:mt-0 shrink-0">
               {steps.map((step, idx) => (
                 <button
                   key={step.id}
@@ -560,7 +560,7 @@ export default function BikeConfigurator() {
           <div className="lg:col-span-3 flex flex-col order-2 shrink-0 lg:h-full">
             <div className="shrink-0 flex flex-col pointer-events-auto relative">
               {/* Mobile: fixed-height container, cards scroll horizontally, no vertical movement */}
-              <div className="overflow-x-auto overflow-y-hidden mobile-cards-scroll custom-scroll-container px-2 lg:px-0 lg:pr-3 pb-[6px] lg:pb-0 h-[160px] lg:h-full lg:overflow-x-hidden lg:overflow-y-auto desktop-cards-scroll">
+              <div className="overflow-x-auto overflow-y-hidden mobile-cards-scroll custom-scroll-container px-2 lg:px-0 lg:pr-2 pb-[6px] lg:pb-2 h-[160px] lg:h-[52vh] lg:overflow-x-hidden lg:overflow-y-scroll desktop-cards-scroll">
                 <div className="flex flex-row lg:flex-col gap-2 h-full lg:h-auto items-stretch">
                   <AnimatePresence mode="popLayout">
                     {filteredOptions.map((option) => (
@@ -683,9 +683,7 @@ const GaragePanel = ({ isOpen, onClose, builds, user, onLogout, onSelectBuild, o
                 <div className="flex items-center gap-3 lg:gap-5 flex-1 min-w-0">
                   <label className="relative flex items-center justify-center cursor-pointer shrink-0">
                     <input type="checkbox" className="peer sr-only" />
-                    <div className="w-2.5 h-2.5 lg:w-3 lg:h-3 rounded-full border border-white/40 peer-checked:border-red-600 peer-checked:bg-red-600/20 flex items-center justify-center transition-all">
-                      <div className="w-1.5 h-1.5 lg:w-2 lg:h-2 rounded-full bg-red-600 scale-0 peer-checked:scale-100 transition-transform" />
-                    </div>
+                    <div className="w-2.5 h-2.5 lg:w-3 lg:h-3 rounded-full border border-white/30 peer-checked:border-red-600 peer-checked:bg-red-600 flex items-center justify-center transition-all duration-150" />
                   </label>
                   <button onClick={() => onSelectBuild(build)} className="text-[12px] lg:text-[14px] font-black uppercase italic text-white hover:text-red-600 truncate text-left pr-1">{build.name}</button>
                 </div>
