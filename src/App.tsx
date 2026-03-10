@@ -547,7 +547,7 @@ const handleLoadBuild = (build: any) => {
         </div>
       </main>
 
-      {/* ФУТЕР */}
+      {/* --- FOOTER --- */}
       <div className="fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur-2xl border-t border-white/5 z-40 shrink-0">
         <div className="max-w-[1500px] mx-auto px-4 lg:px-6 py-4 lg:py-6 grid grid-cols-12 gap-2 items-center">
           <button onClick={() => currentStepIndex > 0 && setCurrentStepIndex(currentStepIndex - 1)} className="col-span-3 lg:col-span-2 flex items-center gap-1 text-zinc-500 hover:text-white transition-all font-black uppercase text-[10px] italic">
@@ -568,7 +568,7 @@ const handleLoadBuild = (build: any) => {
             <button onClick={() => {
                 if (filteredOptions.length > 0 && !selections[currentStep.id]) { return; }
                 currentStepIndex < steps.length - 1 ? setCurrentStepIndex(currentStepIndex + 1) : setIsFinished(true);
-              }} className="bg-red-600 text-white h-[32px] px-4 lg:px-6 rounded-lg font-black uppercase text-[10px] italic flex items-center gap-2 shadow-lg shadow-red-600/20">
+              }} className="bg-red-600 text-white h-[32px] px-4 lg:px-6 rounded-lg font-black uppercase text-[10px] italic flex items-center gap-2 shadow-lg shadow-red-600/20 active:scale-95 transition-all">
               {currentStepIndex === steps.length - 1 ? 'Finish' : 'Next'} <ChevronRight size={14} />
             </button>
           </div>
@@ -588,10 +588,10 @@ const handleLoadBuild = (build: any) => {
           localStorage.setItem('adicto_saved_builds', JSON.stringify(newB)); 
         }} 
       />
-    </> 
+    </> // 1. Закриває Fragment умови else
     )} 
-  </div>
-  );
+  </div> // 2. Закриває самий перший <div className="min-h-screen...">
+  ); // 3. Закриває return
 }
 
 // ТІЛЬКИ ТУТ ПОЧИНАЄТЬСЯ GARAGE PANEL
