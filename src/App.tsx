@@ -41,7 +41,7 @@ const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
   const [rememberMe, setRememberMe] = useState(true);
   const [error, setError] = useState('');
 
-  // FIX #4: stable callback ref to avoid infinite loop in useEffect
+  // stable callback to avoid infinite loop in useEffect
   const stableOnLogin = useCallback(onLogin, []); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (localStorage.getItem('adicto_auth') === 'true') stableOnLogin();
@@ -58,24 +58,24 @@ const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
   };
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center p-6 selection:bg-red-600 font-sans">
+    <div className="min-h-screen bg-black flex items-center justify-center p-6 font-sans">
       <motion.form initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} onSubmit={handleLogin} className="bg-zinc-900/50 p-10 rounded-[2.5rem] border border-white/5 w-full max-w-md backdrop-blur-xl shadow-2xl">
         <div className="flex flex-col items-center mb-8">
           <div className="w-12 h-12 bg-red-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-red-600/20"><Lock size={24} /></div>
           <h2 className="text-xl font-black uppercase tracking-widest italic text-center text-white">Adicto Admin</h2>
         </div>
-        <div className="space-y-4 text-black">
+        <div className="space-y-4">
           <input type="email" placeholder="Email" className="w-full bg-black border border-white/10 p-4 rounded-2xl text-white outline-none focus:border-red-600 transition-all text-sm font-mono" value={email} onChange={(e) => setEmail(e.target.value)} />
           <div className="relative">
             <input type={showPass ? "text" : "password"} placeholder="Password" className="w-full bg-black border border-white/10 p-4 rounded-2xl text-white outline-none focus:border-red-600 transition-all text-sm font-mono" value={pass} onChange={(e) => setPass(e.target.value)} />
-            <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white transition-colors text-[10px] font-bold uppercase">{showPass ? "Hide" : "Show"}</button>
+            <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 text-[10px] font-bold uppercase">{showPass ? "Hide" : "Show"}</button>
           </div>
         </div>
         <div className="flex items-center gap-2 mt-4 px-2 text-white">
           <input type="checkbox" id="remember" checked={rememberMe} onChange={() => setRememberMe(!rememberMe)} className="accent-red-600 h-4 w-4 rounded border-white/10 bg-black" />
           <label htmlFor="remember" className="text-zinc-500 text-[10px] uppercase font-bold cursor-pointer select-none">Remember Me</label>
         </div>
-        {error && <p className="text-red-600 text-[10px] text-center mt-4 uppercase font-black italic tracking-widest">{error}</p>}
+        {error && <p className="text-red-600 text-[10px] text-center mt-4 uppercase font-black tracking-widest">{error}</p>}
         <button className="w-full bg-red-600 py-4 rounded-2xl font-black uppercase tracking-widest text-white mt-8 hover:bg-red-700 active:scale-95 transition-all shadow-lg shadow-red-600/20 text-sm italic">Access Dashboard</button>
       </motion.form>
     </div>
@@ -86,7 +86,6 @@ const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
 const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid, setShowGrid, gridSize, setGridSize, isZoomed, setIsZoomed, zoomScale, setZoomScale, onLogout }: any) => {
   const [selectedCat, setSelectedCat] = useState('excel');
   const [status, setStatus] = useState('');
-  const [showToken, setShowToken] = useState(false);
   const [token, setToken] = useState(localStorage.getItem('adicto_github_token') || '');
   const REPO = "VasileAdicto/Adictobike";
   const BRANCH = "main";
@@ -153,10 +152,9 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
   return (
     <div className="z-[100] sticky top-0 shadow-2xl font-sans text-white">
       <motion.div initial={{ y: -50 }} animate={{ y: 0 }} className="bg-zinc-900 border-b border-white/5 p-2 flex gap-3 items-center justify-center backdrop-blur-md">
-        <div className="flex items-center gap-2 bg-black/40 px-2 py-1 rounded-lg border border-white/10 focus-within:border-red-600 transition-all">
-          <Key size={10} className={token ? "text-red-600" : "text-zinc-500"} />
-          <input type={showToken ? "text" : "password"} placeholder="TOKEN" value={token} onChange={(e) => setToken(e.target.value)} className="bg-transparent text-[9px] w-20 outline-none font-mono uppercase text-white" />
-          <button onClick={() => setShowToken(!showToken)} className="text-zinc-600 hover:text-white">{showToken ? <EyeOff size={10} /> : <Eye size={10} />}</button>
+        <div className="flex items-center gap-2 bg-black/40 px-2 py-1 rounded-lg border border-white/10">
+          <Key size={10} className="text-red-600" />
+          <input type="password" placeholder="TOKEN" value={token} onChange={(e) => setToken(e.target.value)} className="bg-transparent text-[9px] w-20 outline-none font-mono text-white" />
         </div>
         <select value={selectedCat} onChange={(e) => setSelectedCat(e.target.value)} className="bg-black border border-white/10 text-[9px] px-2 py-1 rounded uppercase font-bold outline-none focus:border-red-600 transition-all text-white">
           <option value="excel">📁 EXCEL</option>
@@ -173,24 +171,9 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
             <input type="file" className="hidden" {...{ webkitdirectory: "" } as any} onChange={(e: any) => handleUpload(e, true)} />
           </label>
         </div>
-        <div className="h-4 w-px bg-white/10 mx-1" />
         <div className="flex items-center gap-2 bg-black/40 p-1 rounded-lg border border-white/5">
-          <button onClick={() => setShowGrid(!showGrid)} className={cn("px-2 py-1 rounded text-[9px] font-bold uppercase transition-all", showGrid ? "bg-red-600 text-white" : "bg-zinc-800 text-zinc-400")}><Grid3X3 size={10} /></button>
-          {showGrid && (
-            <div className="flex items-center gap-2 px-1 border-r border-white/5 mr-1 animate-in fade-in slide-in-from-left-2">
-              <span className="text-[7px] text-zinc-500 font-bold uppercase whitespace-nowrap">Grid: {gridSize}px</span>
-              <input type="range" min="10" max="100" step="1" value={gridSize} onChange={(e) => setGridSize(parseInt(e.target.value))} className="w-16 h-1 bg-zinc-700 appearance-none accent-red-600" />
-            </div>
-          )}
-        </div>
-        <div className="flex items-center gap-2 bg-black/40 p-1 rounded-lg border border-white/5">
-          <button onClick={() => setIsZoomed(!isZoomed)} className={cn("px-2 py-1 rounded text-[9px] font-bold uppercase transition-all flex items-center gap-2", isZoomed ? "bg-red-600 text-white" : "bg-zinc-800 text-zinc-400")}><Search size={10} /> {isZoomed ? `${zoomScale}X` : 'Magnify'}</button>
-          {isZoomed && (
-            <div className="flex items-center gap-2 px-1 animate-in fade-in slide-in-from-left-2">
-              <span className="text-[7px] text-zinc-500 font-bold uppercase text-white">Scale</span>
-              <input type="range" min="2" max="10" step="0.1" value={zoomScale} onChange={(e) => setZoomScale(parseFloat(e.target.value))} className="w-20 h-1 bg-zinc-700 appearance-none accent-red-600" />
-            </div>
-          )}
+          <button onClick={() => setShowGrid(!showGrid)} className={cn("px-2 py-1 rounded text-[9px] font-bold uppercase transition-all", showGrid ? "bg-red-600 text-white" : "bg-zinc-800 text-zinc-400")}><Grid3X3 size={10}/></button>
+          <button onClick={() => setIsZoomed(!isZoomed)} className={cn("px-2 py-1 rounded text-[9px] font-bold uppercase transition-all flex items-center gap-2", isZoomed ? "bg-red-600 text-white" : "bg-zinc-800 text-zinc-400")}><Search size={10}/> {isZoomed ? `${zoomScale}X` : 'Magnify'}</button>
         </div>
         <button onClick={onLogout} className="text-zinc-500 hover:text-red-600 transition-colors p-1" title="Logout"><LogOut size={12} /></button>
         {status && <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-[8px] font-mono uppercase text-red-600 ml-1">{status}</motion.span>}
@@ -250,7 +233,7 @@ const OptionCard = ({ component, isSelected, onClick }: { component: Component, 
       isSelected ? "border-red-600 bg-red-600/5 ring-1 ring-red-600/20" : "border-white/5 bg-zinc-900/50 hover:border-white/20"
     )}
   >
-    <div className="aspect-square w-full rounded-md bg-black/40 mb-1 overflow-hidden relative">
+    <div className="aspect-square w-full rounded-md bg-black/40 mb-0.5 overflow-hidden relative">
       <img src={component.cardImageUrl} alt={component.name} className="w-full h-full object-contain p-1" />
       {isSelected && <div className="absolute top-0.5 right-0.5 bg-red-600 p-0.5 rounded-full shadow-lg z-10"><CheckCircle2 size={8} className="text-white" /></div>}
     </div>
