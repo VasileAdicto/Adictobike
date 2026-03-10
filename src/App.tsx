@@ -522,7 +522,7 @@ export default function BikeConfigurator() {
                   key={step.id}
                   onClick={() => setCurrentStepIndex(idx)}
                   className={cn(
-                    "transition-all text-[9px] font-black uppercase tracking-widest pb-1 border-b-2 whitespace-nowrap",
+                    "transition-all text-[11px] font-black uppercase tracking-widest pb-1 border-b-2 whitespace-nowrap",
                     idx === currentStepIndex ? "text-red-600 border-red-600" : "text-white opacity-20 border-transparent"
                   )}
                 >
