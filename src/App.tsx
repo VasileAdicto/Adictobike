@@ -246,22 +246,22 @@ const OptionCard = ({ component, isSelected, onClick }: { component: Component, 
     layout
     onClick={(e) => { e.preventDefault(); onClick(); }}
     className={cn(
-      "relative flex flex-col p-1.5 lg:p-3 rounded-xl lg:rounded-2xl border text-left transition-all group w-full shrink-0",
+      "relative flex flex-col p-1.5 lg:p-2 rounded-xl lg:rounded-xl border text-left transition-all group w-full shrink-0",
       isSelected ? "border-red-600 bg-red-600/5 ring-1 ring-red-600/20" : "border-white/5 bg-zinc-900/50 hover:border-white/20"
     )}
   >
-    <div className="aspect-square w-full rounded-lg bg-black/40 mb-1 lg:mb-3 overflow-hidden relative">
+    <div className="aspect-square w-full rounded-lg bg-black/40 mb-1 lg:mb-1.5 overflow-hidden relative">
       <img src={component.cardImageUrl} alt={component.name} className="w-full h-full object-contain p-1" />
       {isSelected && <div className="absolute top-0.5 right-0.5 bg-red-600 p-0.5 rounded-full shadow-lg z-10"><CheckCircle2 size={8} className="text-white" /></div>}
     </div>
     <div className="flex-1 flex flex-col justify-between overflow-hidden">
       <div>
-        <h3 className="text-[7px] lg:text-[11px] font-bold leading-none line-clamp-1 text-zinc-300 uppercase">{component.name}</h3>
-        <p className="text-[6px] lg:text-[9px] text-zinc-500 uppercase font-black truncate">{component.brand}</p>
+        <h3 className="text-[7px] lg:text-[9px] font-bold leading-none line-clamp-1 text-zinc-300 uppercase">{component.name}</h3>
+        <p className="text-[6px] lg:text-[7px] text-zinc-500 uppercase font-black truncate">{component.brand}</p>
       </div>
-      <div className="flex justify-between items-center mt-1">
-        <p className="font-mono text-[8px] lg:text-sm text-red-600 tracking-tighter">€{component.price}</p>
-        <p className="text-[7px] lg:text-sm text-zinc-600 font-mono italic">{component.weight}g</p>
+      <div className="flex justify-between items-center mt-0.5 lg:mt-1">
+        <p className="font-mono text-[8px] lg:text-[10px] text-red-600 tracking-tighter">€{component.price}</p>
+        <p className="text-[7px] lg:text-[9px] text-zinc-600 font-mono italic">{component.weight}g</p>
       </div>
     </div>
   </motion.button>
@@ -461,8 +461,27 @@ export default function BikeConfigurator() {
         .custom-scroll-container::-webkit-scrollbar-track { background: transparent !important; }
         .custom-scroll-container::-webkit-scrollbar-thumb { background: #ef4444 !important; border-radius: 10px; }
         @media (max-width: 1024px) {
-          .custom-scroll-container { overflow-x: auto !important; -webkit-overflow-scrolling: touch; padding-bottom: 12px !important; }
-          .custom-scroll-container::-webkit-scrollbar { height: 3px !important; display: block !important; }
+          .mobile-cards-scroll {
+            overflow-x: auto !important;
+            overflow-y: hidden !important;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: thin;
+            scrollbar-color: #ef4444 transparent;
+          }
+          .mobile-cards-scroll::-webkit-scrollbar { height: 2px !important; display: block !important; }
+          .mobile-cards-scroll::-webkit-scrollbar-track { background: transparent !important; }
+          .mobile-cards-scroll::-webkit-scrollbar-thumb { background: #ef4444 !important; border-radius: 10px; }
+        }
+        /* Desktop thin right scrollbar for cards */
+        @media (min-width: 1024px) {
+          .desktop-cards-scroll {
+            scrollbar-width: thin;
+            scrollbar-color: #27272a transparent;
+          }
+          .desktop-cards-scroll::-webkit-scrollbar { width: 2px !important; display: block !important; }
+          .desktop-cards-scroll::-webkit-scrollbar-track { background: transparent !important; }
+          .desktop-cards-scroll::-webkit-scrollbar-thumb { background: #3f3f46 !important; border-radius: 10px; }
+          .desktop-cards-scroll::-webkit-scrollbar-thumb:hover { background: #ef4444 !important; }
         }
         @keyframes slideHint { 0%, 100% { transform: translateX(0); opacity: 0.3; } 50% { transform: translateX(10px); opacity: 1; } }
         .animate-slide-hint { animation: slideHint 1.5s infinite; }
@@ -512,17 +531,17 @@ export default function BikeConfigurator() {
 
       {/* MAIN CONTENT */}
       <main className="flex-1 max-w-[1500px] mx-auto px-2 lg:px-6 pt-1 w-full overflow-hidden flex flex-col">
-        <div className="flex flex-col lg:grid lg:grid-cols-12 gap-1.5 lg:gap-10 h-full items-stretch pb-[75px] lg:pb-32">
+        <div className="flex flex-col lg:grid lg:grid-cols-12 gap-0 lg:gap-10 h-full items-stretch pb-[75px] lg:pb-32">
 
-          {/* LEFT: VISUALIZER */}
-          <div className="lg:col-span-9 flex flex-col gap-1 order-1 h-[320px] md:h-[400px] lg:h-full shrink-0">
+          {/* LEFT: VISUALIZER — on mobile fixed height with more bottom margin */}
+          <div className="lg:col-span-9 flex flex-col gap-1 order-1 h-[230px] md:h-[300px] lg:h-full shrink-0 mb-3 lg:mb-0">
             <div ref={stepsNavRef} className="flex overflow-x-auto no-scrollbar gap-x-4 pb-1 shrink-0">
               {steps.map((step, idx) => (
                 <button
                   key={step.id}
                   onClick={() => setCurrentStepIndex(idx)}
                   className={cn(
-                    "transition-all text-[11px] font-black uppercase tracking-widest pb-1 border-b-2 whitespace-nowrap",
+                    "transition-all text-[9px] lg:text-[11px] font-black uppercase tracking-widest pb-1 border-b-2 whitespace-nowrap",
                     idx === currentStepIndex ? "text-red-600 border-red-600" : "text-white opacity-20 border-transparent"
                   )}
                 >
@@ -535,20 +554,16 @@ export default function BikeConfigurator() {
             </div>
           </div>
 
-          {/* RIGHT: OPTION CARDS */}
+          {/* RIGHT: OPTION CARDS — on mobile fixed height, horizontal scroll only */}
           <div className="lg:col-span-3 flex flex-col order-2 shrink-0 lg:h-full">
             <div className="shrink-0 flex flex-col pointer-events-auto relative">
-              {filteredOptions.length > 3 && (
-                <div className="absolute -top-5 left-0 right-0 flex items-center justify-center gap-1 text-zinc-500/60 pointer-events-none">
-                  <span className="text-[7px] font-black uppercase italic tracking-widest">Scroll</span>
-                  <ChevronsRight size={8} className="animate-slide-hint" />
-                </div>
-              )}
-              <div className="overflow-x-auto no-scrollbar custom-scroll-container px-4 pb-[10px] lg:pb-0 max-h-[140px] lg:max-h-none">
-                <div className="flex flex-row lg:flex-col gap-2 min-w-full items-end">
+              {/* Mobile: fixed-height container, cards scroll horizontally, no vertical movement */}
+              <div className="overflow-x-auto overflow-y-hidden mobile-cards-scroll custom-scroll-container px-2 lg:px-0 lg:pr-3 pb-[6px] lg:pb-0 h-[160px] lg:h-full lg:overflow-x-hidden lg:overflow-y-auto desktop-cards-scroll">
+                <div className="flex flex-row lg:flex-col gap-2 h-full lg:h-auto items-stretch">
                   <AnimatePresence mode="popLayout">
                     {filteredOptions.map((option) => (
-                      <div key={option.id} className="w-[28%] min-w-[28%] lg:w-full lg:min-w-0 shrink-0">
+                      /* Mobile: calc(33.33% - gap) so exactly 3 fit on screen; desktop: full width */
+                      <div key={option.id} className="w-[calc(33.333%-6px)] min-w-[calc(33.333%-6px)] lg:w-full lg:min-w-0 shrink-0 h-full lg:h-auto">
                         <OptionCard
                           component={option}
                           isSelected={selections[currentStep.id] === option.id}
@@ -560,12 +575,6 @@ export default function BikeConfigurator() {
                 </div>
               </div>
             </div>
-            {filteredOptions.length > 3 && (
-              <div className="lg:hidden h-6 flex items-center justify-center gap-2 text-red-600 pt-2 pb-1 shrink-0">
-                <span className="text-[8px] font-black uppercase tracking-[0.2em] italic animate-pulse">Scroll</span>
-                <ChevronsRight size={12} className="animate-slide-hint" />
-              </div>
-            )}
           </div>
         </div>
       </main>
