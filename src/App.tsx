@@ -593,25 +593,34 @@ const useSounds = () => {
     } catch {}
   };
 
-  // Whoosh forward — next step
+  // Soft swipe — next step
   const playNext = () => {
     try {
       const ac = getCtx();
-      const buf = ac.createBuffer(1, ac.sampleRate * 0.12, ac.sampleRate);
+      const dur = 0.18;
+      const buf = ac.createBuffer(1, Math.floor(ac.sampleRate * dur), ac.sampleRate);
       const d = buf.getChannelData(0);
-      for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length);
-      const src = ac.createBufferSource();
-      src.buffer = buf;
-      const f = ac.createBiquadFilter();
-      f.type = 'bandpass';
-      f.frequency.setValueAtTime(2000, ac.currentTime);
-      f.frequency.exponentialRampToValueAtTime(4000, ac.currentTime + 0.1);
-      f.Q.value = 0.8;
+      for (let i = 0; i < d.length; i++) {
+        const t = i / d.length;
+        // white noise shaped with smooth ramp up + fast fade out
+        d[i] = (Math.random() * 2 - 1) * Math.pow(t < 0.15 ? t / 0.15 : 1 - (t - 0.15) / 0.85, 1.4);
+      }
+      const noise = ac.createBufferSource();
+      noise.buffer = buf;
+      // Highpass to keep it airy, not rumble
+      const hp = ac.createBiquadFilter();
+      hp.type = 'highpass';
+      hp.frequency.value = 3200;
+      // Lowpass ceiling so it stays soft
+      const lp = ac.createBiquadFilter();
+      lp.type = 'lowpass';
+      lp.frequency.setValueAtTime(7000, ac.currentTime);
+      lp.frequency.linearRampToValueAtTime(12000, ac.currentTime + dur);
       const g = ac.createGain();
-      g.gain.setValueAtTime(0.06, ac.currentTime);
-      g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.12);
-      src.connect(f); f.connect(g); g.connect(ac.destination);
-      src.start();
+      g.gain.setValueAtTime(0.055, ac.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + dur);
+      noise.connect(hp); hp.connect(lp); lp.connect(g); g.connect(ac.destination);
+      noise.start();
     } catch {}
   };
 
