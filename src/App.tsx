@@ -345,7 +345,7 @@ const EmptyVisualizerState = ({ layers = [] }: { layers?: BikeLayer[] }) => {
   const [phase, setPhase]               = useState<IntroPhase>('hidden');
   const [visibleCount, setVisibleCount] = useState(0);
 
-  const HOLD_MS    = 2000;
+  const HOLD_MS    = 1500;
   const FADEOUT_MS = 900;
 
   useEffect(() => {
@@ -566,6 +566,117 @@ const OptionCard = ({ component, isSelected, onClick }: { component: Component, 
   </motion.button>
 );
 
+// --- SOUND ENGINE ---
+// All sounds generated via Web Audio API — no external files needed
+const useSounds = () => {
+  const ctx = useRef<AudioContext | null>(null);
+
+  const getCtx = () => {
+    if (!ctx.current) ctx.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+    return ctx.current;
+  };
+
+  // Soft mechanical click — selecting a card
+  const playSelect = () => {
+    try {
+      const ac = getCtx();
+      const o = ac.createOscillator();
+      const g = ac.createGain();
+      o.connect(g); g.connect(ac.destination);
+      o.type = 'sine';
+      o.frequency.setValueAtTime(900, ac.currentTime);
+      o.frequency.exponentialRampToValueAtTime(600, ac.currentTime + 0.06);
+      g.gain.setValueAtTime(0.08, ac.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.08);
+      o.start(ac.currentTime);
+      o.stop(ac.currentTime + 0.08);
+    } catch {}
+  };
+
+  // Whoosh forward — next step
+  const playNext = () => {
+    try {
+      const ac = getCtx();
+      const buf = ac.createBuffer(1, ac.sampleRate * 0.12, ac.sampleRate);
+      const d = buf.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length);
+      const src = ac.createBufferSource();
+      src.buffer = buf;
+      const f = ac.createBiquadFilter();
+      f.type = 'bandpass';
+      f.frequency.setValueAtTime(2000, ac.currentTime);
+      f.frequency.exponentialRampToValueAtTime(4000, ac.currentTime + 0.1);
+      f.Q.value = 0.8;
+      const g = ac.createGain();
+      g.gain.setValueAtTime(0.06, ac.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.12);
+      src.connect(f); f.connect(g); g.connect(ac.destination);
+      src.start();
+    } catch {}
+  };
+
+  // Soft whoosh back — prev step
+  const playBack = () => {
+    try {
+      const ac = getCtx();
+      const buf = ac.createBuffer(1, ac.sampleRate * 0.1, ac.sampleRate);
+      const d = buf.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (i / d.length) * 0.7;
+      const src = ac.createBufferSource();
+      src.buffer = buf;
+      const f = ac.createBiquadFilter();
+      f.type = 'bandpass';
+      f.frequency.setValueAtTime(3000, ac.currentTime);
+      f.frequency.exponentialRampToValueAtTime(800, ac.currentTime + 0.1);
+      f.Q.value = 1;
+      const g = ac.createGain();
+      g.gain.setValueAtTime(0.04, ac.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.1);
+      src.connect(f); f.connect(g); g.connect(ac.destination);
+      src.start();
+    } catch {}
+  };
+
+  // Success chime — bike finished / saved
+  const playSuccess = () => {
+    try {
+      const ac = getCtx();
+      [0, 0.1, 0.2].forEach((t, i) => {
+        const o = ac.createOscillator();
+        const g = ac.createGain();
+        o.connect(g); g.connect(ac.destination);
+        o.type = 'sine';
+        const freqs = [523, 659, 784]; // C5 E5 G5
+        o.frequency.value = freqs[i];
+        g.gain.setValueAtTime(0, ac.currentTime + t);
+        g.gain.linearRampToValueAtTime(0.07, ac.currentTime + t + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + t + 0.4);
+        o.start(ac.currentTime + t);
+        o.stop(ac.currentTime + t + 0.4);
+      });
+    } catch {}
+  };
+
+  // Soft pop — save/garage open
+  const playPop = () => {
+    try {
+      const ac = getCtx();
+      const o = ac.createOscillator();
+      const g = ac.createGain();
+      o.connect(g); g.connect(ac.destination);
+      o.type = 'sine';
+      o.frequency.setValueAtTime(300, ac.currentTime);
+      o.frequency.exponentialRampToValueAtTime(180, ac.currentTime + 0.1);
+      g.gain.setValueAtTime(0.07, ac.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.12);
+      o.start(ac.currentTime);
+      o.stop(ac.currentTime + 0.12);
+    } catch {}
+  };
+
+  return { playSelect, playNext, playBack, playSuccess, playPop };
+};
+
 // --- MAIN CONFIGURATOR ---
 const INITIAL_STEPS: Step[] = [
   { id: 'frame', title: 'Frame', options: [] },
@@ -602,6 +713,7 @@ export default function BikeConfigurator() {
   const [savedBuilds, setSavedBuilds] = useState<any[]>(JSON.parse(localStorage.getItem('adicto_saved_builds') || '[]'));
 
   const currentStep = steps[currentStepIndex] || steps[0];
+  const { playSelect, playNext, playBack, playSuccess, playPop } = useSounds();
 
   const handleLogout = () => {
     localStorage.removeItem('adicto_auth');
@@ -814,7 +926,7 @@ export default function BikeConfigurator() {
           <div className="flex items-center gap-4">
             {user ? (
               <button
-                onClick={() => setIsGarageOpen(true)}
+                onClick={() => { playPop(); setIsGarageOpen(true); }}
                 className="flex items-center gap-1.5 bg-white/5 px-2.5 py-1 lg:px-3 lg:py-1.5 rounded-full border border-white/5 hover:border-red-600/50 transition-all group active:scale-95"
               >
                 <User size={12} className="text-red-600 group-hover:scale-110 transition-transform" />
@@ -839,7 +951,7 @@ export default function BikeConfigurator() {
               {steps.map((step, idx) => (
                 <button
                   key={step.id}
-                  onClick={() => setCurrentStepIndex(idx)}
+                  onClick={() => { playSelect(); setCurrentStepIndex(idx); }}
                   className={cn(
                     "transition-all text-[9px] lg:text-[11px] font-black uppercase italic tracking-widest pb-1 border-b-2 whitespace-nowrap",
                     idx === currentStepIndex ? "text-red-600 border-red-600" : "text-white/70 border-transparent"
@@ -864,7 +976,7 @@ export default function BikeConfigurator() {
                   <AnimatePresence mode="popLayout">
                     {filteredOptions.map((option) => (
                       <div key={option.id} className="w-[calc(33.333%-6px)] min-w-[calc(33.333%-6px)] shrink-0 h-full">
-                        <OptionCard component={option} isSelected={selections[currentStep.id] === option.id} onClick={() => setSelections({ ...selections, [currentStep.id]: option.id })} />
+                        <OptionCard component={option} isSelected={selections[currentStep.id] === option.id} onClick={() => { playSelect(); setSelections({ ...selections, [currentStep.id]: option.id }); }} />
                       </div>
                     ))}
                   </AnimatePresence>
@@ -875,7 +987,7 @@ export default function BikeConfigurator() {
                   <AnimatePresence mode="popLayout">
                     {filteredOptions.map((option) => (
                       <div key={option.id} className="w-full">
-                        <OptionCard component={option} isSelected={selections[currentStep.id] === option.id} onClick={() => setSelections({ ...selections, [currentStep.id]: option.id })} />
+                        <OptionCard component={option} isSelected={selections[currentStep.id] === option.id} onClick={() => { playSelect(); setSelections({ ...selections, [currentStep.id]: option.id }); }} />
                       </div>
                     ))}
                   </AnimatePresence>
@@ -889,7 +1001,7 @@ export default function BikeConfigurator() {
       {/* FOOTER */}
       <div className="fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur-2xl border-t border-white/5 z-40 shrink-0">
         <div className="max-w-[1500px] mx-auto px-4 lg:px-6 py-4 lg:py-6 grid grid-cols-12 gap-2 items-center">
-          <button onClick={() => currentStepIndex > 0 && setCurrentStepIndex(currentStepIndex - 1)} className="col-span-3 lg:col-span-2 flex items-center gap-1 text-zinc-500 hover:text-white transition-all font-black uppercase text-[10px] italic">
+          <button onClick={() => { if (currentStepIndex > 0) { playBack(); setCurrentStepIndex(currentStepIndex - 1); } }} className="col-span-3 lg:col-span-2 flex items-center gap-1 text-zinc-500 hover:text-white transition-all font-black uppercase text-[10px] italic">
             <ChevronLeft size={16} /> Back
           </button>
           <div className="col-span-6 lg:col-span-7 flex justify-center lg:justify-end items-center gap-4 lg:gap-10">
@@ -907,7 +1019,8 @@ export default function BikeConfigurator() {
             <button
               onClick={() => {
                 if (filteredOptions.length > 0 && !selections[currentStep.id]) return;
-                currentStepIndex < steps.length - 1 ? setCurrentStepIndex(currentStepIndex + 1) : setIsFinished(true);
+                if (currentStepIndex < steps.length - 1) { playNext(); setCurrentStepIndex(currentStepIndex + 1); }
+                else { playSuccess(); setIsFinished(true); }
               }}
               className="bg-red-600 text-white h-[32px] px-4 lg:px-6 rounded-lg font-black uppercase text-[10px] italic flex items-center gap-2 shadow-lg shadow-red-600/20 active:scale-95 transition-all"
             >
@@ -1270,7 +1383,7 @@ const GaragePanel = ({ isOpen, onClose, builds, user, onLogout, onSelectBuild, o
           <span className="text-[7px] font-black uppercase italic tracking-widest">+34 674 262 622</span>
         </a>
         {/* Powered by */}
-        <p className="text-[7px] font-black uppercase italic text-zinc-700 tracking-widest leading-none opacity-50">Powered by Adicto.Bike | 2026</p>
+        <p className="text-[7px] font-black uppercase italic text-red-600/50 tracking-widest leading-none">Powered by Adicto.Bike | 2026</p>
         {/* Email */}
         <a
           href="mailto:hello@adicto.bike"
@@ -1356,6 +1469,19 @@ function SummaryView({ selections, onReset, setSavedBuilds, user, onOpenGarage, 
     const updated = [...current, newBuild];
     localStorage.setItem('adicto_saved_builds', JSON.stringify(updated));
     setSavedBuilds(updated);
+    // play success sound
+    try {
+      const ac = new (window.AudioContext || (window as any).webkitAudioContext)();
+      [0, 0.12, 0.24].forEach((t, i) => {
+        const o = ac.createOscillator(); const g = ac.createGain();
+        o.connect(g); g.connect(ac.destination);
+        o.type = 'sine'; o.frequency.value = [523, 659, 784][i];
+        g.gain.setValueAtTime(0, ac.currentTime + t);
+        g.gain.linearRampToValueAtTime(0.07, ac.currentTime + t + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + t + 0.4);
+        o.start(ac.currentTime + t); o.stop(ac.currentTime + t + 0.4);
+      });
+    } catch {}
     alert(`Build "${finalName}" saved to your Garage!`);
   };
 
