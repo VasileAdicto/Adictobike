@@ -588,10 +588,10 @@ const handleLoadBuild = (build: any) => {
           localStorage.setItem('adicto_saved_builds', JSON.stringify(newB)); 
         }} 
       />
-    </> // 1. Закриває Fragment умови else
+    </> 
     )} 
-  </div> // 2. Закриває самий перший <div className="min-h-screen...">
-  ); // 3. Закриває return
+    </div> 
+  );
 }
 
 // ТІЛЬКИ ТУТ ПОЧИНАЄТЬСЯ GARAGE PANEL
