@@ -407,81 +407,126 @@ const CyclistFinalSVG = () => {
   );
 };
 
-// --- EMPTY VISUALIZER STATE: layer-by-layer bike build animation ---
-const EmptyVisualizerState = ({ layers = [] }: { layers?: string[] }) => {
+// --- EMPTY VISUALIZER STATE: luxury layer-by-layer assembly ---
+interface BikeLayer { imageUrl: string; zIndex: number; }
+
+type IntroPhase = 'assembling' | 'hold' | 'fadeout' | 'logo';
+
+const EmptyVisualizerState = ({ layers = [] }: { layers?: BikeLayer[] }) => {
+  const [phase, setPhase]           = useState<IntroPhase>('assembling');
   const [visibleCount, setVisibleCount] = useState(0);
-  const [showText, setShowText] = useState(false);
-  const text = "Let's start to build your dream";
-  const LAYER_INTERVAL = 180; // ms between each layer appearing
+
+  const STAGGER    = 500;   // ms between each layer
+  const HOLD_MS    = 2000;  // fully assembled — hold
+  const FADEOUT_MS = 1000;  // fade entire bike out
+  const hasLayers  = layers.length > 0;
 
   useEffect(() => {
-    if (layers.length === 0) {
-      // No images yet — just show text after short delay
-      const t = setTimeout(() => setShowText(true), 600);
-      return () => clearTimeout(t);
-    }
+    if (!hasLayers) { setPhase('logo'); return; }
+
+    setPhase('assembling');
     setVisibleCount(0);
-    setShowText(false);
+
     let i = 0;
-    const interval = setInterval(() => {
+    const tick = () => {
       i++;
       setVisibleCount(i);
-      if (i >= layers.length) {
-        clearInterval(interval);
-        setTimeout(() => setShowText(true), 300);
+      if (i < layers.length) {
+        timers.push(setTimeout(tick, STAGGER));
+      } else {
+        // all parts shown — hold
+        timers.push(setTimeout(() => setPhase('hold'), 100));
+        timers.push(setTimeout(() => setPhase('fadeout'), 100 + HOLD_MS));
+        timers.push(setTimeout(() => setPhase('logo'),   100 + HOLD_MS + FADEOUT_MS));
       }
-    }, LAYER_INTERVAL);
-    return () => clearInterval(interval);
-  }, [layers.length]);
+    };
+
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    timers.push(setTimeout(tick, STAGGER));
+    return () => timers.forEach(clearTimeout);
+  }, [hasLayers, layers.length]);
+
+  const bikeVisible = phase === 'assembling' || phase === 'hold';
+  const bikeFading  = phase === 'fadeout';
+  const showLogo    = phase === 'logo';
 
   return (
-    <div className="absolute inset-0 flex flex-col items-center justify-center z-20 pointer-events-none">
-      {/* Layer images stacked */}
-      {layers.slice(0, visibleCount).map((url, i) => (
-        <motion.img
-          key={url + i}
-          src={url}
-          alt=""
-          initial={{ opacity: 0, scale: 0.96 }}
-          animate={{ opacity: i === visibleCount - 1 ? 0.18 : 0.08, scale: 1 }}
-          transition={{ duration: 0.25, ease: 'easeOut' }}
-          className="absolute inset-0 w-full h-full object-contain"
-          style={{ zIndex: i + 1 }}
-        />
-      ))}
-      {/* Last layer full opacity flash then fade */}
-      {layers.length > 0 && visibleCount >= layers.length && (
-        <motion.img
-          key="final"
-          src={layers[layers.length - 1]}
-          alt=""
-          initial={{ opacity: 0.7 }}
-          animate={{ opacity: 0.12 }}
-          transition={{ duration: 1.2, ease: 'easeOut' }}
-          className="absolute inset-0 w-full h-full object-contain"
-          style={{ zIndex: layers.length + 1 }}
-        />
-      )}
-      {/* Text reveal */}
+    <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none overflow-hidden">
+
+      {/* ── BIKE LAYERS ── */}
       <AnimatePresence>
-        {showText && (
-          <motion.p
+        {(bikeVisible || bikeFading) && (
+          <motion.div
+            key="bike-stack"
+            className="absolute inset-0"
+            animate={{ opacity: bikeFading ? 0 : 1 }}
+            transition={{ duration: bikeFading ? FADEOUT_MS / 1000 : 0, ease: 'easeInOut' }}
+          >
+            {layers.map((layer, i) => {
+              const visible = i < visibleCount;
+              return (
+                <motion.img
+                  key={layer.imageUrl + i}
+                  src={layer.imageUrl}
+                  alt=""
+                  initial={{ opacity: 0, y: 18, scale: 0.97 }}
+                  animate={visible
+                    ? { opacity: 1, y: 0, scale: 1 }
+                    : { opacity: 0, y: 18, scale: 0.97 }}
+                  transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+                  className="absolute inset-0 w-full h-full object-contain"
+                  style={{ zIndex: layer.zIndex }}
+                />
+              );
+            })}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── LOGO FINALE ── */}
+      <AnimatePresence>
+        {showLogo && (
+          <motion.div
+            key="logo"
+            className="absolute inset-0 flex flex-col items-center justify-center gap-3"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.6 }}
-            className="relative z-30 text-[12px] lg:text-[15px] font-black uppercase italic tracking-widest text-white/25 whitespace-nowrap text-center px-4"
+            transition={{ duration: 0.8, ease: 'easeOut' }}
           >
-            {text.split('').map((char, i) => (
-              <motion.span
-                key={i}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: i * 0.035, duration: 0.2 }}
-              >
-                {char}
-              </motion.span>
-            ))}
-          </motion.p>
+            {/* Letter-by-letter draw */}
+            <div className="flex items-baseline gap-0 overflow-hidden">
+              {'ADICTO.BIKE'.split('').map((char, i) => (
+                <motion.span
+                  key={i}
+                  initial={{ opacity: 0, y: 12, clipPath: 'inset(0 100% 0 0)' }}
+                  animate={{ opacity: 1, y: 0, clipPath: 'inset(0 0% 0 0)' }}
+                  transition={{ delay: i * 0.06, duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                  className="text-[28px] lg:text-[38px] font-black italic uppercase tracking-tight text-white leading-none"
+                  style={{ letterSpacing: char === '.' ? '0.02em' : '-0.02em' }}
+                >
+                  {char === '.' ? (
+                    <span className="text-red-600">{char}</span>
+                  ) : char}
+                </motion.span>
+              ))}
+            </div>
+            {/* Tagline */}
+            <motion.p
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.9, duration: 0.5 }}
+              className="text-[9px] lg:text-[10px] font-black uppercase italic tracking-[0.3em] text-white/30"
+            >
+              Let&apos;s start to build your dream
+            </motion.p>
+            {/* thin red underline */}
+            <motion.div
+              initial={{ scaleX: 0 }}
+              animate={{ scaleX: 1 }}
+              transition={{ delay: 0.7, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+              className="h-px w-32 bg-red-600 origin-left mt-1"
+            />
+          </motion.div>
         )}
       </AnimatePresence>
     </div>
@@ -491,11 +536,11 @@ const EmptyVisualizerState = ({ layers = [] }: { layers?: string[] }) => {
 // --- VISUALIZER ---
 const Visualizer = ({ selectedComponents, offsets, showGrid, gridSize, isZoomed, zoomScale, steps }: any) => {
   // Collect first imageUrl from each step as preview layers
-  const previewLayers: string[] = useMemo(() => {
+  const previewLayers = useMemo(() => {
     if (!steps) return [];
     return steps
-      .map((s: any) => s.options?.[0]?.imageUrl || '')
-      .filter(Boolean);
+      .map((s: any) => s.options?.[0] ? { imageUrl: s.options[0].imageUrl, zIndex: s.options[0].zIndex ?? 10 } : null)
+      .filter((x): x is { imageUrl: string; zIndex: number } => !!x && !!x.imageUrl);
   }, [steps]);
   return (
     <div id="bike-visualizer" className="relative w-full h-full bg-zinc-950 rounded-none lg:rounded-[2.5rem] overflow-hidden border-0 lg:border border-white/5 shadow-[0_0_100px_rgba(0,0,0,0.5)] flex items-center justify-center cursor-crosshair">
