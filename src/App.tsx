@@ -412,13 +412,15 @@ interface BikeLayer { imageUrl: string; zIndex: number; }
 
 type IntroPhase = 'assembling' | 'hold' | 'fadeout' | 'logo';
 
+// Per-layer stagger in ms. Index 5 = Saddle — shorter gap before it.
+const LAYER_DELAYS = [500, 480, 440, 400, 380, 280, 360, 380, 380, 380, 360];
+
 const EmptyVisualizerState = ({ layers = [] }: { layers?: BikeLayer[] }) => {
-  const [phase, setPhase]           = useState<IntroPhase>('assembling');
+  const [phase, setPhase]               = useState<IntroPhase>('assembling');
   const [visibleCount, setVisibleCount] = useState(0);
 
-  const STAGGER    = 500;   // ms between each layer
-  const HOLD_MS    = 2000;  // fully assembled — hold
-  const FADEOUT_MS = 1000;  // fade entire bike out
+  const HOLD_MS    = 2000;
+  const FADEOUT_MS = 1000;
   const hasLayers  = layers.length > 0;
 
   useEffect(() => {
@@ -427,22 +429,20 @@ const EmptyVisualizerState = ({ layers = [] }: { layers?: BikeLayer[] }) => {
     setPhase('assembling');
     setVisibleCount(0);
 
-    let i = 0;
-    const tick = () => {
-      i++;
-      setVisibleCount(i);
-      if (i < layers.length) {
-        timers.push(setTimeout(tick, STAGGER));
-      } else {
-        // all parts shown — hold
-        timers.push(setTimeout(() => setPhase('hold'), 100));
-        timers.push(setTimeout(() => setPhase('fadeout'), 100 + HOLD_MS));
-        timers.push(setTimeout(() => setPhase('logo'),   100 + HOLD_MS + FADEOUT_MS));
-      }
-    };
-
     const timers: ReturnType<typeof setTimeout>[] = [];
-    timers.push(setTimeout(tick, STAGGER));
+    let elapsed = 0;
+
+    layers.forEach((_, i) => {
+      const delay = i === 0 ? 0 : LAYER_DELAYS[i] ?? 400;
+      elapsed += delay;
+      timers.push(setTimeout(() => setVisibleCount(i + 1), elapsed));
+    });
+
+    const doneAt = elapsed + 100;
+    timers.push(setTimeout(() => setPhase('hold'),    doneAt));
+    timers.push(setTimeout(() => setPhase('fadeout'), doneAt + HOLD_MS));
+    timers.push(setTimeout(() => setPhase('logo'),    doneAt + HOLD_MS + FADEOUT_MS));
+
     return () => timers.forEach(clearTimeout);
   }, [hasLayers, layers.length]);
 
@@ -451,37 +451,35 @@ const EmptyVisualizerState = ({ layers = [] }: { layers?: BikeLayer[] }) => {
   const showLogo    = phase === 'logo';
 
   return (
-    <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none overflow-hidden">
+    <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
 
       {/* ── BIKE LAYERS ── */}
-      <AnimatePresence>
-        {(bikeVisible || bikeFading) && (
-          <motion.div
-            key="bike-stack"
-            className="absolute inset-0"
-            animate={{ opacity: bikeFading ? 0 : 1 }}
-            transition={{ duration: bikeFading ? FADEOUT_MS / 1000 : 0, ease: 'easeInOut' }}
-          >
-            {layers.map((layer, i) => {
-              const visible = i < visibleCount;
-              return (
-                <motion.img
-                  key={layer.imageUrl + i}
-                  src={layer.imageUrl}
-                  alt=""
-                  initial={{ opacity: 0, y: 18, scale: 0.97 }}
-                  animate={visible
-                    ? { opacity: 1, y: 0, scale: 1 }
-                    : { opacity: 0, y: 18, scale: 0.97 }}
-                  transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-                  className="absolute inset-0 w-full h-full object-contain"
-                  style={{ zIndex: layer.zIndex }}
-                />
-              );
-            })}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {(bikeVisible || bikeFading) && (
+        <motion.div
+          key="bike-stack"
+          className="absolute inset-0"
+          animate={{ opacity: bikeFading ? 0 : 1 }}
+          transition={{ duration: bikeFading ? FADEOUT_MS / 1000 : 0.01, ease: 'easeInOut' }}
+        >
+          {layers.map((layer, i) => {
+            const visible = i < visibleCount;
+            return (
+              <motion.img
+                key={i}
+                src={layer.imageUrl}
+                alt=""
+                initial={false}
+                animate={visible
+                  ? { opacity: 1, y: 0, scale: 1 }
+                  : { opacity: 0, y: 16, scale: 0.97 }}
+                transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                className="absolute inset-0 w-full h-full object-contain"
+                style={{ zIndex: layer.zIndex }}
+              />
+            );
+          })}
+        </motion.div>
+      )}
 
       {/* ── LOGO FINALE ── */}
       <AnimatePresence>
@@ -491,41 +489,62 @@ const EmptyVisualizerState = ({ layers = [] }: { layers?: BikeLayer[] }) => {
             className="absolute inset-0 flex flex-col items-center justify-center gap-3"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.8, ease: 'easeOut' }}
+            transition={{ duration: 0.6, ease: 'easeOut' }}
           >
-            {/* Letter-by-letter draw */}
-            <div className="flex items-baseline gap-0 overflow-hidden">
+            {/* Letter-by-letter — NO overflow-hidden, enough padding for descenders */}
+            <div className="flex items-end gap-0 pb-2">
               {'ADICTO.BIKE'.split('').map((char, i) => (
                 <motion.span
                   key={i}
-                  initial={{ opacity: 0, y: 12, clipPath: 'inset(0 100% 0 0)' }}
-                  animate={{ opacity: 1, y: 0, clipPath: 'inset(0 0% 0 0)' }}
-                  transition={{ delay: i * 0.06, duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-                  className="text-[28px] lg:text-[38px] font-black italic uppercase tracking-tight text-white leading-none"
-                  style={{ letterSpacing: char === '.' ? '0.02em' : '-0.02em' }}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 + i * 0.055, duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                  className="text-[30px] lg:text-[40px] font-black italic uppercase text-white leading-none"
+                  style={{ letterSpacing: '-0.02em', display: 'inline-block' }}
                 >
-                  {char === '.' ? (
-                    <span className="text-red-600">{char}</span>
-                  ) : char}
+                  {char === '.' ? <span className="text-red-600">.</span> : char}
                 </motion.span>
               ))}
             </div>
-            {/* Tagline */}
-            <motion.p
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.9, duration: 0.5 }}
-              className="text-[9px] lg:text-[10px] font-black uppercase italic tracking-[0.3em] text-white/30"
-            >
-              Let&apos;s start to build your dream
-            </motion.p>
-            {/* thin red underline */}
+
+            {/* Red underline */}
             <motion.div
               initial={{ scaleX: 0 }}
               animate={{ scaleX: 1 }}
-              transition={{ delay: 0.7, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-              className="h-px w-32 bg-red-600 origin-left mt-1"
+              transition={{ delay: 0.75, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+              className="h-px w-36 bg-red-600 origin-left -mt-1"
             />
+
+            {/* Tagline */}
+            <motion.p
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.95, duration: 0.5 }}
+              className="text-[9px] lg:text-[10px] font-black uppercase italic tracking-[0.25em] text-white/25 mt-1"
+            >
+              Let&apos;s start to build your dream
+            </motion.p>
+
+            {/* Arrow + hint — pointing right toward cards */}
+            <motion.div
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 1.3, duration: 0.5 }}
+              className="flex items-center gap-2 mt-4"
+            >
+              <span className="text-[9px] lg:text-[10px] font-black uppercase italic tracking-widest text-zinc-600">
+                First step: choose the Frameset
+              </span>
+              <motion.span
+                animate={{ x: [0, 5, 0] }}
+                transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut' }}
+                className="text-zinc-600"
+              >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </motion.span>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
