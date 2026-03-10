@@ -978,18 +978,13 @@ const CompareView = ({ builds, onBack }: { builds: any[], onBack: () => void }) 
             <p className="text-[8px] text-zinc-500 uppercase font-bold mt-0.5 tracking-widest">{builds.length} builds · up to 5</p>
           </div>
         </div>
-        <div className="hidden lg:flex items-center gap-6">
-          {totals.map(t => (
-            <div key={t.id} className="text-center">
-              <p className="text-[8px] text-zinc-600 uppercase font-black tracking-widest leading-none mb-1 truncate max-w-[120px]">{t.name}</p>
-              <div className="flex items-center gap-2">
-                <span className={cn("font-mono text-[10px]", highlight(totals.map(x => x.price), t.price))}>€{t.price.toLocaleString()}</span>
-                <span className="text-zinc-700 text-[8px]">·</span>
-                <span className={cn("font-mono text-[10px]", highlight(totals.map(x => x.weight), t.weight))}>{t.weight}g</span>
-              </div>
-            </div>
-          ))}
-        </div>
+        <button
+          onClick={() => window.location.reload()}
+          className="flex items-center gap-2 bg-red-600 hover:bg-red-700 px-5 py-2 rounded-full font-black uppercase italic text-[10px] tracking-widest text-white transition-all active:scale-95 shadow-lg shadow-red-600/20"
+        >
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6a4 4 0 1 1 4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><path d="M2 4V6h2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          Start New Build
+        </button>
       </div>
 
       {/* TABLE */}
@@ -1025,29 +1020,29 @@ const CompareView = ({ builds, onBack }: { builds: any[], onBack: () => void }) 
                 );
               })}
             </tr>
-            {/* Totals rows */}
-            <tr className="bg-zinc-900/60">
-              <td className="sticky left-0 z-20 bg-zinc-900 border-b border-r border-white/10 p-3">
+          </thead>
+          <tbody>
+            {/* Totals rows — scrollable, not sticky */}
+            <tr className="bg-zinc-900/40 border-b border-white/10">
+              <td className="sticky left-0 z-10 bg-zinc-900/80 border-r border-white/10 p-3">
                 <span className="text-[8px] font-black uppercase italic text-zinc-400">Total Weight</span>
               </td>
               {totals.map(t => (
-                <td key={t.id} className="border-b border-l border-white/10 p-3 text-center">
+                <td key={t.id} className="border-l border-white/10 p-3 text-center">
                   <span className={cn("font-mono text-[12px]", highlight(totals.map(x => x.weight), t.weight))}>{t.weight}g</span>
                 </td>
               ))}
             </tr>
-            <tr className="bg-zinc-900/60">
-              <td className="sticky left-0 z-20 bg-zinc-900 border-b border-r border-white/10 p-3">
+            <tr className="bg-zinc-900/40 border-b border-white/10">
+              <td className="sticky left-0 z-10 bg-zinc-900/80 border-r border-white/10 p-3">
                 <span className="text-[8px] font-black uppercase italic text-zinc-400">Total Price</span>
               </td>
               {totals.map(t => (
-                <td key={t.id} className="border-b border-l border-white/10 p-3 text-center">
+                <td key={t.id} className="border-l border-white/10 p-3 text-center">
                   <span className={cn("font-mono text-[12px]", highlight(totals.map(x => x.price), t.price))}>€{t.price.toLocaleString()}</span>
                 </td>
               ))}
             </tr>
-          </thead>
-          <tbody>
             {allCategories.map((cat, rowIdx) => {
               const comps = builds.map(b => getComp(b, cat));
               const prices = comps.map(c => c ? Number(c.price) || 0 : 0).filter(v => v > 0);
@@ -1260,8 +1255,33 @@ const GaragePanel = ({ isOpen, onClose, builds, user, onLogout, onSelectBuild, o
           ))}
         </div>
       </div>
-      <div className="px-6 py-4 border-t border-white/5 bg-black text-center">
-        <p className="text-[7px] font-black uppercase italic text-zinc-600 tracking-widest leading-none opacity-50">Powered by Adicto.Bike | 2026</p>
+      <div className="px-6 py-3 border-t border-white/5 bg-black flex items-center justify-between gap-4">
+        {/* WhatsApp business */}
+        <a
+          href="https://wa.me/34674262622"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-1.5 text-zinc-600 hover:text-green-400 transition-colors group"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className="shrink-0">
+            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+            <path d="M12 0C5.373 0 0 5.373 0 12c0 2.124.558 4.115 1.529 5.845L0 24l6.335-1.508A11.933 11.933 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 0 1-5.006-1.368l-.359-.214-3.722.886.938-3.623-.234-.372A9.818 9.818 0 1 1 12 21.818z"/>
+          </svg>
+          <span className="text-[7px] font-black uppercase italic tracking-widest">+34 674 262 622</span>
+        </a>
+        {/* Powered by */}
+        <p className="text-[7px] font-black uppercase italic text-zinc-700 tracking-widest leading-none opacity-50">Powered by Adicto.Bike | 2026</p>
+        {/* Email */}
+        <a
+          href="mailto:hello@adicto.bike"
+          className="flex items-center gap-1.5 text-zinc-600 hover:text-red-400 transition-colors group"
+        >
+          <span className="text-[7px] font-black uppercase italic tracking-widest">hello@adicto.bike</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+            <rect x="2" y="4" width="20" height="16" rx="2"/>
+            <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+          </svg>
+        </a>
       </div>
       </>}
     </motion.div>
