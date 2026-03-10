@@ -329,84 +329,6 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
 
 
 
-// --- FINAL CYCLIST INTRO ---
-const FinalCyclistIntro = () => {
-  return (
-    <motion.div
-      initial={{ opacity: 1 }}
-      animate={{ opacity: 1 }}
-      className="flex flex-col items-center gap-3 mb-4"
-    >
-      {/* Wide track */}
-      <div className="relative w-[280px] h-[70px] flex items-center overflow-hidden">
-        {/* Ground line */}
-        <div className="absolute bottom-2 left-0 right-0 h-px bg-white/10" />
-        {/* Cyclist enters from left, stops center, thumbs up, exits right */}
-        <motion.div
-          initial={{ x: -90 }}
-          animate={{ x: ['-90px', '100px', '100px', '360px'] }}
-          transition={{
-            duration: 3.6,
-            times: [0, 0.38, 0.72, 1],
-            ease: ['easeOut', 'linear', 'easeIn', 'easeIn'],
-          }}
-          className="absolute"
-          style={{ bottom: 12 }}
-        >
-          <CyclistFinalSVG />
-        </motion.div>
-      </div>
-    </motion.div>
-  );
-};
-
-const CyclistFinalSVG = () => {
-  const [phase, setPhase] = useState<'riding' | 'thumbsup' | 'riding2'>('riding');
-  useEffect(() => {
-    const t1 = setTimeout(() => setPhase('thumbsup'), 1380);
-    const t2 = setTimeout(() => setPhase('riding2'), 2600);
-    return () => { clearTimeout(t1); clearTimeout(t2); };
-  }, []);
-  const spinning = phase !== 'thumbsup';
-  return (
-    <svg width="72" height="54" viewBox="0 0 72 54" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <motion.g animate={{ rotate: spinning ? 360 : 0 }} transition={{ duration: 0.5, repeat: spinning ? Infinity : 0, ease: 'linear' }} style={{ originX: '16px', originY: '42px' }}>
-        <circle cx="16" cy="42" r="9" stroke="#ef4444" strokeWidth="2" fill="none"/>
-        <line x1="16" y1="33" x2="16" y2="51" stroke="#ef4444" strokeWidth="1.2" opacity="0.5"/>
-        <line x1="7" y1="42" x2="25" y2="42" stroke="#ef4444" strokeWidth="1.2" opacity="0.5"/>
-      </motion.g>
-      <motion.g animate={{ rotate: spinning ? 360 : 0 }} transition={{ duration: 0.5, repeat: spinning ? Infinity : 0, ease: 'linear' }} style={{ originX: '54px', originY: '42px' }}>
-        <circle cx="54" cy="42" r="9" stroke="#ef4444" strokeWidth="2" fill="none"/>
-        <line x1="54" y1="33" x2="54" y2="51" stroke="#ef4444" strokeWidth="1.2" opacity="0.5"/>
-        <line x1="45" y1="42" x2="63" y2="42" stroke="#ef4444" strokeWidth="1.2" opacity="0.5"/>
-      </motion.g>
-      <polygon points="16,42 30,22 54,42 16,42" stroke="white" strokeWidth="1.8" fill="none" strokeLinejoin="round"/>
-      <line x1="30" y1="22" x2="40" y2="22" stroke="white" strokeWidth="2"/>
-      <line x1="40" y1="22" x2="54" y2="42" stroke="white" strokeWidth="1.8"/>
-      <line x1="30" y1="22" x2="28" y2="16" stroke="white" strokeWidth="1.8" strokeLinecap="round"/>
-      <line x1="24" y1="15" x2="32" y2="15" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
-      <line x1="40" y1="22" x2="44" y2="17" stroke="white" strokeWidth="1.8" strokeLinecap="round"/>
-      <line x1="42" y1="16" x2="47" y2="18" stroke="white" strokeWidth="2" strokeLinecap="round"/>
-      <line x1="28" y1="16" x2="44" y2="17" stroke="#d1d5db" strokeWidth="1.5" strokeLinecap="round"/>
-      <circle cx="44" cy="12" r="4" fill="#d1d5db"/>
-      <path d="M40 12 Q40 7 44 7 Q48 7 48 12" fill="#ef4444"/>
-      {phase === 'thumbsup' ? (
-        <g>
-          <line x1="42" y1="16" x2="37" y2="7" stroke="#d1d5db" strokeWidth="1.8" strokeLinecap="round"/>
-          <line x1="37" y1="7" x2="37" y2="3" stroke="#d1d5db" strokeWidth="2.2" strokeLinecap="round"/>
-          <line x1="35" y1="7" x2="39" y2="7" stroke="#d1d5db" strokeWidth="1.5" strokeLinecap="round"/>
-        </g>
-      ) : (
-        <line x1="42" y1="16" x2="45" y2="18" stroke="#d1d5db" strokeWidth="1.8" strokeLinecap="round"/>
-      )}
-      <motion.g animate={{ rotate: spinning ? 360 : 0 }} transition={{ duration: 0.6, repeat: spinning ? Infinity : 0, ease: 'linear' }} style={{ originX: '35px', originY: '36px' }}>
-        <line x1="35" y1="30" x2="35" y2="42" stroke="#9ca3af" strokeWidth="1.5" strokeLinecap="round"/>
-        <line x1="35" y1="42" x2="30" y2="46" stroke="#9ca3af" strokeWidth="1.5" strokeLinecap="round"/>
-      </motion.g>
-    </svg>
-  );
-};
-
 // --- EMPTY VISUALIZER STATE: luxury layer-by-layer assembly ---
 interface BikeLayer { imageUrl: string; zIndex: number; }
 
@@ -1436,33 +1358,17 @@ function SummaryView({ selections, onReset, setSavedBuilds, user, onOpenGarage, 
       </nav>
 
       <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
-        <FinalCyclistIntro />
-
-        <motion.h2
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 3.8, duration: 0.6 }}
-          className="text-[20px] lg:text-[22px] font-black italic uppercase tracking-tighter mb-6 leading-[1.1]"
-        >
+        <h2
+          className="text-[20px] lg:text-[22px] font-black italic uppercase tracking-tighter mb-6 leading-[1.1]">
           Your bike is <br /> <span className="text-red-600 uppercase">Ready</span>
-        </motion.h2>
+        </h2>
 
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 4.1, duration: 0.6 }}
-          className="flex justify-center gap-10 my-8 bg-zinc-900/40 p-6 rounded-[2rem] border border-white/5 shadow-2xl backdrop-blur-md"
-        >
+        <div className="flex justify-center gap-10 my-8 bg-zinc-900/40 p-6 rounded-[2rem] border border-white/5 shadow-2xl backdrop-blur-md">
           <div><p className="text-zinc-600 text-[7px] uppercase font-black mb-1 italic tracking-widest">Price</p><p className="text-[14px] font-mono text-red-600 font-black tracking-tighter italic">€{totalPrice.toLocaleString()}</p></div>
           <div><p className="text-zinc-600 text-[7px] uppercase font-black mb-1 italic tracking-widest">Weight</p><p className="text-[14px] font-mono text-white/80 font-black tracking-tighter italic">{totalWeight}g</p></div>
-        </motion.div>
+        </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 4.3, duration: 0.5 }}
-          className="flex flex-col gap-4 w-full max-w-[280px]"
-        >
+        <div className="flex flex-col gap-4 w-full max-w-[280px]">
           <button onClick={handleExport} disabled={isExporting} className="relative h-14 bg-zinc-900 border border-white/10 rounded-2xl font-black uppercase text-[10px] italic overflow-hidden transition-all active:scale-95 group shadow-xl">
             {isExporting && <motion.div className="absolute left-0 top-0 bottom-0 bg-red-600/80 z-0" animate={{ width: `${progress}%` }} transition={{ ease: "linear" }} />}
             <span className="relative z-10 flex items-center justify-center gap-2 text-white">
@@ -1479,7 +1385,7 @@ function SummaryView({ selections, onReset, setSavedBuilds, user, onOpenGarage, 
           <button onClick={onReset} className="px-8 py-4 bg-transparent border border-white/10 text-white rounded-2xl font-black uppercase text-[10px] italic hover:bg-white/5 hover:border-white/20 transition-all active:scale-95 shadow-xl">
             Build another one
           </button>
-        </motion.div>
+        </div>
       </div>
     </div>
   );
