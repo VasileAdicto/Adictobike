@@ -551,7 +551,6 @@ const handleLoadBuild = (build: any) => {
       </div> {/* закриває внутрішній flex/grid контейнер */}
     </main>
 
-      {/* --- FOOTER --- */}
       <div className="fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur-2xl border-t border-white/5 z-40 shrink-0">
         <div className="max-w-[1500px] mx-auto px-4 lg:px-6 py-4 lg:py-6 grid grid-cols-12 gap-2 items-center">
           {/* ... вміст кнопок Back/Next ... */}
