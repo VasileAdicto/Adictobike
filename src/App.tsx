@@ -663,11 +663,180 @@ export default function BikeConfigurator() {
   );
 }
 
+
+// --- COMPARE VIEW ---
+const CompareView = ({ builds, onBack }: { builds: any[], onBack: () => void }) => {
+  const allCategories: string[] = Array.from(new Set(
+    builds.flatMap((b: any) => (b.components || []).map((c: any) => c.stepTitle))
+  )).filter(Boolean) as string[];
+
+  const totals = builds.map((b: any) => ({
+    id: b.id,
+    name: b.name,
+    price: b.components?.reduce((a: number, c: any) => a + (Number(c.price) || 0), 0) || 0,
+    weight: b.components?.reduce((a: number, c: any) => a + (Number(c.weight) || 0), 0) || 0,
+  }));
+
+  const minPrice = Math.min(...totals.map(t => t.price));
+  const minWeight = Math.min(...totals.map(t => t.weight));
+
+  const getComp = (build: any, cat: string) =>
+    build.components?.find((c: any) => c.stepTitle === cat);
+
+  // Highlight: green if best, red if worst
+  const highlight = (vals: number[], val: number, lower = true) => {
+    const best = lower ? Math.min(...vals) : Math.max(...vals);
+    const worst = lower ? Math.max(...vals) : Math.min(...vals);
+    if (val === best) return 'text-green-400 font-black';
+    if (val === worst && vals.length > 1) return 'text-red-400';
+    return 'text-zinc-300';
+  };
+
+  const colWidth = Math.max(160, Math.floor(800 / builds.length));
+
+  return (
+    <div className="fixed inset-0 z-[1100] bg-black text-white font-sans flex flex-col">
+      {/* HEADER */}
+      <div className="shrink-0 px-4 lg:px-8 py-4 border-b border-white/5 bg-zinc-900/60 backdrop-blur-xl flex items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <button onClick={onBack} className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center transition-all active:scale-95">
+            <ChevronLeft size={14} />
+          </button>
+          <div>
+            <h2 className="text-[13px] lg:text-[15px] font-black uppercase italic tracking-widest text-red-600 leading-none">Compare Builds</h2>
+            <p className="text-[8px] text-zinc-500 uppercase font-bold mt-0.5 tracking-widest">{builds.length} builds · up to 5</p>
+          </div>
+        </div>
+        <div className="hidden lg:flex items-center gap-6">
+          {totals.map(t => (
+            <div key={t.id} className="text-center">
+              <p className="text-[8px] text-zinc-600 uppercase font-black tracking-widest leading-none mb-1 truncate max-w-[120px]">{t.name}</p>
+              <div className="flex items-center gap-2">
+                <span className={cn("font-mono text-[10px]", highlight(totals.map(x => x.price), t.price))}>€{t.price.toLocaleString()}</span>
+                <span className="text-zinc-700 text-[8px]">·</span>
+                <span className={cn("font-mono text-[10px]", highlight(totals.map(x => x.weight), t.weight))}>{t.weight}g</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* TABLE */}
+      <div className="flex-1 overflow-auto custom-scroll-container">
+        <table className="border-collapse" style={{ width: '100%', minWidth: `${180 + builds.length * colWidth}px` }}>
+          <thead className="sticky top-0 z-20">
+            <tr>
+              <th className="sticky left-0 z-30 bg-zinc-950 border-b border-r border-white/10 p-3 text-left w-36 lg:w-44">
+                <span className="text-[8px] font-black uppercase text-zinc-600 tracking-widest">Component</span>
+              </th>
+              {builds.map((b: any, i: number) => {
+                const t = totals[i];
+                const isCheapest = t.price === minPrice;
+                const isLightest = t.weight === minWeight;
+                return (
+                  <th key={b.id} className="bg-zinc-950 border-b border-l border-white/10 p-3 text-center" style={{ minWidth: colWidth }}>
+                    <div className="text-[11px] font-black uppercase italic text-white truncate max-w-[140px] mx-auto leading-tight">{b.name}</div>
+                    <div className="text-[8px] text-zinc-600 font-mono mt-0.5">{b.date}</div>
+                    <div className="flex justify-center items-center gap-2 mt-1.5">
+                      <span className={cn("text-[10px] font-mono font-black", isCheapest ? "text-green-400" : "text-red-500")}>
+                        €{t.price.toLocaleString()}
+                      </span>
+                      <span className="text-zinc-700">·</span>
+                      <span className={cn("text-[10px] font-mono", isLightest ? "text-green-400" : "text-zinc-400")}>
+                        {t.weight}g
+                      </span>
+                    </div>
+                    <div className="flex justify-center gap-1 mt-1">
+                      {isCheapest && <span className="text-[7px] bg-green-600/20 text-green-400 px-1.5 py-0.5 rounded-full font-black uppercase tracking-widest">Cheapest</span>}
+                      {isLightest && <span className="text-[7px] bg-blue-600/20 text-blue-400 px-1.5 py-0.5 rounded-full font-black uppercase tracking-widest">Lightest</span>}
+                    </div>
+                  </th>
+                );
+              })}
+            </tr>
+            {/* Totals rows */}
+            <tr className="bg-zinc-900/60">
+              <td className="sticky left-0 z-20 bg-zinc-900 border-b border-r border-white/10 p-3">
+                <span className="text-[8px] font-black uppercase italic text-zinc-400">Total Weight</span>
+              </td>
+              {totals.map(t => (
+                <td key={t.id} className="border-b border-l border-white/10 p-3 text-center">
+                  <span className={cn("font-mono text-[12px]", highlight(totals.map(x => x.weight), t.weight))}>{t.weight}g</span>
+                </td>
+              ))}
+            </tr>
+            <tr className="bg-zinc-900/60">
+              <td className="sticky left-0 z-20 bg-zinc-900 border-b border-r border-white/10 p-3">
+                <span className="text-[8px] font-black uppercase italic text-zinc-400">Total Price</span>
+              </td>
+              {totals.map(t => (
+                <td key={t.id} className="border-b border-l border-white/10 p-3 text-center">
+                  <span className={cn("font-mono text-[12px]", highlight(totals.map(x => x.price), t.price))}>€{t.price.toLocaleString()}</span>
+                </td>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {allCategories.map((cat, rowIdx) => {
+              const comps = builds.map(b => getComp(b, cat));
+              const prices = comps.map(c => c ? Number(c.price) || 0 : 0).filter(v => v > 0);
+              const weights = comps.map(c => c ? Number(c.weight) || 0 : 0).filter(v => v > 0);
+              return (
+                <tr key={cat} className={cn("border-b border-white/5 transition-colors", rowIdx % 2 === 0 ? "bg-transparent" : "bg-white/[0.015]", "hover:bg-white/[0.04]")}>
+                  <td className="sticky left-0 z-10 bg-zinc-950 border-r border-white/10 p-3">
+                    <span className="text-[8px] font-black uppercase text-zinc-500 tracking-widest">{cat}</span>
+                  </td>
+                  {builds.map((b: any, i: number) => {
+                    const comp = comps[i];
+                    const priceClass = prices.length > 1 ? highlight(prices, comp ? Number(comp.price) || 0 : 0) : 'text-zinc-300';
+                    return (
+                      <td key={b.id} className="border-l border-white/5 p-3 text-center align-top">
+                        {comp ? (
+                          <div className="flex flex-col items-center gap-0.5">
+                            <span className="text-[9px] font-black text-white uppercase leading-tight tracking-wide max-w-[130px] truncate">{comp.brand}</span>
+                            <span className="text-[8px] text-zinc-500 leading-tight max-w-[130px] line-clamp-2 text-center">{comp.name}</span>
+                            <div className="flex items-center gap-1.5 mt-1">
+                              <span className={cn("font-mono text-[9px]", priceClass)}>€{comp.price}</span>
+                              <span className="text-zinc-700 text-[8px]">·</span>
+                              <span className="font-mono text-[9px] text-zinc-500">{comp.weight}g</span>
+                            </div>
+                          </div>
+                        ) : (
+                          <span className="text-zinc-800 text-[11px]">—</span>
+                        )}
+                      </td>
+                    );
+                  })}
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="shrink-0 px-6 py-3 border-t border-white/5 bg-zinc-950 flex items-center justify-between">
+        <p className="text-[7px] font-black uppercase italic text-zinc-700 tracking-widest">🟢 Green = best · 🔴 Red = most expensive</p>
+        <button onClick={onBack} className="text-[8px] font-black uppercase italic text-zinc-500 hover:text-white transition-colors flex items-center gap-1">
+          <ChevronLeft size={10} /> Back to Garage
+        </button>
+      </div>
+    </div>
+  );
+};
+
 // --- GARAGE PANEL ---
 // FIX #2 & #3: Merged into a single component definition with handleDownloadPDF inside
 const GaragePanel = ({ isOpen, onClose, builds, user, onLogout, onSelectBuild, onDeleteBuild }: any) => {
   const [exportingId, setExportingId] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
+  const [compareIds, setCompareIds] = useState<string[]>([]);
+  const [isComparing, setIsComparing] = useState(false);
+
+  const toggleCompare = (id: string) => {
+    setCompareIds(prev =>
+      prev.includes(id) ? prev.filter(x => x !== id) : prev.length < 5 ? [...prev, id] : prev
+    );
+  };
 
   // FIX #3: handleDownloadPDF is now correctly inside GaragePanel where state setters live
   const handleDownloadPDF = async (build: any) => {
@@ -682,8 +851,15 @@ const GaragePanel = ({ isOpen, onClose, builds, user, onLogout, onSelectBuild, o
 
   if (!isOpen) return null;
 
+  const selectedBuilds = builds.filter((b: any) => compareIds.includes(b.id));
+
   return (
     <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} className="fixed inset-0 z-[999] bg-black/98 backdrop-blur-3xl flex flex-col font-sans text-white">
+      {/* COMPARE VIEW */}
+      {isComparing && compareIds.length >= 2 && (
+        <CompareView builds={selectedBuilds} onBack={() => setIsComparing(false)} />
+      )}
+      {!(isComparing && compareIds.length >= 2) && <>
       {/* HEADER */}
       <div className="p-4 lg:p-6 border-b border-white/5 flex justify-between items-start relative">
         <div className="flex gap-4">
@@ -697,14 +873,28 @@ const GaragePanel = ({ isOpen, onClose, builds, user, onLogout, onSelectBuild, o
           </div>
         </div>
 
-        <div className="hidden lg:flex absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 items-center gap-4">
-          <button className="bg-red-600 px-6 py-2 rounded-full font-black uppercase italic text-[10px] tracking-widest shadow-lg shadow-red-600/20">Compare</button>
-          <span className="text-[10px] font-black uppercase italic text-zinc-500 tracking-widest">Choose to compare</span>
+        <div className="hidden lg:flex absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 items-center gap-3">
+          {compareIds.length >= 2 ? (
+            <button onClick={() => setIsComparing(true)} className="bg-red-600 px-6 py-2 rounded-full font-black uppercase italic text-[10px] tracking-widest shadow-lg shadow-red-600/20 hover:bg-red-700 transition-all active:scale-95">
+              Compare {compareIds.length} Builds
+            </button>
+          ) : (
+            <button disabled className="bg-zinc-800 px-6 py-2 rounded-full font-black uppercase italic text-[10px] tracking-widest text-zinc-500 cursor-default">
+              Compare
+            </button>
+          )}
+          <span className="text-[9px] font-black uppercase italic text-zinc-600 tracking-widest">
+            {compareIds.length === 0 ? 'Select builds to compare' : compareIds.length === 1 ? 'Select 1 more...' : `${compareIds.length}/5 selected`}
+          </span>
         </div>
 
         <div className="flex flex-col gap-2 items-end">
           <button onClick={onClose} className="text-white uppercase text-[9px] font-black italic flex items-center gap-2 bg-white/10 px-5 py-2.5 rounded-full border border-white/10">MAIN PAGE <ChevronRight size={14} /></button>
-          <button className="lg:hidden bg-red-600 px-4 py-1.5 rounded-full text-white text-[9px] font-black italic">Compare</button>
+          {compareIds.length >= 2 ? (
+            <button onClick={() => setIsComparing(true)} className="lg:hidden bg-red-600 px-4 py-1.5 rounded-full text-white text-[9px] font-black italic active:scale-95">Compare ({compareIds.length})</button>
+          ) : (
+            <button disabled className="lg:hidden bg-zinc-800 px-4 py-1.5 rounded-full text-zinc-500 text-[9px] font-black italic">Compare</button>
+          )}
         </div>
       </div>
 
@@ -715,9 +905,9 @@ const GaragePanel = ({ isOpen, onClose, builds, user, onLogout, onSelectBuild, o
               <div className="absolute top-2 lg:top-3 right-6 text-[8px] lg:text-[10px] font-mono text-zinc-500 uppercase tracking-widest">{build.date}</div>
               <div className="flex flex-col lg:flex-row lg:items-center gap-4 mt-4 lg:mt-0">
                 <div className="flex items-center gap-3 lg:gap-5 flex-1 min-w-0">
-                  <label className="relative flex items-center justify-center cursor-pointer shrink-0">
-                    <input type="checkbox" className="peer sr-only" />
-                    <div className="w-2.5 h-2.5 lg:w-3 lg:h-3 rounded-full border border-white/30 peer-checked:border-red-600 peer-checked:bg-red-600 flex items-center justify-center transition-all duration-150" />
+                  <label className="relative flex items-center justify-center cursor-pointer shrink-0" onClick={(e) => { e.stopPropagation(); toggleCompare(build.id); }}>
+                    <input type="checkbox" className="peer sr-only" readOnly checked={compareIds.includes(build.id)} />
+                    <div className={cn("w-3 h-3 lg:w-3.5 lg:h-3.5 rounded-full border transition-all duration-150", compareIds.includes(build.id) ? "border-red-600 bg-red-600" : "border-white/30")} />
                   </label>
                   <button onClick={() => onSelectBuild(build)} className="text-[12px] lg:text-[14px] font-black uppercase italic text-white hover:text-red-600 truncate text-left pr-1">{build.name}</button>
                 </div>
@@ -754,6 +944,7 @@ const GaragePanel = ({ isOpen, onClose, builds, user, onLogout, onSelectBuild, o
       <div className="px-6 py-4 border-t border-white/5 bg-black text-center">
         <p className="text-[7px] font-black uppercase italic text-zinc-600 tracking-widest leading-none opacity-50">Powered by Adicto.Bike | 2026</p>
       </div>
+      </>}
     </motion.div>
   );
 };
