@@ -486,10 +486,9 @@ const handleLoadBuild = (build: any) => {
 
       {/* ОСНОВНИЙ КОНТЕНТ */}
       <main className="flex-1 max-w-[1500px] mx-auto px-2 lg:px-6 pt-1 w-full overflow-hidden flex flex-col">
-        {/* pb-[70px] на мобайлі резервує місце під футер, щоб картки були в 5px від нього */}
         <div className="flex flex-col lg:grid lg:grid-cols-12 gap-1.5 lg:gap-10 h-full items-stretch pb-[75px] lg:pb-32">
           
-          {/* ЛІВА ЧАСТИНА: ВІЗУАЛІЗАТОР (Збільшено висоту до 320px) */}
+          {/* ЛІВА ЧАСТИНА: ВІЗУАЛІЗАТОР */}
           <div className="lg:col-span-9 flex flex-col gap-1 order-1 h-[320px] md:h-[400px] lg:h-full shrink-0">
             <div ref={stepsNavRef} className="flex overflow-x-auto no-scrollbar gap-x-4 pb-1 shrink-0">
               {steps.map((step, idx) => (
@@ -511,49 +510,68 @@ const handleLoadBuild = (build: any) => {
           </div>
 
           {/* ПРАВА ЧАСТИНА: КАРТКИ ТОВАРІВ */}
-{/* Контейнер карток товарів */}
-<div className="shrink-0 flex flex-col pointer-events-auto relative">
-  
-  {/* Напис Scroll тепер ближче до карток */}
-  {filteredOptions.length > 3 && (
-    <div className="absolute -top-5 left-0 right-0 flex items-center justify-center gap-1 text-zinc-500/60 pointer-events-none">
-      <span className="text-[7px] font-black uppercase italic tracking-widest">Scroll</span>
-      <ChevronsRight size={8} className="animate-slide-hint" />
-    </div>
-  )}
+          <div className="lg:col-span-3 flex flex-col order-2 shrink-0 lg:h-full">
+            <div className="shrink-0 flex flex-col pointer-events-auto relative">
+              {filteredOptions.length > 3 && (
+                <div className="absolute -top-5 left-0 right-0 flex items-center justify-center gap-1 text-zinc-500/60 pointer-events-none">
+                  <span className="text-[7px] font-black uppercase italic tracking-widest">Scroll</span>
+                  <ChevronsRight size={8} className="animate-slide-hint" />
+                </div>
+              )}
 
-  {/* Обмежуємо висоту на мобільних пристроях (max-h) */}
-  <div className="overflow-x-auto no-scrollbar custom-scroll-container px-4 pb-[90px] lg:pb-0 max-h-[140px] lg:max-h-none">
-    <div className="flex flex-row lg:flex-col gap-2 min-w-full items-end">
-      <AnimatePresence mode="popLayout">
-        {filteredOptions.map((option) => (
-          <div key={option.id} className="w-[28%] min-w-[28%] lg:w-full lg:min-w-0 shrink-0">
-            <OptionCard 
-              component={option} 
-              isSelected={selections[currentStep.id] === option.id} 
-              onClick={() => setSelections({...selections, [currentStep.id]: option.id})} 
-            />
-          </div>
-        ))}
-      </AnimatePresence>
-    </div>
-  </div>
-</div>
-
-  {/* ПІДКАЗКА СКРОЛУ */}
-          {filteredOptions.length > 3 && (
-            <div className="lg:hidden h-6 flex items-center justify-center gap-2 text-red-600 pt-2 pb-1 bg-gradient-to-t from-zinc-900/80 to-transparent shrink-0">
-              <span className="text-[8px] font-black uppercase tracking-[0.2em] italic animate-pulse">Scroll</span>
-              <ChevronsRight size={12} className="animate-slide-hint" />
+              <div className="overflow-x-auto no-scrollbar custom-scroll-container px-4 pb-[10px] lg:pb-0 max-h-[140px] lg:max-h-none">
+                <div className="flex flex-row lg:flex-col gap-2 min-w-full items-end">
+                  <AnimatePresence mode="popLayout">
+                    {filteredOptions.map((option) => (
+                      <div key={option.id} className="w-[28%] min-w-[28%] lg:w-full lg:min-w-0 shrink-0">
+                        <OptionCard 
+                          component={option} 
+                          isSelected={selections[currentStep.id] === option.id} 
+                          onClick={() => setSelections({...selections, [currentStep.id]: option.id})} 
+                        />
+                      </div>
+                    ))}
+                  </AnimatePresence>
+                </div>
+              </div>
             </div>
-          )}
-        </div> {/* закриває lg:col-span-3 (праву панель) */}
-      </div> {/* закриває внутрішній flex/grid контейнер */}
-    </main>
 
+            {/* ПІДКАЗКА СКРОЛУ (Мобільна нижня) */}
+            {filteredOptions.length > 3 && (
+              <div className="lg:hidden h-6 flex items-center justify-center gap-2 text-red-600 pt-2 pb-1 shrink-0">
+                <span className="text-[8px] font-black uppercase tracking-[0.2em] italic animate-pulse">Scroll</span>
+                <ChevronsRight size={12} className="animate-slide-hint" />
+              </div>
+            )}
+          </div>
+        </div>
+      </main>
+
+      {/* ФУТЕР */}
       <div className="fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur-2xl border-t border-white/5 z-40 shrink-0">
         <div className="max-w-[1500px] mx-auto px-4 lg:px-6 py-4 lg:py-6 grid grid-cols-12 gap-2 items-center">
-          {/* ... вміст кнопок Back/Next ... */}
+          <button onClick={() => currentStepIndex > 0 && setCurrentStepIndex(currentStepIndex - 1)} className="col-span-3 lg:col-span-2 flex items-center gap-1 text-zinc-500 hover:text-white transition-all font-black uppercase text-[10px] italic">
+            <ChevronLeft size={16} /> Back
+          </button>
+          <div className="col-span-6 lg:col-span-7 flex justify-center lg:justify-end items-center gap-4 lg:gap-10">
+            <div className="text-center lg:text-right text-zinc-300">
+              <p className="text-[7px] text-zinc-600 uppercase font-black mb-0.5 italic">Weight</p>
+              <p className="font-mono text-[10px] lg:text-xs">{selectedComponents.reduce((acc, c) => acc + c.weight, 0)}g</p>
+            </div>
+            <div className="h-8 w-px bg-white/10" />
+            <div className="text-center lg:text-right text-zinc-300">
+              <p className="text-[7px] text-zinc-600 uppercase font-black mb-0.5 italic">Price</p>
+              <p className="font-mono text-[10px] lg:text-xs text-red-600">€{selectedComponents.reduce((acc, c) => acc + c.price, 0).toLocaleString()}</p>
+            </div>
+          </div>
+          <div className="col-span-3 flex justify-end">
+            <button onClick={() => {
+                if (filteredOptions.length > 0 && !selections[currentStep.id]) { return; }
+                currentStepIndex < steps.length - 1 ? setCurrentStepIndex(currentStepIndex + 1) : setIsFinished(true);
+              }} className="bg-red-600 text-white h-[32px] px-4 lg:px-6 rounded-lg font-black uppercase text-[10px] italic flex items-center gap-2 shadow-lg shadow-red-600/20">
+              {currentStepIndex === steps.length - 1 ? 'Finish' : 'Next'} <ChevronRight size={14} />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -570,16 +588,25 @@ const handleLoadBuild = (build: any) => {
           localStorage.setItem('adicto_saved_builds', JSON.stringify(newB)); 
         }} 
       />
-    </> // Закриває Fragment, який почався після ": ("
+    </> 
     )} 
-  </div> // Закриває найперший div конфігуратора
+  </div>
   );
 }
+
+// ТІЛЬКИ ТУТ ПОЧИНАЄТЬСЯ GARAGE PANEL
 const GaragePanel = ({ isOpen, onClose, builds, user, onLogout, onSelectBuild, onDeleteBuild }: any) => {
   const [exportingId, setExportingId] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
 
   if (!isOpen) return null;
+
+  return (
+    <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} className="fixed inset-0 z-[999] bg-black/98 backdrop-blur-3xl flex flex-col font-sans text-white">
+      {/* Контент гаража */}
+    </motion.div>
+  );
+};
 
   const handleDownloadPDF = async (build: any) => {
   setExportingId(build.id);
