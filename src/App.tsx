@@ -1342,10 +1342,10 @@ function SummaryView({ selections, onReset, setSavedBuilds, user, onOpenGarage, 
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-red-600 flex flex-col">
       <nav className="border-b border-white/5 px-4 lg:px-6 py-3 flex justify-between items-center bg-black/80 backdrop-blur-2xl sticky top-0 z-50 w-full">
-        <div className="flex items-center gap-3">
-          <img src="/design/Logo.png" alt="Logo" className="h-5 lg:h-6 w-auto object-contain" />
+        <button onClick={onReset} className="flex items-center gap-3 group active:scale-95 transition-transform" title="Back to start">
+          <img src="/design/Logo.png" alt="Logo" className="h-5 lg:h-6 w-auto object-contain group-hover:opacity-70 transition-opacity" />
           <div className="text-zinc-600 font-mono text-[8px] lg:text-[9px] uppercase tracking-widest italic border-l border-white/10 pl-3 mt-0.5">Build by Vasile & AI</div>
-        </div>
+        </button>
         <div className="flex items-center gap-4">
           {user ? (
             <button onClick={onOpenGarage} className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full border border-white/5 text-[9px] font-black uppercase italic text-white tracking-widest active:scale-95">
