@@ -588,11 +588,13 @@ const handleLoadBuild = (build: any) => {
           localStorage.setItem('adicto_saved_builds', JSON.stringify(newB)); 
         }} 
       />
+      {/* 1. Закриваємо тег div, який відкрили на самому початку return */}
+      </div> 
+
     </> 
     )} 
-    </div> 
   );
-}
+} 
 
 // ТІЛЬКИ ТУТ ПОЧИНАЄТЬСЯ GARAGE PANEL
 const GaragePanel = ({ isOpen, onClose, builds, user, onLogout, onSelectBuild, onDeleteBuild }: any) => {
