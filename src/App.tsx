@@ -407,148 +407,96 @@ const CyclistFinalSVG = () => {
   );
 };
 
-// --- EMPTY VISUALIZER STATE ---
-const EmptyVisualizerState = () => {
+// --- EMPTY VISUALIZER STATE: layer-by-layer bike build animation ---
+const EmptyVisualizerState = ({ layers = [] }: { layers?: string[] }) => {
+  const [visibleCount, setVisibleCount] = useState(0);
   const [showText, setShowText] = useState(false);
-  const [textKey, setTextKey] = useState(0);
   const text = "Let's start to build your dream";
+  const LAYER_INTERVAL = 180; // ms between each layer appearing
 
-  const handleCyclistDone = () => {
-    setShowText(true);
-  };
+  useEffect(() => {
+    if (layers.length === 0) {
+      // No images yet — just show text after short delay
+      const t = setTimeout(() => setShowText(true), 600);
+      return () => clearTimeout(t);
+    }
+    setVisibleCount(0);
+    setShowText(false);
+    let i = 0;
+    const interval = setInterval(() => {
+      i++;
+      setVisibleCount(i);
+      if (i >= layers.length) {
+        clearInterval(interval);
+        setTimeout(() => setShowText(true), 300);
+      }
+    }, LAYER_INTERVAL);
+    return () => clearInterval(interval);
+  }, [layers.length]);
 
   return (
     <div className="absolute inset-0 flex flex-col items-center justify-center z-20 pointer-events-none">
-      <div className="flex flex-col items-center gap-4">
-        <CyclistAnimation onDone={handleCyclistDone} loop={false} />
-        <AnimatePresence>
-          {showText && (
-            <motion.div className="flex flex-wrap justify-center max-w-[220px] gap-x-[4px]">
-              {text.split('').map((char, i) => (
-                <motion.span
-                  key={i}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: i * 0.04, duration: 0.3 }}
-                  className="text-[11px] lg:text-[13px] font-black uppercase italic tracking-widest text-white/30"
-                  style={{ whiteSpace: char === ' ' ? 'pre' : 'normal' }}
-                >
-                  {char === ' ' ? ' ' : char}
-                </motion.span>
-              ))}
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+      {/* Layer images stacked */}
+      {layers.slice(0, visibleCount).map((url, i) => (
+        <motion.img
+          key={url + i}
+          src={url}
+          alt=""
+          initial={{ opacity: 0, scale: 0.96 }}
+          animate={{ opacity: i === visibleCount - 1 ? 0.18 : 0.08, scale: 1 }}
+          transition={{ duration: 0.25, ease: 'easeOut' }}
+          className="absolute inset-0 w-full h-full object-contain"
+          style={{ zIndex: i + 1 }}
+        />
+      ))}
+      {/* Last layer full opacity flash then fade */}
+      {layers.length > 0 && visibleCount >= layers.length && (
+        <motion.img
+          key="final"
+          src={layers[layers.length - 1]}
+          alt=""
+          initial={{ opacity: 0.7 }}
+          animate={{ opacity: 0.12 }}
+          transition={{ duration: 1.2, ease: 'easeOut' }}
+          className="absolute inset-0 w-full h-full object-contain"
+          style={{ zIndex: layers.length + 1 }}
+        />
+      )}
+      {/* Text reveal */}
+      <AnimatePresence>
+        {showText && (
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6 }}
+            className="relative z-30 text-[12px] lg:text-[15px] font-black uppercase italic tracking-widest text-white/25 whitespace-nowrap text-center px-4"
+          >
+            {text.split('').map((char, i) => (
+              <motion.span
+                key={i}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: i * 0.035, duration: 0.2 }}
+              >
+                {char}
+              </motion.span>
+            ))}
+          </motion.p>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
 
-// --- CYCLIST ANIMATION ---
-const CyclistAnimation = ({ onDone, loop = false }: { onDone?: () => void, loop?: boolean }) => {
-  const [phase, setPhase] = useState<'riding-in' | 'thumbsup' | 'riding-out' | 'done'>('riding-in');
-
-  useEffect(() => {
-    // riding-in: 1.4s, thumbsup: 1.2s, riding-out: 1s
-    const t1 = setTimeout(() => setPhase('thumbsup'), 1400);
-    const t2 = setTimeout(() => setPhase('riding-out'), 2600);
-    const t3 = setTimeout(() => {
-      if (loop) {
-        setPhase('riding-in');
-      } else {
-        setPhase('done');
-        onDone?.();
-      }
-    }, 3600);
-    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
-  }, [phase === 'riding-in' ? 'riding-in' : '']);
-
-  if (phase === 'done') return null;
-
-  const isIn = phase === 'riding-in';
-  const isThumb = phase === 'thumbsup';
-  const isOut = phase === 'riding-out';
-
-  return (
-    <motion.div
-      className="pointer-events-none select-none"
-      initial={{ x: isOut ? 0 : -120 }}
-      animate={{
-        x: isThumb ? 0 : isOut ? 160 : 0,
-      }}
-      transition={{
-        duration: isIn ? 1.2 : isThumb ? 0 : 0.9,
-        ease: isIn ? [0.22, 1, 0.36, 1] : 'easeIn',
-      }}
-    >
-      {/* SVG Cyclist — small 72px */}
-      <svg width="72" height="54" viewBox="0 0 72 54" fill="none" xmlns="http://www.w3.org/2000/svg">
-        {/* Wheels */}
-        <motion.g
-          animate={{ rotate: isThumb ? 0 : 360 }}
-          transition={{ duration: 0.5, repeat: isThumb ? 0 : Infinity, ease: 'linear' }}
-          style={{ originX: '16px', originY: '42px' }}
-        >
-          <circle cx="16" cy="42" r="9" stroke="#ef4444" strokeWidth="2" fill="none"/>
-          <line x1="16" y1="33" x2="16" y2="51" stroke="#ef4444" strokeWidth="1.2" opacity="0.5"/>
-          <line x1="7" y1="42" x2="25" y2="42" stroke="#ef4444" strokeWidth="1.2" opacity="0.5"/>
-        </motion.g>
-        <motion.g
-          animate={{ rotate: isThumb ? 0 : 360 }}
-          transition={{ duration: 0.5, repeat: isThumb ? 0 : Infinity, ease: 'linear' }}
-          style={{ originX: '54px', originY: '42px' }}
-        >
-          <circle cx="54" cy="42" r="9" stroke="#ef4444" strokeWidth="2" fill="none"/>
-          <line x1="54" y1="33" x2="54" y2="51" stroke="#ef4444" strokeWidth="1.2" opacity="0.5"/>
-          <line x1="45" y1="42" x2="63" y2="42" stroke="#ef4444" strokeWidth="1.2" opacity="0.5"/>
-        </motion.g>
-        {/* Frame */}
-        <polygon points="16,42 30,22 54,42 16,42" stroke="white" strokeWidth="1.8" fill="none" strokeLinejoin="round"/>
-        <line x1="30" y1="22" x2="40" y2="22" stroke="white" strokeWidth="2" strokeLinecap="round"/>
-        <line x1="40" y1="22" x2="54" y2="42" stroke="white" strokeWidth="1.8" strokeLinecap="round"/>
-        {/* Seat */}
-        <line x1="30" y1="22" x2="28" y2="16" stroke="white" strokeWidth="1.8" strokeLinecap="round"/>
-        <line x1="24" y1="15" x2="32" y2="15" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
-        {/* Handlebar */}
-        <line x1="40" y1="22" x2="44" y2="17" stroke="white" strokeWidth="1.8" strokeLinecap="round"/>
-        <line x1="42" y1="16" x2="47" y2="18" stroke="white" strokeWidth="2" strokeLinecap="round"/>
-        {/* Body */}
-        <line x1="28" y1="16" x2="44" y2="17" stroke="#d1d5db" strokeWidth="1.5" strokeLinecap="round"/>
-        {/* Head */}
-        <circle cx="44" cy="12" r="4" fill="#d1d5db"/>
-        {/* Helmet */}
-        <path d="M40 12 Q40 7 44 7 Q48 7 48 12" fill="#ef4444"/>
-        {/* Thumb up arm — only when phase === thumbsup */}
-        {isThumb ? (
-          <g>
-            {/* Arm raised */}
-            <line x1="42" y1="16" x2="38" y2="8" stroke="#d1d5db" strokeWidth="1.8" strokeLinecap="round"/>
-            {/* Thumb */}
-            <line x1="38" y1="8" x2="38" y2="4" stroke="#d1d5db" strokeWidth="2" strokeLinecap="round"/>
-            <line x1="36" y1="8" x2="40" y2="8" stroke="#d1d5db" strokeWidth="1.5" strokeLinecap="round"/>
-          </g>
-        ) : (
-          <g>
-            {/* Normal riding arm */}
-            <line x1="42" y1="16" x2="45" y2="18" stroke="#d1d5db" strokeWidth="1.8" strokeLinecap="round"/>
-          </g>
-        )}
-        {/* Pedaling legs */}
-        <motion.g
-          animate={{ rotate: isThumb ? 0 : 360 }}
-          transition={{ duration: 0.6, repeat: isThumb ? 0 : Infinity, ease: 'linear' }}
-          style={{ originX: '35px', originY: '36px' }}
-        >
-          <line x1="35" y1="30" x2="35" y2="42" stroke="#9ca3af" strokeWidth="1.5" strokeLinecap="round"/>
-          <line x1="35" y1="42" x2="30" y2="46" stroke="#9ca3af" strokeWidth="1.5" strokeLinecap="round"/>
-        </motion.g>
-      </svg>
-    </motion.div>
-  );
-};
-
 // --- VISUALIZER ---
-const Visualizer = ({ selectedComponents, offsets, showGrid, gridSize, isZoomed, zoomScale }: any) => {
+const Visualizer = ({ selectedComponents, offsets, showGrid, gridSize, isZoomed, zoomScale, steps }: any) => {
+  // Collect first imageUrl from each step as preview layers
+  const previewLayers: string[] = useMemo(() => {
+    if (!steps) return [];
+    return steps
+      .map((s: any) => s.options?.[0]?.imageUrl || '')
+      .filter(Boolean);
+  }, [steps]);
   return (
     <div id="bike-visualizer" className="relative w-full h-full bg-zinc-950 rounded-none lg:rounded-[2.5rem] overflow-hidden border-0 lg:border border-white/5 shadow-[0_0_100px_rgba(0,0,0,0.5)] flex items-center justify-center cursor-crosshair">
       {showGrid && (
@@ -557,7 +505,7 @@ const Visualizer = ({ selectedComponents, offsets, showGrid, gridSize, isZoomed,
       )}
       {/* EMPTY STATE: Cyclist intro animation */}
       {(!selectedComponents || selectedComponents.length === 0) && (
-        <EmptyVisualizerState />
+        <EmptyVisualizerState layers={previewLayers} />
       )}
       <motion.div drag={isZoomed} dragMomentum={false} dragConstraints={{ left: -2500, right: 2500, top: -2500, bottom: 2500 }}
         animate={{ scale: isZoomed ? (zoomScale || 5) : 1, x: isZoomed ? undefined : 0, y: isZoomed ? undefined : 0 }}
@@ -885,7 +833,7 @@ export default function BikeConfigurator() {
               ))}
             </div>
             <div className="flex-1 relative min-h-0">
-              <Visualizer selectedComponents={selectedComponents} offsets={offsets} showGrid={showGrid} gridSize={gridSize} isZoomed={isZoomed} zoomScale={zoomScale} />
+              <Visualizer selectedComponents={selectedComponents} offsets={offsets} showGrid={showGrid} gridSize={gridSize} isZoomed={isZoomed} zoomScale={zoomScale} steps={steps} />
             </div>
           </div>
 
