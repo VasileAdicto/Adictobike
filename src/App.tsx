@@ -252,22 +252,22 @@ const OptionCard = ({ component, isSelected, onClick }: { component: Component, 
     layout
     onClick={(e) => { e.preventDefault(); onClick(); }}
     className={cn(
-      "relative flex flex-col p-1 lg:p-1.5 rounded-lg border text-left transition-all group w-full shrink-0",
+      "relative flex flex-col p-1 lg:p-2 rounded-lg border text-left transition-all group w-full shrink-0",
       isSelected ? "border-red-600 bg-red-600/5 ring-1 ring-red-600/20" : "border-white/5 bg-zinc-900/50 hover:border-white/20"
     )}
   >
-    <div className="aspect-square w-full rounded-md bg-black/40 mb-0.5 overflow-hidden relative">
+    <div className="aspect-square w-full rounded-md bg-black/40 mb-1 overflow-hidden relative">
       <img src={component.cardImageUrl} alt={component.name} className="w-full h-full object-contain p-1" />
       {isSelected && <div className="absolute top-0.5 right-0.5 bg-red-600 p-0.5 rounded-full shadow-lg z-10"><CheckCircle2 size={8} className="text-white" /></div>}
     </div>
     <div className="flex-1 flex flex-col justify-between overflow-hidden">
       <div>
-        <h3 className="text-[7px] lg:text-[8px] font-bold leading-none line-clamp-1 text-zinc-300 uppercase">{component.name}</h3>
-        <p className="text-[6px] lg:text-[6px] text-zinc-500 uppercase font-black truncate">{component.brand}</p>
+        <h3 className="text-[7px] lg:text-[9px] font-bold leading-none line-clamp-1 text-zinc-300 uppercase">{component.name}</h3>
+        <p className="text-[6px] lg:text-[7px] text-zinc-500 uppercase font-black truncate">{component.brand}</p>
       </div>
       <div className="flex justify-between items-center mt-0.5">
-        <p className="font-mono text-[8px] lg:text-[9px] text-red-600 tracking-tighter">€{component.price}</p>
-        <p className="text-[7px] lg:text-[8px] text-zinc-600 font-mono italic">{component.weight}g</p>
+        <p className="font-mono text-[8px] lg:text-[10px] text-red-600 tracking-tighter">€{component.price}</p>
+        <p className="text-[7px] lg:text-[9px] text-zinc-600 font-mono italic">{component.weight}g</p>
       </div>
     </div>
   </motion.button>
@@ -427,7 +427,11 @@ export default function BikeConfigurator() {
     [currentStep, selections]
   );
 
-  // FIX #1 & #2: Removed erroneous </> fragment close. The return now correctly opens and closes a single <div>.
+  // Admin mode: show login screen if ?admin=true or /admin path
+  if (isAdminMode && !isLoggedIn) {
+    return <AdminLogin onLogin={() => setIsLoggedIn(true)} />;
+  }
+
   return (
     <div className="h-screen bg-black text-white font-sans selection:bg-red-600 overflow-hidden flex flex-col lg:overscroll-none lg:touch-none">
       {/* AUTH MODAL */}
@@ -545,7 +549,7 @@ export default function BikeConfigurator() {
                   onClick={() => setCurrentStepIndex(idx)}
                   className={cn(
                     "transition-all text-[9px] lg:text-[11px] font-black uppercase italic tracking-widest pb-1 border-b-2 whitespace-nowrap",
-                    idx === currentStepIndex ? "text-red-600 border-red-600" : "text-white opacity-20 border-transparent"
+                    idx === currentStepIndex ? "text-red-600 border-red-600" : "text-white/70 border-transparent"
                   )}
                 >
                   {step.title}
@@ -597,13 +601,13 @@ export default function BikeConfigurator() {
           </button>
           <div className="col-span-6 lg:col-span-7 flex justify-center lg:justify-end items-center gap-4 lg:gap-10">
             <div className="text-center lg:text-right text-zinc-300">
-              <p className="text-[7px] text-zinc-600 uppercase font-black mb-0.5 italic">Weight</p>
-              <p className="font-mono text-[11px] lg:text-xs">{selectedComponents.reduce((acc, c) => acc + c.weight, 0)}g</p>
+              <p className="text-[8px] lg:text-[9px] text-zinc-500 uppercase font-black mb-0.5 italic">Weight</p>
+              <p className="font-mono text-[12px] lg:text-sm font-black">{selectedComponents.reduce((acc, c) => acc + c.weight, 0)}g</p>
             </div>
             <div className="h-8 w-px bg-white/10" />
             <div className="text-center lg:text-right text-zinc-300">
-              <p className="text-[7px] text-zinc-600 uppercase font-black mb-0.5 italic">Price</p>
-              <p className="font-mono text-[11px] lg:text-xs text-red-600">€{selectedComponents.reduce((acc, c) => acc + c.price, 0).toLocaleString()}</p>
+              <p className="text-[8px] lg:text-[9px] text-zinc-500 uppercase font-black mb-0.5 italic">Price</p>
+              <p className="font-mono text-[12px] lg:text-sm font-black text-red-600">€{selectedComponents.reduce((acc, c) => acc + c.price, 0).toLocaleString()}</p>
             </div>
           </div>
           <div className="col-span-3 flex justify-end">
