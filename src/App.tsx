@@ -37,7 +37,7 @@ interface OffsetData {
 // --- SHARE MENU ---
 const ShareMenu = ({ buildName = 'My Dream Bike', message = "Look at this! Its my dream!" }: { buildName?: string, message?: string }) => {
   const [open, setOpen] = useState(false);
-  const shareText = encodeURIComponent(message + (buildName ? \` — \${buildName}\` : '') + ' | adicto.bike');
+  const shareText = encodeURIComponent(message + (buildName ? ` — ${buildName}` : '') + ' | adicto.bike');
   const url = encodeURIComponent('https://adictobike.vercel.app');
 
   const channels = [
@@ -54,26 +54,26 @@ const ShareMenu = ({ buildName = 'My Dream Bike', message = "Look at this! Its m
       label: 'WhatsApp',
       icon: '💬',
       color: 'bg-green-600',
-      action: () => window.open(\`https://wa.me/?text=\${shareText}%20\${url}\`, '_blank')
+      action: () => window.open(`https://wa.me/?text=${shareText}%20${url}`, '_blank')
     },
     {
       label: 'Telegram',
       icon: '✈️',
       color: 'bg-sky-500',
-      action: () => window.open(\`https://t.me/share/url?url=\${url}&text=\${shareText}\`, '_blank')
+      action: () => window.open(`https://t.me/share/url?url=${url}&text=${shareText}`, '_blank')
     },
     {
       label: 'Email',
       icon: '✉️',
       color: 'bg-zinc-600',
-      action: () => window.open(\`mailto:?subject=\${encodeURIComponent('Check this bike!')}&body=\${shareText}%20\${url}\`, '_blank')
+      action: () => window.open(`mailto:?subject=${encodeURIComponent('Check this bike!')}&body=${shareText}%20${url}`, '_blank')
     },
     {
       label: 'Copy Link',
       icon: '🔗',
       color: 'bg-zinc-800',
       action: () => {
-        navigator.clipboard.writeText(\`\${message} \${buildName ? '— ' + buildName + ' ' : ''}| \${decodeURIComponent(url)}\`);
+        navigator.clipboard.writeText(`${message} ${buildName ? '— ' + buildName + ' ' : ''}| ${decodeURIComponent(url)}`);
         setOpen(false);
       }
     },
@@ -100,7 +100,7 @@ const ShareMenu = ({ buildName = 'My Dream Bike', message = "Look at this! Its m
               <button
                 key={ch.label}
                 onClick={() => { ch.action(); setOpen(false); }}
-                className={\`\${ch.color} flex flex-col items-center gap-1 px-3 py-2.5 rounded-xl transition-all active:scale-95 hover:opacity-90 min-w-[52px]\`}
+                className={`${ch.color} flex flex-col items-center gap-1 px-3 py-2.5 rounded-xl transition-all active:scale-95 hover:opacity-90 min-w-[52px]`}
               >
                 <span className="text-[16px] leading-none">{ch.icon}</span>
                 <span className="text-[7px] font-black uppercase text-white tracking-widest leading-none">{ch.label}</span>
@@ -1134,14 +1134,14 @@ const CompareView = ({ builds, onBack }: { builds: any[], onBack: () => void }) 
 // --- GARAGE SHARE BUTTON ---
 const GarageShareBtn = ({ buildName }: { buildName: string }) => {
   const [open, setOpen] = useState(false);
-  const msg = encodeURIComponent(\`Look at this! Its my dream! — \${buildName} | adicto.bike\`);
+  const msg = encodeURIComponent(`Look at this! Its my dream! — ${buildName} | adicto.bike`);
   const url = encodeURIComponent('https://adictobike.vercel.app');
 
   const items = [
-    { label: 'WA', icon: '💬', action: () => window.open(\`https://wa.me/?text=\${msg}%20\${url}\`, '_blank') },
-    { label: 'TG', icon: '✈️', action: () => window.open(\`https://t.me/share/url?url=\${url}&text=\${msg}\`, '_blank') },
+    { label: 'WA', icon: '💬', action: () => window.open(`https://wa.me/?text=${msg}%20${url}`, '_blank') },
+    { label: 'TG', icon: '✈️', action: () => window.open(`https://t.me/share/url?url=${url}&text=${msg}`, '_blank') },
     { label: 'IG', icon: '📸', action: () => { navigator.clipboard.writeText(decodeURIComponent(msg)); window.open('https://www.instagram.com/', '_blank'); } },
-    { label: 'Mail', icon: '✉️', action: () => window.open(\`mailto:?subject=\${encodeURIComponent('Check this bike!')}&body=\${msg}%20\${url}\`, '_blank') },
+    { label: 'Mail', icon: '✉️', action: () => window.open(`mailto:?subject=${encodeURIComponent('Check this bike!')}&body=${msg}%20${url}`, '_blank') },
   ];
   return (
     <div className="relative">
