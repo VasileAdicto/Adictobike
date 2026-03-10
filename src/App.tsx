@@ -194,9 +194,31 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
             <input type="file" className="hidden" {...{ webkitdirectory: "" } as any} onChange={(e: any) => handleUpload(e, true)} />
           </label>
         </div>
-        <div className="flex items-center gap-2 bg-black/40 p-1 rounded-lg border border-white/5">
-          <button onClick={() => setShowGrid(!showGrid)} className={cn("px-2 py-1 rounded text-[9px] font-bold uppercase transition-all", showGrid ? "bg-red-600 text-white" : "bg-zinc-800 text-zinc-400")}><Grid3X3 size={10}/></button>
-          <button onClick={() => setIsZoomed(!isZoomed)} className={cn("px-2 py-1 rounded text-[9px] font-bold uppercase transition-all flex items-center gap-2", isZoomed ? "bg-red-600 text-white" : "bg-zinc-800 text-zinc-400")}><Search size={10}/> {isZoomed ? `${zoomScale}X` : 'Magnify'}</button>
+        {/* Grid button + inline slider */}
+        <div className="flex items-center gap-1.5 bg-black/40 px-1.5 py-1 rounded-lg border border-white/5">
+          <button onClick={() => setShowGrid(!showGrid)} className={cn("px-2 py-1 rounded text-[9px] font-bold uppercase transition-all flex items-center gap-1", showGrid ? "bg-red-600 text-white" : "bg-zinc-800 text-zinc-400")}>
+            <Grid3X3 size={10}/> Grid
+          </button>
+          {showGrid && (
+            <div className="flex items-center gap-2 pl-1 border-l border-white/10">
+              <span className="text-[8px] font-mono text-red-400 w-6 text-right">{gridSize}</span>
+              <input type="range" min="5" max="20" step="1" value={gridSize} onChange={(e) => setGridSize(parseInt(e.target.value))} className="w-20 h-1 bg-zinc-700 appearance-none accent-red-600 cursor-pointer" />
+              <span className="text-[7px] text-zinc-500 font-bold">px</span>
+            </div>
+          )}
+        </div>
+        {/* Zoom button + inline slider */}
+        <div className="flex items-center gap-1.5 bg-black/40 px-1.5 py-1 rounded-lg border border-white/5">
+          <button onClick={() => setIsZoomed(!isZoomed)} className={cn("px-2 py-1 rounded text-[9px] font-bold uppercase transition-all flex items-center gap-1", isZoomed ? "bg-red-600 text-white" : "bg-zinc-800 text-zinc-400")}>
+            <Search size={10}/> {isZoomed ? `${zoomScale.toFixed(1)}X` : 'Zoom'}
+          </button>
+          {isZoomed && (
+            <div className="flex items-center gap-2 pl-1 border-l border-white/10">
+              <span className="text-[8px] font-mono text-red-400 w-8 text-right">{zoomScale.toFixed(1)}x</span>
+              <input type="range" min="0" max="10" step="0.1" value={zoomScale} onChange={(e) => setZoomScale(parseFloat(e.target.value))} className="w-20 h-1 bg-zinc-700 appearance-none accent-red-600 cursor-pointer" />
+              <span className="text-[7px] text-zinc-500 font-bold">10x</span>
+            </div>
+          )}
         </div>
         <button onClick={onLogout} className="text-zinc-500 hover:text-red-600 transition-colors p-1" title="Logout"><LogOut size={12} /></button>
         {status && <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-[8px] font-mono uppercase text-red-600 ml-1">{status}</motion.span>}
@@ -252,22 +274,22 @@ const OptionCard = ({ component, isSelected, onClick }: { component: Component, 
     layout
     onClick={(e) => { e.preventDefault(); onClick(); }}
     className={cn(
-      "relative flex flex-col p-1 lg:p-2 rounded-lg border text-left transition-all group w-full shrink-0",
+      "relative flex flex-col p-1 lg:p-3 rounded-xl border text-left transition-all group w-full shrink-0",
       isSelected ? "border-red-600 bg-red-600/5 ring-1 ring-red-600/20" : "border-white/5 bg-zinc-900/50 hover:border-white/20"
     )}
   >
-    <div className="aspect-square w-full rounded-md bg-black/40 mb-1 overflow-hidden relative">
+    <div className="aspect-square w-full rounded-md bg-black/40 mb-1 lg:mb-2 overflow-hidden relative">
       <img src={component.cardImageUrl} alt={component.name} className="w-full h-full object-contain p-1" />
       {isSelected && <div className="absolute top-0.5 right-0.5 bg-red-600 p-0.5 rounded-full shadow-lg z-10"><CheckCircle2 size={8} className="text-white" /></div>}
     </div>
     <div className="flex-1 flex flex-col justify-between overflow-hidden">
       <div>
-        <h3 className="text-[7px] lg:text-[9px] font-bold leading-none line-clamp-1 text-zinc-300 uppercase">{component.name}</h3>
-        <p className="text-[6px] lg:text-[7px] text-zinc-500 uppercase font-black truncate">{component.brand}</p>
+        <h3 className="text-[7px] lg:text-[11px] font-bold leading-none line-clamp-1 text-zinc-300 uppercase">{component.name}</h3>
+        <p className="text-[6px] lg:text-[8px] text-zinc-500 uppercase font-black truncate">{component.brand}</p>
       </div>
       <div className="flex justify-between items-center mt-0.5">
-        <p className="font-mono text-[8px] lg:text-[10px] text-red-600 tracking-tighter">€{component.price}</p>
-        <p className="text-[7px] lg:text-[9px] text-zinc-600 font-mono italic">{component.weight}g</p>
+        <p className="font-mono text-[8px] lg:text-[12px] text-red-600 tracking-tighter">€{component.price}</p>
+        <p className="text-[7px] lg:text-[11px] text-zinc-600 font-mono italic">{component.weight}g</p>
       </div>
     </div>
   </motion.button>
@@ -541,7 +563,7 @@ export default function BikeConfigurator() {
         <div className="flex flex-col lg:grid lg:grid-cols-12 gap-0 lg:gap-6 h-full items-stretch pb-[75px] lg:pb-24">
 
           {/* LEFT: VISUALIZER — on mobile fixed height with more bottom margin */}
-          <div className="lg:col-span-10 flex flex-col gap-1 order-1 h-[350px] md:h-[350px] lg:h-full shrink-0 mb-3 lg:mb-0">
+          <div className="lg:col-span-9 flex flex-col gap-1 order-1 h-[350px] md:h-[350px] lg:h-full shrink-0 mb-3 lg:mb-0">
             <div ref={stepsNavRef} className="flex overflow-x-auto no-scrollbar gap-x-3 pb-3 lg:pb-1 mt-2 lg:mt-0 shrink-0 px-2 lg:px-0">
               {steps.map((step, idx) => (
                 <button
@@ -562,7 +584,7 @@ export default function BikeConfigurator() {
           </div>
 
           {/* RIGHT: OPTION CARDS — on mobile fixed height, horizontal scroll only */}
-          <div className="lg:col-span-2 flex flex-col order-2 shrink-0 lg:h-full min-h-0">
+          <div className="lg:col-span-3 flex flex-col order-2 shrink-0 lg:h-full min-h-0">
             <div className="flex flex-col pointer-events-auto relative h-full">
               {/* Mobile: fixed-height container, cards scroll horizontally, no vertical movement */}
               {/* Mobile: horizontal scroll; Desktop: vertical scroll with red scrollbar */}
