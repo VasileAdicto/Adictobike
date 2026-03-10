@@ -220,7 +220,7 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
 // --- VISUALIZER ---
 const Visualizer = ({ selectedComponents, offsets, showGrid, gridSize, isZoomed, zoomScale }: any) => {
   return (
-    <div id="bike-visualizer" className="relative w-full h-full bg-zinc-950 rounded-[1.5rem] lg:rounded-[2.5rem] overflow-hidden border border-white/5 shadow-[0_0_100px_rgba(0,0,0,0.5)] flex items-center justify-center cursor-crosshair">
+    <div id="bike-visualizer" className="relative w-full h-full bg-zinc-950 rounded-none lg:rounded-[2.5rem] overflow-hidden border-0 lg:border border-white/5 shadow-[0_0_100px_rgba(0,0,0,0.5)] flex items-center justify-center cursor-crosshair">
       {showGrid && (
         <div className="absolute inset-0 z-[60] pointer-events-none opacity-[0.2]"
           style={{ backgroundImage: `linear-gradient(to right, rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.5) 1px, transparent 1px)`, backgroundSize: `${gridSize}px ${gridSize}px` }} />
@@ -423,7 +423,7 @@ export default function BikeConfigurator() {
 
   // FIX #1 & #2: Removed erroneous </> fragment close. The return now correctly opens and closes a single <div>.
   return (
-    <div className="h-screen bg-black text-white font-sans selection:bg-red-600 overflow-hidden flex flex-col overscroll-none touch-none">
+    <div className="h-screen bg-black text-white font-sans selection:bg-red-600 overflow-hidden flex flex-col lg:overscroll-none lg:touch-none">
       {/* AUTH MODAL */}
       <AuthModal
         isOpen={isAuthModalOpen}
@@ -483,8 +483,14 @@ export default function BikeConfigurator() {
           .desktop-cards-scroll::-webkit-scrollbar-thumb { background: #ef4444 !important; border-radius: 10px; }
           .desktop-cards-scroll::-webkit-scrollbar-thumb:hover { background: #dc2626 !important; }
         }
-        /* Prevent pull-to-refresh / overscroll on mobile */
-        html, body { overscroll-behavior: none; overflow: hidden; height: 100%; }
+        /* Allow pull-to-refresh on mobile only */
+        @media (max-width: 1024px) {
+          html { overscroll-behavior-y: auto; }
+          body { overflow: hidden; height: 100%; }
+        }
+        @media (min-width: 1025px) {
+          html, body { overscroll-behavior: none; overflow: hidden; height: 100%; }
+        }
         @keyframes slideHint { 0%, 100% { transform: translateX(0); opacity: 0.3; } 50% { transform: translateX(10px); opacity: 1; } }
         .animate-slide-hint { animation: slideHint 1.5s infinite; }
       `}</style>
@@ -532,12 +538,12 @@ export default function BikeConfigurator() {
       )}
 
       {/* MAIN CONTENT */}
-      <main className="flex-1 max-w-[1500px] mx-auto px-2 lg:px-6 pt-3 lg:pt-1 w-full overflow-hidden flex flex-col">
-        <div className="flex flex-col lg:grid lg:grid-cols-12 gap-0 lg:gap-6 h-full items-start pb-[75px] lg:pb-28">
+      <main className="flex-1 max-w-[1500px] mx-auto px-0 lg:px-6 pt-3 lg:pt-1 w-full overflow-hidden flex flex-col">
+        <div className="flex flex-col lg:grid lg:grid-cols-12 gap-0 lg:gap-6 h-full items-stretch pb-[75px] lg:pb-24">
 
           {/* LEFT: VISUALIZER — on mobile fixed height with more bottom margin */}
-          <div className="lg:col-span-9 flex flex-col gap-1 order-1 h-[350px] md:h-[230px] lg:h-[58vh] shrink-0 mb-3 lg:mb-0">
-            <div ref={stepsNavRef} className="flex overflow-x-auto no-scrollbar gap-x-4 pb-3 lg:pb-1 mt-2 lg:mt-0 shrink-0">
+          <div className="lg:col-span-9 flex flex-col gap-1 order-1 h-[350px] md:h-[350px] lg:h-full shrink-0 mb-3 lg:mb-0">
+            <div ref={stepsNavRef} className="flex overflow-x-auto no-scrollbar gap-x-3 pb-3 lg:pb-1 mt-2 lg:mt-0 shrink-0 px-2 lg:px-0">
               {steps.map((step, idx) => (
                 <button
                   key={step.id}
@@ -557,10 +563,10 @@ export default function BikeConfigurator() {
           </div>
 
           {/* RIGHT: OPTION CARDS — on mobile fixed height, horizontal scroll only */}
-          <div className="lg:col-span-3 flex flex-col order-2 shrink-0 lg:h-full">
+          <div className="lg:col-span-3 flex flex-col order-2 shrink-0 lg:h-full min-h-0">
             <div className="shrink-0 flex flex-col pointer-events-auto relative">
               {/* Mobile: fixed-height container, cards scroll horizontally, no vertical movement */}
-              <div className="overflow-x-auto overflow-y-hidden mobile-cards-scroll custom-scroll-container px-2 lg:px-0 lg:pr-2 pb-[6px] lg:pb-2 h-[160px] lg:h-[52vh] lg:overflow-x-hidden lg:overflow-y-scroll desktop-cards-scroll">
+              <div className="overflow-x-auto overflow-y-hidden mobile-cards-scroll custom-scroll-container px-2 lg:px-0 lg:pr-2 pb-[6px] lg:pb-2 h-[160px] lg:h-full lg:overflow-x-hidden lg:overflow-y-scroll desktop-cards-scroll">
                 <div className="flex flex-row lg:flex-col gap-2 h-full lg:h-auto items-stretch">
                   <AnimatePresence mode="popLayout">
                     {filteredOptions.map((option) => (
