@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, ChevronsRight, Download, CheckCircle2, Upload, Lock, User, Save, RotateCcw, Grid3X3, Search, Move, FolderOpen, Key, Eye, EyeOff, LogOut, LogIn } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronsRight, Download, CheckCircle2, Upload, Lock, User, Save, RotateCcw, Grid3X3, Search, Move, FolderOpen, Key, Eye, EyeOff, LogOut, LogIn, Share2, Send } from 'lucide-react';
 import { cn } from './lib/utils';
 
 import jsPDF from 'jspdf';
@@ -32,6 +32,87 @@ interface OffsetData {
   x: number;
   y: number;
 }
+
+
+// --- SHARE MENU ---
+const ShareMenu = ({ buildName = 'My Dream Bike', message = "Look at this! Its my dream!" }: { buildName?: string, message?: string }) => {
+  const [open, setOpen] = useState(false);
+  const shareText = encodeURIComponent(message + (buildName ? \` — \${buildName}\` : '') + ' | adicto.bike');
+  const url = encodeURIComponent('https://adictobike.vercel.app');
+
+  const channels = [
+    {
+      label: 'Instagram',
+      icon: '📸',
+      color: 'bg-gradient-to-br from-purple-600 to-pink-500',
+      action: () => {
+        navigator.clipboard.writeText(decodeURIComponent(shareText));
+        window.open('https://www.instagram.com/', '_blank');
+      }
+    },
+    {
+      label: 'WhatsApp',
+      icon: '💬',
+      color: 'bg-green-600',
+      action: () => window.open(\`https://wa.me/?text=\${shareText}%20\${url}\`, '_blank')
+    },
+    {
+      label: 'Telegram',
+      icon: '✈️',
+      color: 'bg-sky-500',
+      action: () => window.open(\`https://t.me/share/url?url=\${url}&text=\${shareText}\`, '_blank')
+    },
+    {
+      label: 'Email',
+      icon: '✉️',
+      color: 'bg-zinc-600',
+      action: () => window.open(\`mailto:?subject=\${encodeURIComponent('Check this bike!')}&body=\${shareText}%20\${url}\`, '_blank')
+    },
+    {
+      label: 'Copy Link',
+      icon: '🔗',
+      color: 'bg-zinc-800',
+      action: () => {
+        navigator.clipboard.writeText(\`\${message} \${buildName ? '— ' + buildName + ' ' : ''}| \${decodeURIComponent(url)}\`);
+        setOpen(false);
+      }
+    },
+  ];
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="h-14 border border-white/10 text-white rounded-2xl font-black uppercase text-[10px] italic hover:bg-white/5 transition-all active:scale-95 w-full flex items-center justify-center gap-2"
+      >
+        <Share2 size={14} className="text-zinc-400" /> Share
+      </button>
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: 8, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 8, scale: 0.95 }}
+            transition={{ duration: 0.15 }}
+            className="absolute bottom-16 left-1/2 -translate-x-1/2 bg-zinc-900 border border-white/10 rounded-2xl p-3 flex gap-2 shadow-2xl z-50 w-max"
+          >
+            {channels.map((ch) => (
+              <button
+                key={ch.label}
+                onClick={() => { ch.action(); setOpen(false); }}
+                className={\`\${ch.color} flex flex-col items-center gap-1 px-3 py-2.5 rounded-xl transition-all active:scale-95 hover:opacity-90 min-w-[52px]\`}
+              >
+                <span className="text-[16px] leading-none">{ch.icon}</span>
+                <span className="text-[7px] font-black uppercase text-white tracking-widest leading-none">{ch.label}</span>
+              </button>
+            ))}
+            <button onClick={() => setOpen(false)} className="absolute -top-2 -right-2 w-5 h-5 bg-zinc-700 rounded-full text-white text-[9px] flex items-center justify-center font-black hover:bg-red-600 transition-colors">✕</button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
 
 // --- ADMIN LOGIN ---
 const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
@@ -245,6 +326,227 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
   );
 };
 
+
+
+
+// --- FINAL CYCLIST INTRO ---
+const FinalCyclistIntro = () => {
+  return (
+    <motion.div
+      initial={{ opacity: 1 }}
+      animate={{ opacity: 1 }}
+      className="flex flex-col items-center gap-3 mb-4"
+    >
+      {/* Wide track */}
+      <div className="relative w-[280px] h-[70px] flex items-center overflow-hidden">
+        {/* Ground line */}
+        <div className="absolute bottom-2 left-0 right-0 h-px bg-white/10" />
+        {/* Cyclist enters from left, stops center, thumbs up, exits right */}
+        <motion.div
+          initial={{ x: -90 }}
+          animate={{ x: ['-90px', '100px', '100px', '360px'] }}
+          transition={{
+            duration: 3.6,
+            times: [0, 0.38, 0.72, 1],
+            ease: ['easeOut', 'linear', 'easeIn', 'easeIn'],
+          }}
+          className="absolute"
+          style={{ bottom: 12 }}
+        >
+          <CyclistFinalSVG />
+        </motion.div>
+      </div>
+    </motion.div>
+  );
+};
+
+const CyclistFinalSVG = () => {
+  const [phase, setPhase] = useState<'riding' | 'thumbsup' | 'riding2'>('riding');
+  useEffect(() => {
+    const t1 = setTimeout(() => setPhase('thumbsup'), 1380);
+    const t2 = setTimeout(() => setPhase('riding2'), 2600);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, []);
+  const spinning = phase !== 'thumbsup';
+  return (
+    <svg width="72" height="54" viewBox="0 0 72 54" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <motion.g animate={{ rotate: spinning ? 360 : 0 }} transition={{ duration: 0.5, repeat: spinning ? Infinity : 0, ease: 'linear' }} style={{ originX: '16px', originY: '42px' }}>
+        <circle cx="16" cy="42" r="9" stroke="#ef4444" strokeWidth="2" fill="none"/>
+        <line x1="16" y1="33" x2="16" y2="51" stroke="#ef4444" strokeWidth="1.2" opacity="0.5"/>
+        <line x1="7" y1="42" x2="25" y2="42" stroke="#ef4444" strokeWidth="1.2" opacity="0.5"/>
+      </motion.g>
+      <motion.g animate={{ rotate: spinning ? 360 : 0 }} transition={{ duration: 0.5, repeat: spinning ? Infinity : 0, ease: 'linear' }} style={{ originX: '54px', originY: '42px' }}>
+        <circle cx="54" cy="42" r="9" stroke="#ef4444" strokeWidth="2" fill="none"/>
+        <line x1="54" y1="33" x2="54" y2="51" stroke="#ef4444" strokeWidth="1.2" opacity="0.5"/>
+        <line x1="45" y1="42" x2="63" y2="42" stroke="#ef4444" strokeWidth="1.2" opacity="0.5"/>
+      </motion.g>
+      <polygon points="16,42 30,22 54,42 16,42" stroke="white" strokeWidth="1.8" fill="none" strokeLinejoin="round"/>
+      <line x1="30" y1="22" x2="40" y2="22" stroke="white" strokeWidth="2"/>
+      <line x1="40" y1="22" x2="54" y2="42" stroke="white" strokeWidth="1.8"/>
+      <line x1="30" y1="22" x2="28" y2="16" stroke="white" strokeWidth="1.8" strokeLinecap="round"/>
+      <line x1="24" y1="15" x2="32" y2="15" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
+      <line x1="40" y1="22" x2="44" y2="17" stroke="white" strokeWidth="1.8" strokeLinecap="round"/>
+      <line x1="42" y1="16" x2="47" y2="18" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+      <line x1="28" y1="16" x2="44" y2="17" stroke="#d1d5db" strokeWidth="1.5" strokeLinecap="round"/>
+      <circle cx="44" cy="12" r="4" fill="#d1d5db"/>
+      <path d="M40 12 Q40 7 44 7 Q48 7 48 12" fill="#ef4444"/>
+      {phase === 'thumbsup' ? (
+        <g>
+          <line x1="42" y1="16" x2="37" y2="7" stroke="#d1d5db" strokeWidth="1.8" strokeLinecap="round"/>
+          <line x1="37" y1="7" x2="37" y2="3" stroke="#d1d5db" strokeWidth="2.2" strokeLinecap="round"/>
+          <line x1="35" y1="7" x2="39" y2="7" stroke="#d1d5db" strokeWidth="1.5" strokeLinecap="round"/>
+        </g>
+      ) : (
+        <line x1="42" y1="16" x2="45" y2="18" stroke="#d1d5db" strokeWidth="1.8" strokeLinecap="round"/>
+      )}
+      <motion.g animate={{ rotate: spinning ? 360 : 0 }} transition={{ duration: 0.6, repeat: spinning ? Infinity : 0, ease: 'linear' }} style={{ originX: '35px', originY: '36px' }}>
+        <line x1="35" y1="30" x2="35" y2="42" stroke="#9ca3af" strokeWidth="1.5" strokeLinecap="round"/>
+        <line x1="35" y1="42" x2="30" y2="46" stroke="#9ca3af" strokeWidth="1.5" strokeLinecap="round"/>
+      </motion.g>
+    </svg>
+  );
+};
+
+// --- EMPTY VISUALIZER STATE ---
+const EmptyVisualizerState = () => {
+  const [showText, setShowText] = useState(false);
+  const [textKey, setTextKey] = useState(0);
+  const text = "Let's start to build your dream";
+
+  const handleCyclistDone = () => {
+    setShowText(true);
+  };
+
+  return (
+    <div className="absolute inset-0 flex flex-col items-center justify-center z-20 pointer-events-none">
+      <div className="flex flex-col items-center gap-4">
+        <CyclistAnimation onDone={handleCyclistDone} loop={false} />
+        <AnimatePresence>
+          {showText && (
+            <motion.div className="flex flex-wrap justify-center max-w-[220px] gap-x-[4px]">
+              {text.split('').map((char, i) => (
+                <motion.span
+                  key={i}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: i * 0.04, duration: 0.3 }}
+                  className="text-[11px] lg:text-[13px] font-black uppercase italic tracking-widest text-white/30"
+                  style={{ whiteSpace: char === ' ' ? 'pre' : 'normal' }}
+                >
+                  {char === ' ' ? ' ' : char}
+                </motion.span>
+              ))}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </div>
+  );
+};
+
+// --- CYCLIST ANIMATION ---
+const CyclistAnimation = ({ onDone, loop = false }: { onDone?: () => void, loop?: boolean }) => {
+  const [phase, setPhase] = useState<'riding-in' | 'thumbsup' | 'riding-out' | 'done'>('riding-in');
+
+  useEffect(() => {
+    // riding-in: 1.4s, thumbsup: 1.2s, riding-out: 1s
+    const t1 = setTimeout(() => setPhase('thumbsup'), 1400);
+    const t2 = setTimeout(() => setPhase('riding-out'), 2600);
+    const t3 = setTimeout(() => {
+      if (loop) {
+        setPhase('riding-in');
+      } else {
+        setPhase('done');
+        onDone?.();
+      }
+    }, 3600);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+  }, [phase === 'riding-in' ? 'riding-in' : '']);
+
+  if (phase === 'done') return null;
+
+  const isIn = phase === 'riding-in';
+  const isThumb = phase === 'thumbsup';
+  const isOut = phase === 'riding-out';
+
+  return (
+    <motion.div
+      className="pointer-events-none select-none"
+      initial={{ x: isOut ? 0 : -120 }}
+      animate={{
+        x: isThumb ? 0 : isOut ? 160 : 0,
+      }}
+      transition={{
+        duration: isIn ? 1.2 : isThumb ? 0 : 0.9,
+        ease: isIn ? [0.22, 1, 0.36, 1] : 'easeIn',
+      }}
+    >
+      {/* SVG Cyclist — small 72px */}
+      <svg width="72" height="54" viewBox="0 0 72 54" fill="none" xmlns="http://www.w3.org/2000/svg">
+        {/* Wheels */}
+        <motion.g
+          animate={{ rotate: isThumb ? 0 : 360 }}
+          transition={{ duration: 0.5, repeat: isThumb ? 0 : Infinity, ease: 'linear' }}
+          style={{ originX: '16px', originY: '42px' }}
+        >
+          <circle cx="16" cy="42" r="9" stroke="#ef4444" strokeWidth="2" fill="none"/>
+          <line x1="16" y1="33" x2="16" y2="51" stroke="#ef4444" strokeWidth="1.2" opacity="0.5"/>
+          <line x1="7" y1="42" x2="25" y2="42" stroke="#ef4444" strokeWidth="1.2" opacity="0.5"/>
+        </motion.g>
+        <motion.g
+          animate={{ rotate: isThumb ? 0 : 360 }}
+          transition={{ duration: 0.5, repeat: isThumb ? 0 : Infinity, ease: 'linear' }}
+          style={{ originX: '54px', originY: '42px' }}
+        >
+          <circle cx="54" cy="42" r="9" stroke="#ef4444" strokeWidth="2" fill="none"/>
+          <line x1="54" y1="33" x2="54" y2="51" stroke="#ef4444" strokeWidth="1.2" opacity="0.5"/>
+          <line x1="45" y1="42" x2="63" y2="42" stroke="#ef4444" strokeWidth="1.2" opacity="0.5"/>
+        </motion.g>
+        {/* Frame */}
+        <polygon points="16,42 30,22 54,42 16,42" stroke="white" strokeWidth="1.8" fill="none" strokeLinejoin="round"/>
+        <line x1="30" y1="22" x2="40" y2="22" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+        <line x1="40" y1="22" x2="54" y2="42" stroke="white" strokeWidth="1.8" strokeLinecap="round"/>
+        {/* Seat */}
+        <line x1="30" y1="22" x2="28" y2="16" stroke="white" strokeWidth="1.8" strokeLinecap="round"/>
+        <line x1="24" y1="15" x2="32" y2="15" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
+        {/* Handlebar */}
+        <line x1="40" y1="22" x2="44" y2="17" stroke="white" strokeWidth="1.8" strokeLinecap="round"/>
+        <line x1="42" y1="16" x2="47" y2="18" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+        {/* Body */}
+        <line x1="28" y1="16" x2="44" y2="17" stroke="#d1d5db" strokeWidth="1.5" strokeLinecap="round"/>
+        {/* Head */}
+        <circle cx="44" cy="12" r="4" fill="#d1d5db"/>
+        {/* Helmet */}
+        <path d="M40 12 Q40 7 44 7 Q48 7 48 12" fill="#ef4444"/>
+        {/* Thumb up arm — only when phase === thumbsup */}
+        {isThumb ? (
+          <g>
+            {/* Arm raised */}
+            <line x1="42" y1="16" x2="38" y2="8" stroke="#d1d5db" strokeWidth="1.8" strokeLinecap="round"/>
+            {/* Thumb */}
+            <line x1="38" y1="8" x2="38" y2="4" stroke="#d1d5db" strokeWidth="2" strokeLinecap="round"/>
+            <line x1="36" y1="8" x2="40" y2="8" stroke="#d1d5db" strokeWidth="1.5" strokeLinecap="round"/>
+          </g>
+        ) : (
+          <g>
+            {/* Normal riding arm */}
+            <line x1="42" y1="16" x2="45" y2="18" stroke="#d1d5db" strokeWidth="1.8" strokeLinecap="round"/>
+          </g>
+        )}
+        {/* Pedaling legs */}
+        <motion.g
+          animate={{ rotate: isThumb ? 0 : 360 }}
+          transition={{ duration: 0.6, repeat: isThumb ? 0 : Infinity, ease: 'linear' }}
+          style={{ originX: '35px', originY: '36px' }}
+        >
+          <line x1="35" y1="30" x2="35" y2="42" stroke="#9ca3af" strokeWidth="1.5" strokeLinecap="round"/>
+          <line x1="35" y1="42" x2="30" y2="46" stroke="#9ca3af" strokeWidth="1.5" strokeLinecap="round"/>
+        </motion.g>
+      </svg>
+    </motion.div>
+  );
+};
+
 // --- VISUALIZER ---
 const Visualizer = ({ selectedComponents, offsets, showGrid, gridSize, isZoomed, zoomScale }: any) => {
   return (
@@ -252,6 +554,10 @@ const Visualizer = ({ selectedComponents, offsets, showGrid, gridSize, isZoomed,
       {showGrid && (
         <div className="absolute inset-0 z-[60] pointer-events-none opacity-[0.2]"
           style={{ backgroundImage: `linear-gradient(to right, rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.5) 1px, transparent 1px)`, backgroundSize: `${gridSize}px ${gridSize}px` }} />
+      )}
+      {/* EMPTY STATE: Cyclist intro animation */}
+      {(!selectedComponents || selectedComponents.length === 0) && (
+        <EmptyVisualizerState />
       )}
       <motion.div drag={isZoomed} dragMomentum={false} dragConstraints={{ left: -2500, right: 2500, top: -2500, bottom: 2500 }}
         animate={{ scale: isZoomed ? (zoomScale || 5) : 1, x: isZoomed ? undefined : 0, y: isZoomed ? undefined : 0 }}
@@ -534,12 +840,12 @@ export default function BikeConfigurator() {
         />
       ) : (
         <nav className="border-b border-white/5 px-4 lg:px-6 py-3 flex justify-between items-center bg-black/80 backdrop-blur-2xl sticky top-0 z-50">
-          <div className="flex items-center gap-3">
-            <img src="/design/Logo.png" alt="Logo" className="h-5 lg:h-6 w-auto object-contain" />
+          <button onClick={() => window.location.reload()} className="flex items-center gap-3 group active:scale-95 transition-transform" title="Back to start">
+            <img src="/design/Logo.png" alt="Logo" className="h-5 lg:h-6 w-auto object-contain group-hover:opacity-70 transition-opacity" />
             <div className="text-zinc-600 font-mono text-[8px] lg:text-[9px] uppercase tracking-widest italic border-l border-white/10 pl-3 mt-0.5">
               Build by Vasile & AI
             </div>
-          </div>
+          </button>
           <div className="flex items-center gap-4">
             {user ? (
               <button
@@ -824,6 +1130,47 @@ const CompareView = ({ builds, onBack }: { builds: any[], onBack: () => void }) 
   );
 };
 
+
+// --- GARAGE SHARE BUTTON ---
+const GarageShareBtn = ({ buildName }: { buildName: string }) => {
+  const [open, setOpen] = useState(false);
+  const msg = encodeURIComponent(\`Look at this! Its my dream! — \${buildName} | adicto.bike\`);
+  const url = encodeURIComponent('https://adictobike.vercel.app');
+
+  const items = [
+    { label: 'WA', icon: '💬', action: () => window.open(\`https://wa.me/?text=\${msg}%20\${url}\`, '_blank') },
+    { label: 'TG', icon: '✈️', action: () => window.open(\`https://t.me/share/url?url=\${url}&text=\${msg}\`, '_blank') },
+    { label: 'IG', icon: '📸', action: () => { navigator.clipboard.writeText(decodeURIComponent(msg)); window.open('https://www.instagram.com/', '_blank'); } },
+    { label: 'Mail', icon: '✉️', action: () => window.open(\`mailto:?subject=\${encodeURIComponent('Check this bike!')}&body=\${msg}%20\${url}\`, '_blank') },
+  ];
+  return (
+    <div className="relative">
+      <button onClick={() => setOpen(o => !o)} className="bg-white/5 text-white px-3 py-1.5 rounded-lg text-[8px] font-black uppercase italic flex items-center gap-1 hover:bg-white/10 transition-all active:scale-95">
+        <Share2 size={10} className="text-zinc-400" /> Share
+      </button>
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9, y: 6 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: 6 }}
+            className="absolute bottom-9 right-0 bg-zinc-900 border border-white/10 rounded-xl p-2 flex gap-1.5 shadow-2xl z-[9999]"
+          >
+            {items.map(it => (
+              <button key={it.label} onClick={() => { it.action(); setOpen(false); }}
+                className="flex flex-col items-center gap-0.5 bg-white/5 px-2 py-1.5 rounded-lg hover:bg-white/10 transition-all active:scale-90 min-w-[36px]">
+                <span className="text-[13px]">{it.icon}</span>
+                <span className="text-[6px] font-black uppercase text-zinc-400">{it.label}</span>
+              </button>
+            ))}
+            <button onClick={() => setOpen(false)} className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-zinc-700 rounded-full text-white text-[8px] flex items-center justify-center font-black hover:bg-red-600">✕</button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
 // --- GARAGE PANEL ---
 // FIX #2 & #3: Merged into a single component definition with handleDownloadPDF inside
 const GaragePanel = ({ isOpen, onClose, builds, user, onLogout, onSelectBuild, onDeleteBuild }: any) => {
@@ -939,6 +1286,7 @@ const GaragePanel = ({ isOpen, onClose, builds, user, onLogout, onSelectBuild, o
                         {exportingId === build.id ? `${progress}%` : 'PDF'}
                       </span>
                     </button>
+                    <GarageShareBtn buildName={build.name} />
                     <button onClick={() => onDeleteBuild(build.id)} className="bg-red-600/10 text-red-600 px-3 py-1.5 rounded-lg text-[8px] font-black uppercase italic">Delete</button>
                   </div>
                 </div>
@@ -1045,16 +1393,33 @@ function SummaryView({ selections, onReset, setSavedBuilds, user, onOpenGarage, 
       </nav>
 
       <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
-        <h2 className="text-[20px] lg:text-[22px] font-black italic uppercase tracking-tighter mb-6 leading-[1.1]">
-          Your bike is <br /> <span className="text-red-600 uppercase">Ready</span>
-        </h2>
+        <FinalCyclistIntro />
 
-        <div className="flex justify-center gap-10 my-8 bg-zinc-900/40 p-6 rounded-[2rem] border border-white/5 shadow-2xl backdrop-blur-md">
+        <motion.h2
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 3.8, duration: 0.6 }}
+          className="text-[20px] lg:text-[22px] font-black italic uppercase tracking-tighter mb-6 leading-[1.1]"
+        >
+          Your bike is <br /> <span className="text-red-600 uppercase">Ready</span>
+        </motion.h2>
+
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 4.1, duration: 0.6 }}
+          className="flex justify-center gap-10 my-8 bg-zinc-900/40 p-6 rounded-[2rem] border border-white/5 shadow-2xl backdrop-blur-md"
+        >
           <div><p className="text-zinc-600 text-[7px] uppercase font-black mb-1 italic tracking-widest">Price</p><p className="text-[14px] font-mono text-red-600 font-black tracking-tighter italic">€{totalPrice.toLocaleString()}</p></div>
           <div><p className="text-zinc-600 text-[7px] uppercase font-black mb-1 italic tracking-widest">Weight</p><p className="text-[14px] font-mono text-white/80 font-black tracking-tighter italic">{totalWeight}g</p></div>
-        </div>
+        </motion.div>
 
-        <div className="flex flex-col gap-4 w-full max-w-[280px]">
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 4.3, duration: 0.5 }}
+          className="flex flex-col gap-4 w-full max-w-[280px]"
+        >
           <button onClick={handleExport} disabled={isExporting} className="relative h-14 bg-zinc-900 border border-white/10 rounded-2xl font-black uppercase text-[10px] italic overflow-hidden transition-all active:scale-95 group shadow-xl">
             {isExporting && <motion.div className="absolute left-0 top-0 bottom-0 bg-red-600/80 z-0" animate={{ width: `${progress}%` }} transition={{ ease: "linear" }} />}
             <span className="relative z-10 flex items-center justify-center gap-2 text-white">
@@ -1066,10 +1431,12 @@ function SummaryView({ selections, onReset, setSavedBuilds, user, onOpenGarage, 
             Save to Garage
           </button>
 
+          <ShareMenu buildName={selections.find((c: any) => c.stepTitle === 'Frame')?.name} message="Look at this! Its my dream!" />
+
           <button onClick={onReset} className="px-8 py-4 bg-transparent border border-white/10 text-white rounded-2xl font-black uppercase text-[10px] italic hover:bg-white/5 hover:border-white/20 transition-all active:scale-95 shadow-xl">
             Build another one
           </button>
-        </div>
+        </motion.div>
       </div>
     </div>
   );
