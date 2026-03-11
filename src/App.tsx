@@ -592,7 +592,7 @@ const useSounds = () => {
     return ctx.current;
   };
   const mob = typeof window !== 'undefined' && window.innerWidth < 1024;
-  const vol = (v: number) => mob ? Math.min(v * 4.5, 0.95) : v;
+  const vol = (v: number) => mob ? Math.min(v * 2.7, 0.95) : v;
 
   // Soft mechanical click — selecting a card
   const playSelect = async () => {
@@ -1106,7 +1106,7 @@ const CompareView = ({ builds, onBack }: { builds: any[], onBack: () => void }) 
   };
 
   const isMobile = typeof window !== "undefined" && window.innerWidth < 1024;
-  const colWidth = isMobile ? Math.max(100, Math.floor(360 / builds.length)) : Math.max(160, Math.floor(800 / builds.length));
+  const colWidth = isMobile ? Math.max(80, Math.floor(260 / builds.length)) : Math.max(160, Math.floor(800 / builds.length));
 
   return (
     <div className="fixed inset-0 z-[1100] bg-black text-white font-sans flex flex-col">
@@ -1135,7 +1135,7 @@ const CompareView = ({ builds, onBack }: { builds: any[], onBack: () => void }) 
         <table className="border-collapse" style={{ width: '100%', minWidth: `${180 + builds.length * colWidth}px` }}>
           <thead className="sticky top-0 z-20">
             <tr>
-              <th className="sticky left-0 z-30 bg-zinc-950 border-b border-r border-white/10 p-1.5 lg:p-3 text-left w-20 lg:w-44">
+              <th className="sticky left-0 z-30 bg-zinc-950 border-b border-r border-white/10 p-1 lg:p-3 text-left w-16 lg:w-44">
                 <span className="text-[8px] font-black uppercase text-zinc-600 tracking-widest">Component</span>
               </th>
               {builds.map((b: any, i: number) => {
@@ -1192,8 +1192,8 @@ const CompareView = ({ builds, onBack }: { builds: any[], onBack: () => void }) 
               const weights = comps.map(c => c ? Number(c.weight) || 0 : 0).filter(v => v > 0);
               return (
                 <tr key={cat} className={cn("border-b border-white/5 transition-colors", rowIdx % 2 === 0 ? "bg-transparent" : "bg-white/[0.015]", "hover:bg-white/[0.04]")}>
-                  <td className="sticky left-0 z-10 bg-zinc-950 border-r border-white/10 p-1.5 lg:p-3">
-                    <span className="text-[7px] lg:text-[8px] font-black uppercase text-zinc-500 tracking-widest">{cat}</span>
+                  <td className="sticky left-0 z-10 bg-zinc-950 border-r border-white/10 p-1 lg:p-3">
+                    <span className="text-[6px] lg:text-[8px] font-black uppercase text-zinc-500 tracking-widest">{cat}</span>
                   </td>
                   {builds.map((b: any, i: number) => {
                     const comp = comps[i];
@@ -1446,6 +1446,38 @@ const AuthModal = ({ isOpen, onClose, onLogin }: any) => {
 };
 
 
+// --- FREEWHEEL SOUND — plays once when final screen mounts ---
+const FreewheelSound = () => {
+  const played = useRef(false);
+  useEffect(() => {
+    if (played.current) return;
+    played.current = true;
+    // Small delay so it plays after transition
+    const t = setTimeout(async () => {
+      try {
+        const audio = new Audio('/parts/sounds/freesound_community-bike-freewheel-37985.mp3');
+        audio.volume = 0.55;
+        // Trim: play only first ~1.8 seconds
+        audio.currentTime = 0;
+        await audio.play();
+        setTimeout(() => {
+          // Fade out
+          const fade = setInterval(() => {
+            if (audio.volume > 0.04) {
+              audio.volume = Math.max(0, audio.volume - 0.06);
+            } else {
+              audio.pause();
+              clearInterval(fade);
+            }
+          }, 60);
+        }, 1400);
+      } catch {}
+    }, 400);
+    return () => clearTimeout(t);
+  }, []);
+  return null; // invisible — audio only
+};
+
 // --- SUMMARY VISUALIZER ---
 // Renders the completed bike from selected components (read-only, no offsets needed)
 const SummaryVisualizer = ({ selections }: { selections: any[] }) => {
@@ -1565,18 +1597,17 @@ function SummaryView({ selections, onBack, onReset, setSavedBuilds, user, onOpen
         </div>
       </nav>
 
-      {/* MAIN LAYOUT — bike left/center, buttons right */}
+      {/* MAIN LAYOUT */}
       <div className="flex-1 flex flex-col lg:flex-row overflow-hidden min-h-0">
 
-        {/* LEFT: Bike Visualizer */}
-        <div className="flex-1 relative flex flex-col min-h-0">
-          {/* Bike canvas */}
+        {/* LEFT / TOP: Bike Visualizer — same look as configurator */}
+        <div className="flex-1 relative flex flex-col min-h-0 lg:flex-1">
+          {/* Visualizer fills available space */}
           <div className="relative flex-1 min-h-0">
             <SummaryVisualizer selections={selections} />
           </div>
-
-          {/* Components list — bottom overlay */}
-          <div className="shrink-0 px-4 lg:px-8 pb-3 pt-2">
+          {/* Component cards — desktop only, scrollable */}
+          <div className="hidden lg:block shrink-0 px-8 pb-3 pt-2">
             <div className="flex gap-3 overflow-x-auto pb-2 custom-scroll-container">
               {selections.map((c: any, i: number) => (
                 <div key={i} className="shrink-0 bg-zinc-900/70 border border-white/5 rounded-xl px-4 py-3 flex flex-col gap-1 min-w-[160px] backdrop-blur-sm">
@@ -1594,54 +1625,54 @@ function SummaryView({ selections, onBack, onReset, setSavedBuilds, user, onOpen
           </div>
         </div>
 
-        {/* RIGHT PANEL: actions — same column as cards in configurator */}
+        {/* RIGHT (desktop) / BOTTOM (mobile): actions panel */}
         <div className="w-full lg:w-[280px] shrink-0 flex flex-col border-t lg:border-t-0 lg:border-l border-white/5 bg-zinc-950/60 backdrop-blur-xl">
-          <div className="flex-1 flex flex-col justify-center p-5 lg:p-6 gap-5">
 
-            {/* Stats */}
-            <div className="flex gap-3">
-              <div className="flex-1 bg-black/40 border border-white/5 rounded-2xl p-3 flex flex-col items-center justify-center text-center">
-                <p className="text-zinc-600 text-[7px] uppercase font-black italic tracking-widest leading-none mb-1">Price</p>
-                <p className="text-[16px] font-mono text-red-600 font-black tracking-tighter italic leading-none">€{totalPrice.toLocaleString()}</p>
-              </div>
-              <div className="flex-1 bg-black/40 border border-white/5 rounded-2xl p-3 flex flex-col items-center justify-center text-center">
-                <p className="text-zinc-600 text-[7px] uppercase font-black italic tracking-widest leading-none mb-1">Weight</p>
-                <p className="text-[16px] font-mono text-white/80 font-black tracking-tighter italic leading-none">{totalWeight}g</p>
-              </div>
+          {/* Stats */}
+          <div className="flex gap-2 px-4 lg:px-5 pt-3 pb-2 lg:pt-5 lg:pb-0">
+            <div className="flex-1 bg-black/40 border border-white/5 rounded-xl p-2 lg:p-3 flex flex-col items-center justify-center text-center">
+              <p className="text-zinc-600 text-[6px] lg:text-[7px] uppercase font-black italic tracking-widest leading-none mb-0.5 lg:mb-1">Price</p>
+              <p className="text-[13px] lg:text-[16px] font-mono text-red-600 font-black tracking-tighter italic leading-none">€{totalPrice.toLocaleString()}</p>
             </div>
+            <div className="flex-1 bg-black/40 border border-white/5 rounded-xl p-2 lg:p-3 flex flex-col items-center justify-center text-center">
+              <p className="text-zinc-600 text-[6px] lg:text-[7px] uppercase font-black italic tracking-widest leading-none mb-0.5 lg:mb-1">Weight</p>
+              <p className="text-[13px] lg:text-[16px] font-mono text-white/80 font-black tracking-tighter italic leading-none">{totalWeight}g</p>
+            </div>
+          </div>
 
-            {/* Action buttons — 2 col grid on mobile, column on desktop */}
-            <div className="grid grid-cols-2 lg:grid-cols-1 gap-2 lg:gap-2.5">
-              <button onClick={handleSaveBuild} className="h-11 bg-zinc-800/80 hover:bg-zinc-700/80 border border-white/10 text-white rounded-lg font-black uppercase text-[9px] tracking-widest transition-all active:scale-[0.97] flex items-center justify-center gap-2">
-                <Save size={12} /> Save to Garage
+          {/* Action buttons */}
+          <div className="flex-1 flex flex-col justify-start lg:justify-center px-4 lg:px-5 py-2 lg:py-5 gap-2">
+            {/* 2x2 grid on mobile */}
+            <div className="grid grid-cols-2 lg:grid-cols-1 gap-2">
+              <button onClick={handleSaveBuild} className="h-10 lg:h-11 bg-zinc-800/80 hover:bg-zinc-700/80 border border-white/10 text-white rounded-lg font-black uppercase text-[8px] lg:text-[9px] tracking-widest transition-all active:scale-[0.97] flex items-center justify-center gap-1.5">
+                <Save size={11} /> Save to Garage
               </button>
-
-              <button onClick={handleExport} disabled={isExporting} className="relative h-11 bg-zinc-800/80 hover:bg-zinc-700/80 border border-white/10 text-white rounded-lg font-black uppercase text-[9px] tracking-widest transition-all active:scale-[0.97] flex items-center justify-center gap-2 overflow-hidden">
+              <button onClick={handleExport} disabled={isExporting} className="relative h-10 lg:h-11 bg-zinc-800/80 hover:bg-zinc-700/80 border border-white/10 text-white rounded-lg font-black uppercase text-[8px] lg:text-[9px] tracking-widest transition-all active:scale-[0.97] flex items-center justify-center gap-1.5 overflow-hidden">
                 {isExporting && <motion.div className="absolute left-0 top-0 bottom-0 bg-red-600/80 z-0" animate={{ width: `${progress}%` }} transition={{ ease: "linear" }} />}
-                <span className="relative z-10 flex items-center justify-center gap-2 text-white">
-                  {isExporting ? `SAVING ${progress}%` : <><Download size={13} /> Export PDF</>}
+                <span className="relative z-10 flex items-center gap-1.5 text-white">
+                  {isExporting ? `${progress}%` : <><Download size={11} /> Export PDF</>}
                 </span>
               </button>
-
               <ShareMenu buildName={selections.find((c: any) => c.stepTitle === 'Frame')?.name} message="Look at this! Its my dream!" />
-
-              <button onClick={onReset} className="h-11 bg-zinc-800/80 hover:bg-zinc-700/80 border border-white/10 text-white rounded-lg font-black uppercase text-[9px] tracking-widest transition-all active:scale-[0.97] flex items-center justify-center gap-2 text-zinc-400 hover:text-white">
-                <svg width="13" height="13" viewBox="0 0 12 12" fill="none"><path d="M2 6a4 4 0 1 1 4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><path d="M2 4V6h2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                Build Another One
+              <button onClick={onReset} className="h-10 lg:h-11 bg-zinc-800/80 hover:bg-zinc-700/80 border border-white/10 text-zinc-400 hover:text-white rounded-lg font-black uppercase text-[8px] lg:text-[9px] tracking-widest transition-all active:scale-[0.97] flex items-center justify-center gap-1.5">
+                <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 6a4 4 0 1 1 4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><path d="M2 4V6h2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                Build Another
               </button>
             </div>
 
+            {/* Freewheel audio — plays once on mount */}
+            <FreewheelSound />
           </div>
 
           {/* Footer — WA left, email right */}
-          <div className="px-5 py-3 border-t border-white/5 flex items-center justify-between gap-2">
+          <div className="px-4 lg:px-5 py-2 lg:py-3 border-t border-white/5 flex items-center justify-between">
             <a href="https://wa.me/34674262622" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-zinc-500 hover:text-green-400 transition-colors">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className="shrink-0"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.124.558 4.115 1.529 5.845L0 24l6.335-1.508A11.933 11.933 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 0 1-5.006-1.368l-.359-.214-3.722.886.938-3.623-.234-.372A9.818 9.818 0 1 1 12 21.818z"/></svg>
-              <span className="text-[8px] font-black uppercase italic tracking-widest">+34 674 262 622</span>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" className="shrink-0"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.124.558 4.115 1.529 5.845L0 24l6.335-1.508A11.933 11.933 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 0 1-5.006-1.368l-.359-.214-3.722.886.938-3.623-.234-.372A9.818 9.818 0 1 1 12 21.818z"/></svg>
+              <span className="text-[7px] lg:text-[8px] font-black uppercase italic tracking-widest">+34 674 262 622</span>
             </a>
             <a href="mailto:hello@adicto.bike" className="flex items-center gap-1.5 text-zinc-500 hover:text-red-400 transition-colors">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="shrink-0"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
-              <span className="text-[8px] font-black uppercase italic tracking-widest">hello@adicto.bike</span>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="shrink-0"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+              <span className="text-[7px] lg:text-[8px] font-black uppercase italic tracking-widest">hello@adicto.bike</span>
             </a>
           </div>
         </div>
