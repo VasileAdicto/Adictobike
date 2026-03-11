@@ -581,6 +581,20 @@ const OptionCard = ({ component, isSelected, onClick }: { component: Component, 
   </motion.button>
 );
 
+// Visible debug overlay — tap any button to see values
+const SoundDebugOverlay = () => {
+  const [txt, setTxt] = React.useState('tap a button');
+  useEffect(() => {
+    const id = setInterval(() => {
+      setTxt('w:' + soundDbg.w + ' mob:' + soundDbg.mob + ' gain:' + soundDbg.gain + ' ' + soundDbg.last);
+    }, 400);
+    return () => clearInterval(id);
+  }, []);
+  return React.createElement('div', {
+    style: { position: 'fixed', bottom: 90, left: 8, zIndex: 9999, background: 'rgba(0,0,0,0.9)', color: '#ef4444', fontSize: 11, padding: '4px 10px', borderRadius: 6, fontFamily: 'monospace', pointerEvents: 'none', border: '1px solid #333' }
+  }, txt);
+};
+
 // --- SOUND ENGINE ---
 // All sounds generated via Web Audio API — no external files needed
 
@@ -588,8 +602,9 @@ const OptionCard = ({ component, isSelected, onClick }: { component: Component, 
 const getMobVol = (v: number): number => {
   try {
     const w = window.innerWidth || window.screen?.width || 9999;
+    console.log('[SOUND] getMobVol: innerWidth=', w, 'isMob=', w < 1024, 'in=', v, 'out=', w < 1024 ? Math.min(v * 1.62, 0.95) : v);
     if (w < 1024) return Math.min(v * 1.62, 0.95);
-  } catch {}
+  } catch(e) { console.log('[SOUND] getMobVol error', e); }
   return v;
 };
 
@@ -606,7 +621,9 @@ const useSounds = () => {
     if (ctx.current.state === 'suspended') await ctx.current.resume();
     // Update master gain based on current screen width
     if (master.current) {
-      master.current.gain.value = getMobVol(1.0);
+      const mv = getMobVol(1.0);
+      console.log('[SOUND] master.gain =', mv, 'ctx.state=', ctx.current.state);
+      master.current.gain.value = mv;
     }
     return ctx.current;
   };
@@ -615,6 +632,7 @@ const useSounds = () => {
 
   // Soft mechanical click — selecting a card
   const playSelect = async () => {
+    soundDbg.last='SEL';
     try {
       const ac = await getCtx();
       const o = ac.createOscillator();
@@ -632,6 +650,7 @@ const useSounds = () => {
 
   // Soft swipe — next step
   const playNext = async () => {
+    soundDbg.last='NXT';
     try {
       const ac = await getCtx();
       const dur = 0.18;
@@ -918,6 +937,7 @@ export default function BikeConfigurator() {
         )}
       </AnimatePresence>
 
+      <SoundDebugOverlay />
       <style>{`
         /* Mobile horizontal scroll */
         .mob-scroll { overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; }
