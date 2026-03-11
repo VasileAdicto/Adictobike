@@ -1566,7 +1566,7 @@ function SummaryView({ selections, onBack, onReset, setSavedBuilds, user, onOpen
     // play success sound
     try {
       const ac = new (window.AudioContext || (window as any).webkitAudioContext)();
-      if (ac.state === 'suspended') await ac.resume();
+      if (ac.state === 'suspended') ac.resume();
       [0, 0.12, 0.24].forEach((t, i) => {
         const o = ac.createOscillator(); const g = ac.createGain();
         o.connect(g); g.connect(ac.destination);
