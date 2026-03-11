@@ -581,63 +581,32 @@ const OptionCard = ({ component, isSelected, onClick }: { component: Component, 
   </motion.button>
 );
 
-// Visible debug overlay — tap any button to see values
-const SoundDebugOverlay = () => {
-  const [txt, setTxt] = React.useState('tap a button');
-  useEffect(() => {
-    const id = setInterval(() => {
-      setTxt('w:' + soundDbg.w + ' mob:' + soundDbg.mob + ' gain:' + soundDbg.gain + ' ' + soundDbg.last);
-    }, 400);
-    return () => clearInterval(id);
-  }, []);
-  return React.createElement('div', {
-    style: { position: 'fixed', bottom: 90, left: 8, zIndex: 9999, background: 'rgba(0,0,0,0.9)', color: '#ef4444', fontSize: 11, padding: '4px 10px', borderRadius: 6, fontFamily: 'monospace', pointerEvents: 'none', border: '1px solid #333' }
-  }, txt);
-};
-
 // --- SOUND ENGINE ---
 // All sounds generated via Web Audio API — no external files needed
 
-// Mobile volume helper — checks innerWidth fresh at call time
+// Mobile volume — checked fresh each call
 const getMobVol = (v: number): number => {
-  try {
-    const w = window.innerWidth || window.screen?.width || 9999;
-    console.log('[SOUND] getMobVol: innerWidth=', w, 'isMob=', w < 1024, 'in=', v, 'out=', w < 1024 ? Math.min(v * 1.62, 0.95) : v);
-    if (w < 1024) return Math.min(v * 1.62, 0.95);
-  } catch(e) { console.log('[SOUND] getMobVol error', e); }
+  try { if (window.innerWidth < 1024) return v * 0.6; } catch {}
   return v;
 };
 
 const useSounds = () => {
   const ctx = useRef<AudioContext | null>(null);
-  const master = useRef<GainNode | null>(null);
 
   const getCtx = async () => {
-    if (!ctx.current) {
-      ctx.current = new (window.AudioContext || (window as any).webkitAudioContext)();
-      master.current = ctx.current.createGain();
-      master.current.connect(ctx.current.destination);
-    }
+    if (!ctx.current) ctx.current = new (window.AudioContext || (window as any).webkitAudioContext)();
     if (ctx.current.state === 'suspended') await ctx.current.resume();
-    // Update master gain based on current screen width
-    if (master.current) {
-      const mv = getMobVol(1.0);
-      console.log('[SOUND] master.gain =', mv, 'ctx.state=', ctx.current.state);
-      master.current.gain.value = mv;
-    }
     return ctx.current;
   };
-  const getMaster = () => master.current || ctx.current?.destination;
-  const vol = getMobVol; // uses module-level helper
+  const vol = getMobVol;
 
   // Soft mechanical click — selecting a card
   const playSelect = async () => {
-    soundDbg.last='SEL';
     try {
       const ac = await getCtx();
       const o = ac.createOscillator();
       const g = ac.createGain();
-      o.connect(g); g.connect(getMaster()!);
+      o.connect(g); g.connect(ctx.current!.destination);
       o.type = 'sine';
       o.frequency.setValueAtTime(900, ac.currentTime);
       o.frequency.exponentialRampToValueAtTime(600, ac.currentTime + 0.06);
@@ -650,7 +619,6 @@ const useSounds = () => {
 
   // Soft swipe — next step
   const playNext = async () => {
-    soundDbg.last='NXT';
     try {
       const ac = await getCtx();
       const dur = 0.18;
@@ -675,7 +643,7 @@ const useSounds = () => {
       const g = ac.createGain();
       g.gain.setValueAtTime(vol(0.13), ac.currentTime);
       g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + dur);
-      noise.connect(hp); hp.connect(lp); lp.connect(g); g.connect(getMaster()!);
+      noise.connect(hp); hp.connect(lp); lp.connect(g); g.connect(ctx.current!.destination);
       noise.start();
     } catch {}
   };
@@ -697,7 +665,7 @@ const useSounds = () => {
       const g = ac.createGain();
       g.gain.setValueAtTime(vol(0.04), ac.currentTime);
       g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.1);
-      src.connect(f); f.connect(g); g.connect(getMaster()!);
+      src.connect(f); f.connect(g); g.connect(ctx.current!.destination);
       src.start();
     } catch {}
   };
@@ -709,7 +677,7 @@ const useSounds = () => {
       [0, 0.1, 0.2].forEach((t, i) => {
         const o = ac.createOscillator();
         const g = ac.createGain();
-        o.connect(g); g.connect(getMaster()!);
+        o.connect(g); g.connect(ctx.current!.destination);
         o.type = 'sine';
         const freqs = [523, 659, 784]; // C5 E5 G5
         o.frequency.value = freqs[i];
@@ -728,7 +696,7 @@ const useSounds = () => {
       const ac = await getCtx();
       const o = ac.createOscillator();
       const g = ac.createGain();
-      o.connect(g); g.connect(getMaster()!);
+      o.connect(g); g.connect(ctx.current!.destination);
       o.type = 'sine';
       o.frequency.setValueAtTime(300, ac.currentTime);
       o.frequency.exponentialRampToValueAtTime(180, ac.currentTime + 0.1);
@@ -937,7 +905,6 @@ export default function BikeConfigurator() {
         )}
       </AnimatePresence>
 
-      <SoundDebugOverlay />
       <style>{`
         /* Mobile horizontal scroll */
         .mob-scroll { overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; }
@@ -1599,15 +1566,13 @@ function SummaryView({ selections, onBack, onReset, setSavedBuilds, user, onOpen
     // play success sound
     try {
       const ac = new (window.AudioContext || (window as any).webkitAudioContext)();
-      const master = ac.createGain();
-      master.gain.value = getMobVol(1.0);
-      master.connect(ac.destination);
+      if (ac.state === 'suspended') await ac.resume();
       [0, 0.12, 0.24].forEach((t, i) => {
         const o = ac.createOscillator(); const g = ac.createGain();
-        o.connect(g); g.connect(master);
+        o.connect(g); g.connect(ac.destination);
         o.type = 'sine'; o.frequency.value = [523, 659, 784][i];
         g.gain.setValueAtTime(0, ac.currentTime + t);
-        g.gain.linearRampToValueAtTime(0.07, ac.currentTime + t + 0.02);
+        g.gain.linearRampToValueAtTime(getMobVol(0.07), ac.currentTime + t + 0.02);
         g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + t + 0.4);
         o.start(ac.currentTime + t); o.stop(ac.currentTime + t + 0.4);
       });
