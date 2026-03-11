@@ -584,20 +584,33 @@ const OptionCard = ({ component, isSelected, onClick }: { component: Component, 
 // --- SOUND ENGINE ---
 // All sounds generated via Web Audio API — no external files needed
 
-// Module-level mobile volume helper — accessible from any component
-const getMobVol = (v: number) => {
-  const isMob = typeof window !== 'undefined' && window.innerWidth < 1024;
-  return isMob ? Math.min(v * 1.62, 0.95) : v;
+// Mobile volume helper — checks innerWidth fresh at call time
+const getMobVol = (v: number): number => {
+  try {
+    const w = window.innerWidth || window.screen?.width || 9999;
+    if (w < 1024) return Math.min(v * 1.62, 0.95);
+  } catch {}
+  return v;
 };
 
 const useSounds = () => {
   const ctx = useRef<AudioContext | null>(null);
+  const master = useRef<GainNode | null>(null);
 
   const getCtx = async () => {
-    if (!ctx.current) ctx.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+    if (!ctx.current) {
+      ctx.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      master.current = ctx.current.createGain();
+      master.current.connect(ctx.current.destination);
+    }
     if (ctx.current.state === 'suspended') await ctx.current.resume();
+    // Update master gain based on current screen width
+    if (master.current) {
+      master.current.gain.value = getMobVol(1.0);
+    }
     return ctx.current;
   };
+  const getMaster = () => master.current || ctx.current?.destination;
   const vol = getMobVol; // uses module-level helper
 
   // Soft mechanical click — selecting a card
@@ -606,7 +619,7 @@ const useSounds = () => {
       const ac = await getCtx();
       const o = ac.createOscillator();
       const g = ac.createGain();
-      o.connect(g); g.connect(ac.destination);
+      o.connect(g); g.connect(getMaster()!);
       o.type = 'sine';
       o.frequency.setValueAtTime(900, ac.currentTime);
       o.frequency.exponentialRampToValueAtTime(600, ac.currentTime + 0.06);
@@ -643,7 +656,7 @@ const useSounds = () => {
       const g = ac.createGain();
       g.gain.setValueAtTime(vol(0.13), ac.currentTime);
       g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + dur);
-      noise.connect(hp); hp.connect(lp); lp.connect(g); g.connect(ac.destination);
+      noise.connect(hp); hp.connect(lp); lp.connect(g); g.connect(getMaster()!);
       noise.start();
     } catch {}
   };
@@ -665,7 +678,7 @@ const useSounds = () => {
       const g = ac.createGain();
       g.gain.setValueAtTime(vol(0.04), ac.currentTime);
       g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.1);
-      src.connect(f); f.connect(g); g.connect(ac.destination);
+      src.connect(f); f.connect(g); g.connect(getMaster()!);
       src.start();
     } catch {}
   };
@@ -677,7 +690,7 @@ const useSounds = () => {
       [0, 0.1, 0.2].forEach((t, i) => {
         const o = ac.createOscillator();
         const g = ac.createGain();
-        o.connect(g); g.connect(ac.destination);
+        o.connect(g); g.connect(getMaster()!);
         o.type = 'sine';
         const freqs = [523, 659, 784]; // C5 E5 G5
         o.frequency.value = freqs[i];
@@ -696,7 +709,7 @@ const useSounds = () => {
       const ac = await getCtx();
       const o = ac.createOscillator();
       const g = ac.createGain();
-      o.connect(g); g.connect(ac.destination);
+      o.connect(g); g.connect(getMaster()!);
       o.type = 'sine';
       o.frequency.setValueAtTime(300, ac.currentTime);
       o.frequency.exponentialRampToValueAtTime(180, ac.currentTime + 0.1);
@@ -1566,12 +1579,15 @@ function SummaryView({ selections, onBack, onReset, setSavedBuilds, user, onOpen
     // play success sound
     try {
       const ac = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const master = ac.createGain();
+      master.gain.value = getMobVol(1.0);
+      master.connect(ac.destination);
       [0, 0.12, 0.24].forEach((t, i) => {
         const o = ac.createOscillator(); const g = ac.createGain();
-        o.connect(g); g.connect(ac.destination);
+        o.connect(g); g.connect(master);
         o.type = 'sine'; o.frequency.value = [523, 659, 784][i];
         g.gain.setValueAtTime(0, ac.currentTime + t);
-        g.gain.linearRampToValueAtTime(getMobVol(0.07), ac.currentTime + t + 0.02);
+        g.gain.linearRampToValueAtTime(0.07, ac.currentTime + t + 0.02);
         g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + t + 0.4);
         o.start(ac.currentTime + t); o.stop(ac.currentTime + t + 0.4);
       });
