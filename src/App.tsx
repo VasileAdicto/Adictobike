@@ -583,6 +583,13 @@ const OptionCard = ({ component, isSelected, onClick }: { component: Component, 
 
 // --- SOUND ENGINE ---
 // All sounds generated via Web Audio API — no external files needed
+
+// Module-level mobile volume helper — accessible from any component
+const getMobVol = (v: number) => {
+  const isMob = typeof window !== 'undefined' && window.innerWidth < 1024;
+  return isMob ? Math.min(v * 1.62, 0.95) : v;
+};
+
 const useSounds = () => {
   const ctx = useRef<AudioContext | null>(null);
 
@@ -591,8 +598,7 @@ const useSounds = () => {
     if (ctx.current.state === 'suspended') await ctx.current.resume();
     return ctx.current;
   };
-  const mob = typeof window !== 'undefined' && window.innerWidth < 1024;
-  const vol = (v: number) => mob ? Math.min(v * 1.62, 0.95) : v;
+  const vol = getMobVol; // uses module-level helper
 
   // Soft mechanical click — selecting a card
   const playSelect = async () => {
@@ -1447,16 +1453,16 @@ const AuthModal = ({ isOpen, onClose, onLogin }: any) => {
 
 
 // --- FREEWHEEL SOUND — plays once when final screen mounts ---
-const FreewheelSound = () => {
+const FreewheelSound = ({ immediate = false }: { immediate?: boolean }) => {
   const played = useRef(false);
   useEffect(() => {
     if (played.current) return;
     played.current = true;
-    // Small delay so it plays after transition
+    const delay = immediate ? 0 : 400;
     const t = setTimeout(async () => {
       try {
         const audio = new Audio('/parts/sounds/freesound_community-bike-freewheel-37985.mp3');
-        audio.volume = 0.55;
+        audio.volume = getMobVol(0.55);
         // Trim: play only first ~1.8 seconds
         audio.currentTime = 0;
         await audio.play();
@@ -1472,9 +1478,9 @@ const FreewheelSound = () => {
           }, 60);
         }, 1400);
       } catch {}
-    }, 400);
+    }, delay);
     return () => clearTimeout(t);
-  }, []);
+  }, [immediate]);
   return null; // invisible — audio only
 };
 
@@ -1565,7 +1571,7 @@ function SummaryView({ selections, onBack, onReset, setSavedBuilds, user, onOpen
         o.connect(g); g.connect(ac.destination);
         o.type = 'sine'; o.frequency.value = [523, 659, 784][i];
         g.gain.setValueAtTime(0, ac.currentTime + t);
-        g.gain.linearRampToValueAtTime(vol(0.07), ac.currentTime + t + 0.02);
+        g.gain.linearRampToValueAtTime(getMobVol(0.07), ac.currentTime + t + 0.02);
         g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + t + 0.4);
         o.start(ac.currentTime + t); o.stop(ac.currentTime + t + 0.4);
       });
@@ -1612,10 +1618,10 @@ function SummaryView({ selections, onBack, onReset, setSavedBuilds, user, onOpen
           </div>
 
           {/* Component cards — horizontal scroll, same as configurator option cards on mobile */}
-          <div className="mob-scroll lg:hidden shrink-0 px-2 pb-1 h-[90px]">
+          <div className="mob-scroll lg:hidden shrink-0 px-2 pb-1 h-[68px]">
             <div className="flex flex-row gap-2 h-full items-stretch">
               {selections.map((c: any, i: number) => (
-                <div key={i} className="shrink-0 bg-zinc-900/60 border border-white/5 rounded-xl px-2.5 py-2 flex flex-col justify-between h-full min-w-[100px]">
+                <div key={i} className="shrink-0 bg-zinc-900/60 border border-white/5 rounded-xl px-2 py-1.5 flex flex-col justify-between h-full min-w-[76px]">
                   <span className="text-[6px] font-black uppercase italic text-zinc-600 tracking-widest leading-none">{c.stepTitle}</span>
                   <span className="text-[8px] font-black text-white uppercase leading-tight truncate max-w-[90px]">{c.brand}</span>
                   <span className="text-[7px] text-zinc-400 leading-tight truncate max-w-[90px]">{c.name}</span>
@@ -1652,7 +1658,7 @@ function SummaryView({ selections, onBack, onReset, setSavedBuilds, user, onOpen
         <div className="w-full lg:w-[280px] shrink-0 flex flex-col border-t lg:border-t-0 lg:border-l border-white/5 bg-zinc-950/60 backdrop-blur-xl">
 
           {/* Stats row */}
-          <div className="flex gap-2 px-3 lg:px-5 pt-2 pb-1.5 lg:pt-5 lg:pb-0 shrink-0">
+          <div className="flex gap-2 px-3 lg:px-5 pt-1.5 pb-1 lg:pt-5 lg:pb-0 shrink-0">
             <div className="flex-1 bg-black/40 border border-white/5 rounded-xl p-2 lg:p-3 flex flex-col items-center justify-center text-center">
               <p className="text-zinc-600 text-[6px] lg:text-[7px] uppercase font-black italic tracking-widest leading-none mb-0.5 lg:mb-1">Price</p>
               <p className="text-[13px] lg:text-[16px] font-mono text-red-600 font-black tracking-tighter italic leading-none">€{totalPrice.toLocaleString()}</p>
@@ -1664,8 +1670,8 @@ function SummaryView({ selections, onBack, onReset, setSavedBuilds, user, onOpen
           </div>
 
           {/* 2×2 button grid on mobile, column on desktop */}
-          <div className="flex-1 flex flex-col justify-start lg:justify-center px-3 lg:px-5 py-1.5 lg:py-5 gap-1.5 lg:gap-2">
-            <div className="grid grid-cols-2 lg:grid-cols-1 gap-1.5 lg:gap-2">
+          <div className="flex-1 flex flex-col justify-start lg:justify-center px-3 lg:px-5 py-1 lg:py-5 gap-1 lg:gap-2">
+            <div className="grid grid-cols-2 lg:grid-cols-1 gap-1 lg:gap-2">
               <button onClick={handleSaveBuild} className="h-10 lg:h-11 bg-zinc-800/80 hover:bg-zinc-700/80 border border-white/10 text-white rounded-lg font-black uppercase text-[8px] lg:text-[9px] tracking-widest transition-all active:scale-[0.97] flex items-center justify-center gap-1.5">
                 <Save size={11} /> Save to Garage
               </button>
@@ -1681,7 +1687,7 @@ function SummaryView({ selections, onBack, onReset, setSavedBuilds, user, onOpen
                 Build Another
               </button>
             </div>
-            <FreewheelSound />
+            <FreewheelSound immediate={true} />
           </div>
 
           {/* Footer — WA left, email right */}
