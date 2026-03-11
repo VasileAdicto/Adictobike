@@ -497,12 +497,12 @@ const EmptyVisualizerState = ({ layers = [] }: { layers?: BikeLayer[] }) => {
                     First step: choose the Frameset
                   </span>
                   <motion.span
-                    animate={{ x: [0, 5, 0] }}
+                    animate={{ y: [0, 5, 0] }}
                     transition={{ duration: 1.1, repeat: Infinity, ease: 'easeInOut', delay: hintDelay }}
                     className="text-zinc-500"
                   >
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                      <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M8 3v10M4 9l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   </motion.span>
                 </motion.div>
@@ -591,7 +591,7 @@ const useSounds = () => {
     return ctx.current;
   };
   const mob = typeof window !== 'undefined' && window.innerWidth < 1024;
-  const vol = (v: number) => mob ? Math.min(v * 2.2, 0.95) : v;
+  const vol = (v: number) => mob ? Math.min(v * 4.5, 0.95) : v;
 
   // Soft mechanical click — selecting a card
   const playSelect = () => {
@@ -634,7 +634,7 @@ const useSounds = () => {
       lp.frequency.setValueAtTime(7000, ac.currentTime);
       lp.frequency.linearRampToValueAtTime(12000, ac.currentTime + dur);
       const g = ac.createGain();
-      g.gain.setValueAtTime(vol(0.09), ac.currentTime);
+      g.gain.setValueAtTime(vol(0.13), ac.currentTime);
       g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + dur);
       noise.connect(hp); hp.connect(lp); lp.connect(g); g.connect(ac.destination);
       noise.start();
@@ -1410,8 +1410,6 @@ const GaragePanel = ({ isOpen, onClose, builds, user, onLogout, onSelectBuild, o
           </svg>
           <span className="text-[7px] font-black uppercase italic tracking-widest">+34 674 262 622</span>
         </a>
-        {/* Powered by */}
-        <p className="text-[7px] font-black uppercase italic text-red-600/50 tracking-widest leading-none">Powered by Adicto.Bike | 2026</p>
         {/* Email */}
         <a
           href="mailto:hello@adicto.bike"
@@ -1571,16 +1569,16 @@ function SummaryView({ selections, onReset, setSavedBuilds, user, onOpenGarage, 
 
           {/* Components list — bottom overlay */}
           <div className="shrink-0 px-4 lg:px-8 pb-3 pt-2">
-            <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+            <div className="flex gap-3 overflow-x-auto pb-2 custom-scroll-container">
               {selections.map((c: any, i: number) => (
-                <div key={i} className="shrink-0 bg-zinc-900/70 border border-white/5 rounded-xl px-3 py-2 flex flex-col gap-0.5 min-w-[90px] backdrop-blur-sm">
-                  <span className="text-[6px] font-black uppercase italic text-zinc-600 tracking-widest leading-none">{c.stepTitle}</span>
-                  <span className="text-[7px] font-black text-white uppercase leading-tight truncate max-w-[80px]">{c.brand}</span>
-                  <span className="text-[7px] text-zinc-400 leading-tight truncate max-w-[80px]">{c.name}</span>
-                  <div className="flex items-center gap-1 mt-0.5">
-                    <span className="text-[7px] font-mono text-red-500">€{c.price}</span>
-                    <span className="text-zinc-700 text-[6px]">·</span>
-                    <span className="text-[7px] font-mono text-zinc-500">{c.weight}g</span>
+                <div key={i} className="shrink-0 bg-zinc-900/70 border border-white/5 rounded-xl px-4 py-3 flex flex-col gap-1 min-w-[160px] backdrop-blur-sm">
+                  <span className="text-[8px] font-black uppercase italic text-zinc-600 tracking-widest leading-none">{c.stepTitle}</span>
+                  <span className="text-[11px] font-black text-white uppercase leading-tight truncate max-w-[140px]">{c.brand}</span>
+                  <span className="text-[10px] text-zinc-400 leading-tight truncate max-w-[140px]">{c.name}</span>
+                  <div className="flex items-center gap-1.5 mt-1">
+                    <span className="text-[10px] font-mono text-red-500">€{c.price}</span>
+                    <span className="text-zinc-700 text-[9px]">·</span>
+                    <span className="text-[10px] font-mono text-zinc-500">{c.weight}g</span>
                   </div>
                 </div>
               ))}
@@ -1591,14 +1589,6 @@ function SummaryView({ selections, onReset, setSavedBuilds, user, onOpenGarage, 
         {/* RIGHT PANEL: actions — same column as cards in configurator */}
         <div className="w-full lg:w-[280px] shrink-0 flex flex-col border-t lg:border-t-0 lg:border-l border-white/5 bg-zinc-950/60 backdrop-blur-xl">
           <div className="flex-1 flex flex-col justify-center p-5 lg:p-6 gap-5">
-
-            {/* Title */}
-            <div>
-              <p className="text-[8px] font-black uppercase italic tracking-widest text-zinc-600 leading-none mb-1">Your build</p>
-              <h2 className="text-[18px] lg:text-[20px] font-black italic uppercase tracking-tighter leading-tight">
-                Your bike is <span className="text-red-600">Ready</span>
-              </h2>
-            </div>
 
             {/* Stats */}
             <div className="flex gap-3">
@@ -1635,16 +1625,15 @@ function SummaryView({ selections, onReset, setSavedBuilds, user, onOpenGarage, 
 
           </div>
 
-          {/* Footer */}
-          <div className="px-5 py-3 border-t border-white/5 flex items-center justify-center gap-4">
-            <a href="https://wa.me/34674262622" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-zinc-600 hover:text-green-400 transition-colors">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.124.558 4.115 1.529 5.845L0 24l6.335-1.508A11.933 11.933 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 0 1-5.006-1.368l-.359-.214-3.722.886.938-3.623-.234-.372A9.818 9.818 0 1 1 12 21.818z"/></svg>
-              <span className="text-[6px] font-black uppercase italic tracking-widest">+34 674 262 622</span>
+          {/* Footer — desktop only contacts, no branding */}
+          <div className="px-5 py-3 border-t border-white/5 flex flex-col gap-2">
+            <a href="https://wa.me/34674262622" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-zinc-500 hover:text-green-400 transition-colors">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" className="shrink-0"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.124.558 4.115 1.529 5.845L0 24l6.335-1.508A11.933 11.933 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 0 1-5.006-1.368l-.359-.214-3.722.886.938-3.623-.234-.372A9.818 9.818 0 1 1 12 21.818z"/></svg>
+              <span className="text-[9px] font-black uppercase italic tracking-widest">+34 674 262 622</span>
             </a>
-            <p className="text-[6px] font-black uppercase italic text-red-600/50 tracking-widest">Adicto.Bike | 2026</p>
-            <a href="mailto:hello@adicto.bike" className="flex items-center gap-1 text-zinc-600 hover:text-red-400 transition-colors">
-              <span className="text-[6px] font-black uppercase italic tracking-widest">hello@adicto.bike</span>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+            <a href="mailto:hello@adicto.bike" className="flex items-center gap-2 text-zinc-500 hover:text-red-400 transition-colors">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="shrink-0"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+              <span className="text-[9px] font-black uppercase italic tracking-widest">hello@adicto.bike</span>
             </a>
           </div>
         </div>
