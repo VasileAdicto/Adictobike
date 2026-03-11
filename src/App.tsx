@@ -83,7 +83,7 @@ const ShareMenu = ({ buildName = 'My Dream Bike', message = "Look at this! Its m
     <div className="relative">
       <button
         onClick={() => setOpen(o => !o)}
-        className="h-11 bg-zinc-800/80 hover:bg-zinc-700/80 border border-white/8 text-white rounded-lg font-black uppercase text-[9px] tracking-widest transition-all active:scale-[0.97] flex items-center justify-center gap-2 w-full"
+        className="h-11 bg-zinc-800/80 hover:bg-zinc-700/80 border border-white/10 text-white rounded-lg font-black uppercase text-[9px] tracking-widest transition-all active:scale-[0.97] flex items-center justify-center gap-2 w-full"
       >
         <Share2 size={14} className="text-zinc-400" /> Share
       </button>
@@ -586,17 +586,18 @@ const OptionCard = ({ component, isSelected, onClick }: { component: Component, 
 const useSounds = () => {
   const ctx = useRef<AudioContext | null>(null);
 
-  const getCtx = () => {
+  const getCtx = async () => {
     if (!ctx.current) ctx.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+    if (ctx.current.state === 'suspended') await ctx.current.resume();
     return ctx.current;
   };
   const mob = typeof window !== 'undefined' && window.innerWidth < 1024;
   const vol = (v: number) => mob ? Math.min(v * 4.5, 0.95) : v;
 
   // Soft mechanical click — selecting a card
-  const playSelect = () => {
+  const playSelect = async () => {
     try {
-      const ac = getCtx();
+      const ac = await getCtx();
       const o = ac.createOscillator();
       const g = ac.createGain();
       o.connect(g); g.connect(ac.destination);
@@ -611,9 +612,9 @@ const useSounds = () => {
   };
 
   // Soft swipe — next step
-  const playNext = () => {
+  const playNext = async () => {
     try {
-      const ac = getCtx();
+      const ac = await getCtx();
       const dur = 0.18;
       const buf = ac.createBuffer(1, Math.floor(ac.sampleRate * dur), ac.sampleRate);
       const d = buf.getChannelData(0);
@@ -642,9 +643,9 @@ const useSounds = () => {
   };
 
   // Soft whoosh back — prev step
-  const playBack = () => {
+  const playBack = async () => {
     try {
-      const ac = getCtx();
+      const ac = await getCtx();
       const buf = ac.createBuffer(1, ac.sampleRate * 0.1, ac.sampleRate);
       const d = buf.getChannelData(0);
       for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (i / d.length) * 0.7;
@@ -664,9 +665,9 @@ const useSounds = () => {
   };
 
   // Success chime — bike finished / saved
-  const playSuccess = () => {
+  const playSuccess = async () => {
     try {
-      const ac = getCtx();
+      const ac = await getCtx();
       [0, 0.1, 0.2].forEach((t, i) => {
         const o = ac.createOscillator();
         const g = ac.createGain();
@@ -684,9 +685,9 @@ const useSounds = () => {
   };
 
   // Soft pop — save/garage open
-  const playPop = () => {
+  const playPop = async () => {
     try {
-      const ac = getCtx();
+      const ac = await getCtx();
       const o = ac.createOscillator();
       const g = ac.createGain();
       o.connect(g); g.connect(ac.destination);
@@ -1540,7 +1541,7 @@ function SummaryView({ selections, onReset, setSavedBuilds, user, onOpenGarage, 
   };
 
   return (
-    <div className="min-h-screen bg-black text-white font-sans selection:bg-red-600 flex flex-col">
+    <div className="h-screen bg-black text-white font-sans selection:bg-red-600 flex flex-col overflow-hidden">
       <nav className="border-b border-white/5 px-4 lg:px-6 py-3 flex justify-between items-center bg-black/80 backdrop-blur-2xl sticky top-0 z-50 w-full">
         <button onClick={onReset} className="flex items-center gap-3 group active:scale-95 transition-transform" title="Back to start">
           <img src="/design/Logo.png" alt="Logo" className="h-5 lg:h-6 w-auto object-contain group-hover:opacity-70 transition-opacity" />
@@ -1604,11 +1605,11 @@ function SummaryView({ selections, onReset, setSavedBuilds, user, onOpenGarage, 
 
             {/* Action buttons */}
             <div className="flex flex-col gap-2.5">
-              <button onClick={handleSaveBuild} className="h-11 bg-zinc-800/80 hover:bg-zinc-700/80 border border-white/8 text-white rounded-lg font-black uppercase text-[9px] tracking-widest transition-all active:scale-[0.97] flex items-center justify-center gap-2">
+              <button onClick={handleSaveBuild} className="h-11 bg-zinc-800/80 hover:bg-zinc-700/80 border border-white/10 text-white rounded-lg font-black uppercase text-[9px] tracking-widest transition-all active:scale-[0.97] flex items-center justify-center gap-2">
                 <Save size={12} /> Save to Garage
               </button>
 
-              <button onClick={handleExport} disabled={isExporting} className="relative h-11 bg-zinc-800/80 hover:bg-zinc-700/80 border border-white/8 text-white rounded-lg font-black uppercase text-[9px] tracking-widest transition-all active:scale-[0.97] flex items-center justify-center gap-2 overflow-hidden">
+              <button onClick={handleExport} disabled={isExporting} className="relative h-11 bg-zinc-800/80 hover:bg-zinc-700/80 border border-white/10 text-white rounded-lg font-black uppercase text-[9px] tracking-widest transition-all active:scale-[0.97] flex items-center justify-center gap-2 overflow-hidden">
                 {isExporting && <motion.div className="absolute left-0 top-0 bottom-0 bg-red-600/80 z-0" animate={{ width: `${progress}%` }} transition={{ ease: "linear" }} />}
                 <span className="relative z-10 flex items-center justify-center gap-2 text-white">
                   {isExporting ? `SAVING ${progress}%` : <><Download size={13} /> Export PDF</>}
@@ -1617,7 +1618,7 @@ function SummaryView({ selections, onReset, setSavedBuilds, user, onOpenGarage, 
 
               <ShareMenu buildName={selections.find((c: any) => c.stepTitle === 'Frame')?.name} message="Look at this! Its my dream!" />
 
-              <button onClick={onReset} className="h-11 bg-zinc-800/80 hover:bg-zinc-700/80 border border-white/8 text-white rounded-lg font-black uppercase text-[9px] tracking-widest transition-all active:scale-[0.97] flex items-center justify-center gap-2 text-zinc-400 hover:text-white">
+              <button onClick={onReset} className="h-11 bg-zinc-800/80 hover:bg-zinc-700/80 border border-white/10 text-white rounded-lg font-black uppercase text-[9px] tracking-widest transition-all active:scale-[0.97] flex items-center justify-center gap-2 text-zinc-400 hover:text-white">
                 <svg width="13" height="13" viewBox="0 0 12 12" fill="none"><path d="M2 6a4 4 0 1 1 4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><path d="M2 4V6h2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                 Build Another One
               </button>
