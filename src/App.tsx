@@ -592,7 +592,7 @@ const useSounds = () => {
     return ctx.current;
   };
   const mob = typeof window !== 'undefined' && window.innerWidth < 1024;
-  const vol = (v: number) => mob ? Math.min(v * 2.7, 0.95) : v;
+  const vol = (v: number) => mob ? Math.min(v * 1.62, 0.95) : v;
 
   // Soft mechanical click — selecting a card
   const playSelect = async () => {
@@ -1597,16 +1597,39 @@ function SummaryView({ selections, onBack, onReset, setSavedBuilds, user, onOpen
         </div>
       </nav>
 
-      {/* MAIN LAYOUT */}
+      {/* MAIN LAYOUT
+           MOBILE: visualizer (350px) → component cards scroll (same as configurator) → stats+buttons
+           DESKTOP: visualizer left + cards below | buttons right panel
+      */}
       <div className="flex-1 flex flex-col lg:flex-row overflow-hidden min-h-0">
 
-        {/* LEFT / TOP: Bike Visualizer — same look as configurator */}
-        <div className="flex-1 relative flex flex-col min-h-0 lg:flex-1">
-          {/* Visualizer fills available space */}
-          <div className="relative flex-1 min-h-0">
+        {/* ── VISUALIZER COLUMN (left on desktop, top on mobile) ── */}
+        <div className="flex flex-col min-h-0 lg:flex-1">
+
+          {/* Visualizer — exact same height as configurator on mobile */}
+          <div className="h-[350px] lg:flex-1 relative shrink-0 lg:shrink">
             <SummaryVisualizer selections={selections} />
           </div>
-          {/* Component cards — desktop only, scrollable */}
+
+          {/* Component cards — horizontal scroll, same as configurator option cards on mobile */}
+          <div className="mob-scroll lg:hidden shrink-0 px-2 pb-1 h-[90px]">
+            <div className="flex flex-row gap-2 h-full items-stretch">
+              {selections.map((c: any, i: number) => (
+                <div key={i} className="shrink-0 bg-zinc-900/60 border border-white/5 rounded-xl px-2.5 py-2 flex flex-col justify-between h-full min-w-[100px]">
+                  <span className="text-[6px] font-black uppercase italic text-zinc-600 tracking-widest leading-none">{c.stepTitle}</span>
+                  <span className="text-[8px] font-black text-white uppercase leading-tight truncate max-w-[90px]">{c.brand}</span>
+                  <span className="text-[7px] text-zinc-400 leading-tight truncate max-w-[90px]">{c.name}</span>
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <span className="text-[7px] font-mono text-red-500">€{c.price}</span>
+                    <span className="text-zinc-700 text-[6px]">·</span>
+                    <span className="text-[7px] font-mono text-zinc-500">{c.weight}g</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Desktop component cards */}
           <div className="hidden lg:block shrink-0 px-8 pb-3 pt-2">
             <div className="flex gap-3 overflow-x-auto pb-2 custom-scroll-container">
               {selections.map((c: any, i: number) => (
@@ -1625,11 +1648,11 @@ function SummaryView({ selections, onBack, onReset, setSavedBuilds, user, onOpen
           </div>
         </div>
 
-        {/* RIGHT (desktop) / BOTTOM (mobile): actions panel */}
+        {/* ── RIGHT / BOTTOM PANEL: stats + buttons ── */}
         <div className="w-full lg:w-[280px] shrink-0 flex flex-col border-t lg:border-t-0 lg:border-l border-white/5 bg-zinc-950/60 backdrop-blur-xl">
 
-          {/* Stats */}
-          <div className="flex gap-2 px-4 lg:px-5 pt-3 pb-2 lg:pt-5 lg:pb-0">
+          {/* Stats row */}
+          <div className="flex gap-2 px-3 lg:px-5 pt-2 pb-1.5 lg:pt-5 lg:pb-0 shrink-0">
             <div className="flex-1 bg-black/40 border border-white/5 rounded-xl p-2 lg:p-3 flex flex-col items-center justify-center text-center">
               <p className="text-zinc-600 text-[6px] lg:text-[7px] uppercase font-black italic tracking-widest leading-none mb-0.5 lg:mb-1">Price</p>
               <p className="text-[13px] lg:text-[16px] font-mono text-red-600 font-black tracking-tighter italic leading-none">€{totalPrice.toLocaleString()}</p>
@@ -1640,10 +1663,9 @@ function SummaryView({ selections, onBack, onReset, setSavedBuilds, user, onOpen
             </div>
           </div>
 
-          {/* Action buttons */}
-          <div className="flex-1 flex flex-col justify-start lg:justify-center px-4 lg:px-5 py-2 lg:py-5 gap-2">
-            {/* 2x2 grid on mobile */}
-            <div className="grid grid-cols-2 lg:grid-cols-1 gap-2">
+          {/* 2×2 button grid on mobile, column on desktop */}
+          <div className="flex-1 flex flex-col justify-start lg:justify-center px-3 lg:px-5 py-1.5 lg:py-5 gap-1.5 lg:gap-2">
+            <div className="grid grid-cols-2 lg:grid-cols-1 gap-1.5 lg:gap-2">
               <button onClick={handleSaveBuild} className="h-10 lg:h-11 bg-zinc-800/80 hover:bg-zinc-700/80 border border-white/10 text-white rounded-lg font-black uppercase text-[8px] lg:text-[9px] tracking-widest transition-all active:scale-[0.97] flex items-center justify-center gap-1.5">
                 <Save size={11} /> Save to Garage
               </button>
@@ -1659,13 +1681,11 @@ function SummaryView({ selections, onBack, onReset, setSavedBuilds, user, onOpen
                 Build Another
               </button>
             </div>
-
-            {/* Freewheel audio — plays once on mount */}
             <FreewheelSound />
           </div>
 
           {/* Footer — WA left, email right */}
-          <div className="px-4 lg:px-5 py-2 lg:py-3 border-t border-white/5 flex items-center justify-between">
+          <div className="px-3 lg:px-5 py-2 lg:py-3 border-t border-white/5 flex items-center justify-between shrink-0">
             <a href="https://wa.me/34674262622" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-zinc-500 hover:text-green-400 transition-colors">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" className="shrink-0"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.124.558 4.115 1.529 5.845L0 24l6.335-1.508A11.933 11.933 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 0 1-5.006-1.368l-.359-.214-3.722.886.938-3.623-.234-.372A9.818 9.818 0 1 1 12 21.818z"/></svg>
               <span className="text-[7px] lg:text-[8px] font-black uppercase italic tracking-widest">+34 674 262 622</span>
