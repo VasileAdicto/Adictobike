@@ -83,7 +83,7 @@ const ShareMenu = ({ buildName = 'My Dream Bike', message = "Look at this! Its m
     <div className="relative">
       <button
         onClick={() => setOpen(o => !o)}
-        className="h-14 border border-white/10 text-white rounded-2xl font-black uppercase text-[10px] italic hover:bg-white/5 transition-all active:scale-95 w-full flex items-center justify-center gap-2"
+        className="h-11 bg-zinc-800/80 hover:bg-zinc-700/80 border border-white/8 text-white rounded-lg font-black uppercase text-[9px] tracking-widest transition-all active:scale-[0.97] flex items-center justify-center gap-2 w-full"
       >
         <Share2 size={14} className="text-zinc-400" /> Share
       </button>
@@ -164,7 +164,9 @@ const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
 };
 
 // --- ADMIN PANEL COMPONENT ---
-const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid, setShowGrid, gridSize, setGridSize, isZoomed, setIsZoomed, zoomScale, setZoomScale, onLogout }: any) => {
+const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, selectedFrameId, showGrid, setShowGrid, gridSize, setGridSize, isZoomed, setIsZoomed, zoomScale, setZoomScale, onLogout }: any) => {
+  // offset key = "{frameId}__{compId}" — unique per frame
+  const offsetKey = (compId: string) => selectedFrameId ? `${selectedFrameId}__${compId}` : `__${compId}`;
   const [selectedCat, setSelectedCat] = useState('excel');
   const [status, setStatus] = useState('');
   const [token, setToken] = useState(localStorage.getItem('adicto_github_token') || '');
@@ -192,7 +194,8 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
 
   const updateTune = (key: keyof OffsetData, val: number) => {
     if (!activeComponent) return;
-    setOffsets((prev: any) => ({ ...prev, [activeComponent.id]: { ...(prev[activeComponent.id] || { s: 1, x: 0, y: 0 }), [key]: val } }));
+    const k = offsetKey(activeComponent.id);
+    setOffsets((prev: any) => ({ ...prev, [k]: { ...(prev[k] || { s: 1, x: 0, y: 0 }), [key]: val } }));
   };
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>, isFolder: boolean) => {
@@ -306,12 +309,19 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, showGrid
       </motion.div>
       {activeComponent && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-black/80 border-b border-white/5 p-2 flex justify-between items-center px-6 backdrop-blur-xl gap-10">
+          {/* Frame context indicator */}
+          {selectedFrameId && (
+            <div className="absolute top-1 left-6 flex items-center gap-1.5">
+              <span className="text-[7px] font-black uppercase text-zinc-600 italic tracking-widest">Frame:</span>
+              <span className="text-[7px] font-black uppercase text-red-600/70 italic tracking-widest">{selectedFrameId.split('-')[0]}-{selectedFrameId.split('-')[1]}</span>
+            </div>
+          )}
           <div className="flex flex-col gap-1 flex-1">
             {[{ key: 's', label: 'Size', min: 0.8, max: 1.2, step: 0.001, reset: 1 }, { key: 'x', label: 'Pos X', min: -40, max: 40, step: 1, reset: 0 }, { key: 'y', label: 'Pos Y', min: -40, max: 40, step: 1, reset: 0 }].map((item) => (
               <div key={item.key} className="flex items-center gap-3">
                 <span className="text-[8px] text-zinc-500 font-black w-8 uppercase">{item.label}</span>
-                <input type="range" min={item.min} max={item.max} step={item.step} value={offsets[activeComponent.id]?.[item.key as keyof OffsetData] ?? item.reset} onChange={e => updateTune(item.key as keyof OffsetData, parseFloat(e.target.value))} className="flex-1 h-1 bg-zinc-800 rounded-lg appearance-none accent-red-600 cursor-pointer" />
-                <input type="number" step={item.step} value={offsets[activeComponent.id]?.[item.key as keyof OffsetData] ?? item.reset} onChange={e => updateTune(item.key as keyof OffsetData, parseFloat(e.target.value))} className="bg-transparent text-white text-[9px] w-10 text-right font-mono border-b border-white/5 focus:border-red-600 outline-none" />
+                <input type="range" min={item.min} max={item.max} step={item.step} value={offsets[offsetKey(activeComponent.id)]?.[item.key as keyof OffsetData] ?? item.reset} onChange={e => updateTune(item.key as keyof OffsetData, parseFloat(e.target.value))} className="flex-1 h-1 bg-zinc-800 rounded-lg appearance-none accent-red-600 cursor-pointer" />
+                <input type="number" step={item.step} value={offsets[offsetKey(activeComponent.id)]?.[item.key as keyof OffsetData] ?? item.reset} onChange={e => updateTune(item.key as keyof OffsetData, parseFloat(e.target.value))} className="bg-transparent text-white text-[9px] w-10 text-right font-mono border-b border-white/5 focus:border-red-600 outline-none" />
                 <button onClick={() => updateTune(item.key as keyof OffsetData, item.reset)} className="text-zinc-600 hover:text-red-600 transition-colors"><RotateCcw size={10} /></button>
               </div>
             ))}
@@ -506,7 +516,12 @@ const EmptyVisualizerState = ({ layers = [] }: { layers?: BikeLayer[] }) => {
 };
 
 // --- VISUALIZER ---
-const Visualizer = ({ selectedComponents, offsets, showGrid, gridSize, isZoomed, zoomScale, steps }: any) => {
+const Visualizer = ({ selectedComponents, offsets, showGrid, gridSize, isZoomed, zoomScale, steps, selectedFrameId }: any) => {
+  // Build offset key: "{frameId}__{compId}" — falls back to "__{compId}" if no frame
+  const getOffset = (compId: string) => {
+    const k = selectedFrameId ? `${selectedFrameId}__${compId}` : `__${compId}`;
+    return offsets?.[k] || offsets?.[compId] || { s: 1, x: 0, y: 0 };
+  };
   // Collect first imageUrl from each step as preview layers
   const previewLayers = useMemo(() => {
     if (!steps) return [];
@@ -529,7 +544,7 @@ const Visualizer = ({ selectedComponents, offsets, showGrid, gridSize, isZoomed,
         transition={{ type: 'spring', damping: 25, stiffness: 120 }} className="relative w-full h-full flex items-center justify-center">
         <AnimatePresence mode="popLayout">
           {selectedComponents?.map((comp: any) => {
-            const tune = (offsets && offsets[comp.id]) || { s: 1, x: 0, y: 0 };
+            const tune = getOffset(comp.id);
             return <motion.img key={comp.id} src={comp.imageUrl} crossOrigin="anonymous" loading="eager" alt={comp.name} initial={{ opacity: 0 }} animate={{ opacity: 1, scale: tune.s, x: tune.x, y: tune.y }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full object-contain pointer-events-none" style={{ zIndex: Number(comp.zIndex) }} />;
           })}
         </AnimatePresence>
@@ -575,6 +590,8 @@ const useSounds = () => {
     if (!ctx.current) ctx.current = new (window.AudioContext || (window as any).webkitAudioContext)();
     return ctx.current;
   };
+  const mob = typeof window !== 'undefined' && window.innerWidth < 1024;
+  const vol = (v: number) => mob ? Math.min(v * 2.2, 0.95) : v;
 
   // Soft mechanical click — selecting a card
   const playSelect = () => {
@@ -586,7 +603,7 @@ const useSounds = () => {
       o.type = 'sine';
       o.frequency.setValueAtTime(900, ac.currentTime);
       o.frequency.exponentialRampToValueAtTime(600, ac.currentTime + 0.06);
-      g.gain.setValueAtTime(0.04, ac.currentTime);
+      g.gain.setValueAtTime(vol(0.04), ac.currentTime);
       g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.08);
       o.start(ac.currentTime);
       o.stop(ac.currentTime + 0.08);
@@ -617,7 +634,7 @@ const useSounds = () => {
       lp.frequency.setValueAtTime(7000, ac.currentTime);
       lp.frequency.linearRampToValueAtTime(12000, ac.currentTime + dur);
       const g = ac.createGain();
-      g.gain.setValueAtTime(0.09, ac.currentTime);
+      g.gain.setValueAtTime(vol(0.09), ac.currentTime);
       g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + dur);
       noise.connect(hp); hp.connect(lp); lp.connect(g); g.connect(ac.destination);
       noise.start();
@@ -639,7 +656,7 @@ const useSounds = () => {
       f.frequency.exponentialRampToValueAtTime(800, ac.currentTime + 0.1);
       f.Q.value = 1;
       const g = ac.createGain();
-      g.gain.setValueAtTime(0.04, ac.currentTime);
+      g.gain.setValueAtTime(vol(0.04), ac.currentTime);
       g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.1);
       src.connect(f); f.connect(g); g.connect(ac.destination);
       src.start();
@@ -658,7 +675,7 @@ const useSounds = () => {
         const freqs = [523, 659, 784]; // C5 E5 G5
         o.frequency.value = freqs[i];
         g.gain.setValueAtTime(0, ac.currentTime + t);
-        g.gain.linearRampToValueAtTime(0.07, ac.currentTime + t + 0.02);
+        g.gain.linearRampToValueAtTime(vol(0.07), ac.currentTime + t + 0.02);
         g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + t + 0.4);
         o.start(ac.currentTime + t);
         o.stop(ac.currentTime + t + 0.4);
@@ -676,7 +693,7 @@ const useSounds = () => {
       o.type = 'sine';
       o.frequency.setValueAtTime(300, ac.currentTime);
       o.frequency.exponentialRampToValueAtTime(180, ac.currentTime + 0.1);
-      g.gain.setValueAtTime(0.07, ac.currentTime);
+      g.gain.setValueAtTime(vol(0.07), ac.currentTime);
       g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.12);
       o.start(ac.currentTime);
       o.stop(ac.currentTime + 0.12);
@@ -914,6 +931,7 @@ export default function BikeConfigurator() {
           offsets={offsets}
           setOffsets={setOffsets}
           activeComponent={activeComponentForTuning}
+          selectedFrameId={selections['frame'] || ''}
           showGrid={showGrid}
           setShowGrid={setShowGrid}
           gridSize={gridSize}
@@ -971,7 +989,7 @@ export default function BikeConfigurator() {
               ))}
             </div>
             <div className="flex-1 relative min-h-0">
-              <Visualizer selectedComponents={selectedComponents} offsets={offsets} showGrid={showGrid} gridSize={gridSize} isZoomed={isZoomed} zoomScale={zoomScale} steps={steps} />
+              <Visualizer selectedComponents={selectedComponents} offsets={offsets} showGrid={showGrid} gridSize={gridSize} isZoomed={isZoomed} zoomScale={zoomScale} steps={steps} selectedFrameId={selections['frame'] || ''} />
             </div>
           </div>
 
@@ -1085,24 +1103,25 @@ const CompareView = ({ builds, onBack }: { builds: any[], onBack: () => void }) 
     return 'text-zinc-300';
   };
 
-  const colWidth = Math.max(160, Math.floor(800 / builds.length));
+  const isMobile = typeof window !== "undefined" && window.innerWidth < 1024;
+  const colWidth = isMobile ? Math.max(100, Math.floor(360 / builds.length)) : Math.max(160, Math.floor(800 / builds.length));
 
   return (
     <div className="fixed inset-0 z-[1100] bg-black text-white font-sans flex flex-col">
       {/* HEADER */}
-      <div className="shrink-0 px-4 lg:px-8 py-4 border-b border-white/5 bg-zinc-900/60 backdrop-blur-xl flex items-center justify-between gap-4">
+      <div className="shrink-0 px-3 lg:px-8 py-2 lg:py-4 border-b border-white/5 bg-zinc-900/60 backdrop-blur-xl flex items-center justify-between gap-2">
         <div className="flex items-center gap-4">
           <button onClick={onBack} className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center transition-all active:scale-95">
             <ChevronLeft size={14} />
           </button>
           <div>
-            <h2 className="text-[13px] lg:text-[15px] font-black uppercase italic tracking-widest text-red-600 leading-none">Compare Builds</h2>
-            <p className="text-[8px] text-zinc-500 uppercase font-bold mt-0.5 tracking-widest">{builds.length} builds · up to 5</p>
+            <h2 className="text-[11px] lg:text-[15px] font-black uppercase italic tracking-widest text-red-600 leading-none">Compare</h2>
+            <p className="text-[7px] text-zinc-500 uppercase font-bold mt-0.5 tracking-widest">{builds.length} builds</p>
           </div>
         </div>
         <button
           onClick={() => window.location.reload()}
-          className="flex items-center gap-2 bg-red-600 hover:bg-red-700 px-5 py-2 rounded-full font-black uppercase italic text-[10px] tracking-widest text-white transition-all active:scale-95 shadow-lg shadow-red-600/20"
+          className="flex items-center gap-1.5 bg-red-600 hover:bg-red-700 px-3 lg:px-5 py-1.5 lg:py-2 rounded-full font-black uppercase italic text-[9px] lg:text-[10px] tracking-widest text-white transition-all active:scale-95 shadow-lg shadow-red-600/20"
         >
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6a4 4 0 1 1 4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><path d="M2 4V6h2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
           Start New Build
@@ -1114,7 +1133,7 @@ const CompareView = ({ builds, onBack }: { builds: any[], onBack: () => void }) 
         <table className="border-collapse" style={{ width: '100%', minWidth: `${180 + builds.length * colWidth}px` }}>
           <thead className="sticky top-0 z-20">
             <tr>
-              <th className="sticky left-0 z-30 bg-zinc-950 border-b border-r border-white/10 p-3 text-left w-36 lg:w-44">
+              <th className="sticky left-0 z-30 bg-zinc-950 border-b border-r border-white/10 p-1.5 lg:p-3 text-left w-20 lg:w-44">
                 <span className="text-[8px] font-black uppercase text-zinc-600 tracking-widest">Component</span>
               </th>
               {builds.map((b: any, i: number) => {
@@ -1122,21 +1141,21 @@ const CompareView = ({ builds, onBack }: { builds: any[], onBack: () => void }) 
                 const isCheapest = t.price === minPrice;
                 const isLightest = t.weight === minWeight;
                 return (
-                  <th key={b.id} className="bg-zinc-950 border-b border-l border-white/10 p-3 text-center" style={{ minWidth: colWidth }}>
-                    <div className="text-[11px] font-black uppercase italic text-white truncate max-w-[140px] mx-auto leading-tight">{b.name}</div>
-                    <div className="text-[8px] text-zinc-600 font-mono mt-0.5">{b.date}</div>
-                    <div className="flex justify-center items-center gap-2 mt-1.5">
-                      <span className={cn("text-[10px] font-mono font-black", isCheapest ? "text-green-400" : "text-red-500")}>
+                  <th key={b.id} className="bg-zinc-950 border-b border-l border-white/10 p-1.5 lg:p-3 text-center" style={{ minWidth: colWidth }}>
+                    <div className="text-[9px] lg:text-[11px] font-black uppercase italic text-white truncate max-w-[90px] lg:max-w-[140px] mx-auto leading-tight">{b.name}</div>
+                    <div className="hidden lg:block text-[8px] text-zinc-600 font-mono mt-0.5">{b.date}</div>
+                    <div className="flex justify-center items-center gap-1 lg:gap-2 mt-1">
+                      <span className={cn("text-[8px] lg:text-[10px] font-mono font-black", isCheapest ? "text-green-400" : "text-red-500")}>
                         €{t.price.toLocaleString()}
                       </span>
                       <span className="text-zinc-700">·</span>
-                      <span className={cn("text-[10px] font-mono", isLightest ? "text-green-400" : "text-zinc-400")}>
+                      <span className={cn("text-[8px] lg:text-[10px] font-mono", isLightest ? "text-green-400" : "text-zinc-400")}>
                         {t.weight}g
                       </span>
                     </div>
                     <div className="flex justify-center gap-1 mt-1">
-                      {isCheapest && <span className="text-[7px] bg-green-600/20 text-green-400 px-1.5 py-0.5 rounded-full font-black uppercase tracking-widest">Cheapest</span>}
-                      {isLightest && <span className="text-[7px] bg-blue-600/20 text-blue-400 px-1.5 py-0.5 rounded-full font-black uppercase tracking-widest">Lightest</span>}
+                      {isCheapest && <span className="hidden lg:inline text-[7px] bg-green-600/20 text-green-400 px-1.5 py-0.5 rounded-full font-black uppercase tracking-widest">Cheapest</span>}
+                      {isLightest && <span className="hidden lg:inline text-[7px] bg-blue-600/20 text-blue-400 px-1.5 py-0.5 rounded-full font-black uppercase tracking-widest">Lightest</span>}
                     </div>
                   </th>
                 );
@@ -1146,22 +1165,22 @@ const CompareView = ({ builds, onBack }: { builds: any[], onBack: () => void }) 
           <tbody>
             {/* Totals rows — scrollable, not sticky */}
             <tr className="bg-zinc-900/40 border-b border-white/10">
-              <td className="sticky left-0 z-10 bg-zinc-900/80 border-r border-white/10 p-3">
+              <td className="sticky left-0 z-10 bg-zinc-900/80 border-r border-white/10 p-1.5 lg:p-3">
                 <span className="text-[8px] font-black uppercase italic text-zinc-400">Total Weight</span>
               </td>
               {totals.map(t => (
-                <td key={t.id} className="border-l border-white/10 p-3 text-center">
-                  <span className={cn("font-mono text-[12px]", highlight(totals.map(x => x.weight), t.weight))}>{t.weight}g</span>
+                <td key={t.id} className="border-l border-white/10 p-1.5 lg:p-3 text-center">
+                  <span className={cn("font-mono text-[10px] lg:text-[12px]", highlight(totals.map(x => x.weight), t.weight))}>{t.weight}g</span>
                 </td>
               ))}
             </tr>
             <tr className="bg-zinc-900/40 border-b border-white/10">
-              <td className="sticky left-0 z-10 bg-zinc-900/80 border-r border-white/10 p-3">
+              <td className="sticky left-0 z-10 bg-zinc-900/80 border-r border-white/10 p-1.5 lg:p-3">
                 <span className="text-[8px] font-black uppercase italic text-zinc-400">Total Price</span>
               </td>
               {totals.map(t => (
-                <td key={t.id} className="border-l border-white/10 p-3 text-center">
-                  <span className={cn("font-mono text-[12px]", highlight(totals.map(x => x.price), t.price))}>€{t.price.toLocaleString()}</span>
+                <td key={t.id} className="border-l border-white/10 p-1.5 lg:p-3 text-center">
+                  <span className={cn("font-mono text-[10px] lg:text-[12px]", highlight(totals.map(x => x.price), t.price))}>€{t.price.toLocaleString()}</span>
                 </td>
               ))}
             </tr>
@@ -1171,22 +1190,22 @@ const CompareView = ({ builds, onBack }: { builds: any[], onBack: () => void }) 
               const weights = comps.map(c => c ? Number(c.weight) || 0 : 0).filter(v => v > 0);
               return (
                 <tr key={cat} className={cn("border-b border-white/5 transition-colors", rowIdx % 2 === 0 ? "bg-transparent" : "bg-white/[0.015]", "hover:bg-white/[0.04]")}>
-                  <td className="sticky left-0 z-10 bg-zinc-950 border-r border-white/10 p-3">
-                    <span className="text-[8px] font-black uppercase text-zinc-500 tracking-widest">{cat}</span>
+                  <td className="sticky left-0 z-10 bg-zinc-950 border-r border-white/10 p-1.5 lg:p-3">
+                    <span className="text-[7px] lg:text-[8px] font-black uppercase text-zinc-500 tracking-widest">{cat}</span>
                   </td>
                   {builds.map((b: any, i: number) => {
                     const comp = comps[i];
                     const priceClass = prices.length > 1 ? highlight(prices, comp ? Number(comp.price) || 0 : 0) : 'text-zinc-300';
                     return (
-                      <td key={b.id} className="border-l border-white/5 p-3 text-center align-top">
+                      <td key={b.id} className="border-l border-white/5 p-1.5 lg:p-3 text-center align-top">
                         {comp ? (
                           <div className="flex flex-col items-center gap-0.5">
-                            <span className="text-[9px] font-black text-white uppercase leading-tight tracking-wide max-w-[130px] truncate">{comp.brand}</span>
-                            <span className="text-[8px] text-zinc-500 leading-tight max-w-[130px] line-clamp-2 text-center">{comp.name}</span>
-                            <div className="flex items-center gap-1.5 mt-1">
-                              <span className={cn("font-mono text-[9px]", priceClass)}>€{comp.price}</span>
-                              <span className="text-zinc-700 text-[8px]">·</span>
-                              <span className="font-mono text-[9px] text-zinc-500">{comp.weight}g</span>
+                            <span className="text-[7px] lg:text-[9px] font-black text-white uppercase leading-tight tracking-wide max-w-[80px] lg:max-w-[130px] truncate">{comp.brand}</span>
+                            <span className="text-[7px] lg:text-[8px] text-zinc-500 leading-tight max-w-[80px] lg:max-w-[130px] line-clamp-2 text-center">{comp.name}</span>
+                            <div className="flex items-center gap-1 mt-0.5">
+                              <span className={cn("font-mono text-[7px] lg:text-[9px]", priceClass)}>€{comp.price}</span>
+                              <span className="text-zinc-700 text-[7px]">·</span>
+                              <span className="font-mono text-[7px] lg:text-[9px] text-zinc-500">{comp.weight}g</span>
                             </div>
                           </div>
                         ) : (
@@ -1426,6 +1445,34 @@ const AuthModal = ({ isOpen, onClose, onLogin }: any) => {
   );
 };
 
+
+// --- SUMMARY VISUALIZER ---
+// Renders the completed bike from selected components (read-only, no offsets needed)
+const SummaryVisualizer = ({ selections }: { selections: any[] }) => {
+  const sorted = [...selections].sort((a, b) => (Number(a.zIndex) || 0) - (Number(b.zIndex) || 0));
+  return (
+    <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
+      {/* Subtle radial glow */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_55%,rgba(239,68,68,0.06),transparent)] pointer-events-none" />
+      {sorted.map((comp, i) => (
+        comp.imageUrl ? (
+          <motion.img
+            key={comp.id || i}
+            src={comp.imageUrl}
+            alt={comp.name}
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.04, duration: 0.4, ease: 'easeOut' }}
+            className="absolute inset-0 w-full h-full object-contain"
+            style={{ zIndex: Number(comp.zIndex) || 10 }}
+            draggable={false}
+          />
+        ) : null
+      ))}
+    </div>
+  );
+};
+
 // --- SUMMARY VIEW ---
 function SummaryView({ selections, onReset, setSavedBuilds, user, onOpenGarage, onOpenAuth }: any) {
   const [isExporting, setIsExporting] = useState(false);
@@ -1486,7 +1533,7 @@ function SummaryView({ selections, onReset, setSavedBuilds, user, onOpenGarage, 
         o.connect(g); g.connect(ac.destination);
         o.type = 'sine'; o.frequency.value = [523, 659, 784][i];
         g.gain.setValueAtTime(0, ac.currentTime + t);
-        g.gain.linearRampToValueAtTime(0.07, ac.currentTime + t + 0.02);
+        g.gain.linearRampToValueAtTime(vol(0.07), ac.currentTime + t + 0.02);
         g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + t + 0.4);
         o.start(ac.currentTime + t); o.stop(ac.currentTime + t + 0.4);
       });
@@ -1512,34 +1559,94 @@ function SummaryView({ selections, onReset, setSavedBuilds, user, onOpenGarage, 
         </div>
       </nav>
 
-      <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
-        <h2
-          className="text-[20px] lg:text-[22px] font-black italic uppercase tracking-tighter mb-6 leading-[1.1]">
-          Your bike is <br /> <span className="text-red-600 uppercase">Ready</span>
-        </h2>
+      {/* MAIN LAYOUT — bike left/center, buttons right */}
+      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden min-h-0">
 
-        <div className="flex justify-center gap-10 my-8 bg-zinc-900/40 p-6 rounded-[2rem] border border-white/5 shadow-2xl backdrop-blur-md">
-          <div><p className="text-zinc-600 text-[7px] uppercase font-black mb-1 italic tracking-widest">Price</p><p className="text-[14px] font-mono text-red-600 font-black tracking-tighter italic">€{totalPrice.toLocaleString()}</p></div>
-          <div><p className="text-zinc-600 text-[7px] uppercase font-black mb-1 italic tracking-widest">Weight</p><p className="text-[14px] font-mono text-white/80 font-black tracking-tighter italic">{totalWeight}g</p></div>
+        {/* LEFT: Bike Visualizer */}
+        <div className="flex-1 relative flex flex-col min-h-0">
+          {/* Bike canvas */}
+          <div className="relative flex-1 min-h-0">
+            <SummaryVisualizer selections={selections} />
+          </div>
+
+          {/* Components list — bottom overlay */}
+          <div className="shrink-0 px-4 lg:px-8 pb-3 pt-2">
+            <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+              {selections.map((c: any, i: number) => (
+                <div key={i} className="shrink-0 bg-zinc-900/70 border border-white/5 rounded-xl px-3 py-2 flex flex-col gap-0.5 min-w-[90px] backdrop-blur-sm">
+                  <span className="text-[6px] font-black uppercase italic text-zinc-600 tracking-widest leading-none">{c.stepTitle}</span>
+                  <span className="text-[7px] font-black text-white uppercase leading-tight truncate max-w-[80px]">{c.brand}</span>
+                  <span className="text-[7px] text-zinc-400 leading-tight truncate max-w-[80px]">{c.name}</span>
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <span className="text-[7px] font-mono text-red-500">€{c.price}</span>
+                    <span className="text-zinc-700 text-[6px]">·</span>
+                    <span className="text-[7px] font-mono text-zinc-500">{c.weight}g</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
-        <div className="flex flex-col gap-4 w-full max-w-[280px]">
-          <button onClick={handleExport} disabled={isExporting} className="relative h-14 bg-zinc-900 border border-white/10 rounded-2xl font-black uppercase text-[10px] italic overflow-hidden transition-all active:scale-95 group shadow-xl">
-            {isExporting && <motion.div className="absolute left-0 top-0 bottom-0 bg-red-600/80 z-0" animate={{ width: `${progress}%` }} transition={{ ease: "linear" }} />}
-            <span className="relative z-10 flex items-center justify-center gap-2 text-white">
-              {isExporting ? `SAVING ${progress}%` : <><Download size={14} /> EXPORT PDF</>}
-            </span>
-          </button>
+        {/* RIGHT PANEL: actions — same column as cards in configurator */}
+        <div className="w-full lg:w-[280px] shrink-0 flex flex-col border-t lg:border-t-0 lg:border-l border-white/5 bg-zinc-950/60 backdrop-blur-xl">
+          <div className="flex-1 flex flex-col justify-center p-5 lg:p-6 gap-5">
 
-          <button onClick={handleSaveBuild} className="h-14 border border-red-600/30 text-red-600 rounded-2xl font-black uppercase text-[10px] italic hover:bg-red-600/10 transition-all active:scale-95 shadow-lg shadow-red-600/5">
-            Save to Garage
-          </button>
+            {/* Title */}
+            <div>
+              <p className="text-[8px] font-black uppercase italic tracking-widest text-zinc-600 leading-none mb-1">Your build</p>
+              <h2 className="text-[18px] lg:text-[20px] font-black italic uppercase tracking-tighter leading-tight">
+                Your bike is <span className="text-red-600">Ready</span>
+              </h2>
+            </div>
 
-          <ShareMenu buildName={selections.find((c: any) => c.stepTitle === 'Frame')?.name} message="Look at this! Its my dream!" />
+            {/* Stats */}
+            <div className="flex gap-3">
+              <div className="flex-1 bg-black/40 border border-white/5 rounded-2xl p-3">
+                <p className="text-zinc-600 text-[7px] uppercase font-black italic tracking-widest leading-none mb-1">Price</p>
+                <p className="text-[16px] font-mono text-red-600 font-black tracking-tighter italic leading-none">€{totalPrice.toLocaleString()}</p>
+              </div>
+              <div className="flex-1 bg-black/40 border border-white/5 rounded-2xl p-3">
+                <p className="text-zinc-600 text-[7px] uppercase font-black italic tracking-widest leading-none mb-1">Weight</p>
+                <p className="text-[16px] font-mono text-white/80 font-black tracking-tighter italic leading-none">{totalWeight}g</p>
+              </div>
+            </div>
 
-          <button onClick={onReset} className="px-8 py-4 bg-transparent border border-white/10 text-white rounded-2xl font-black uppercase text-[10px] italic hover:bg-white/5 hover:border-white/20 transition-all active:scale-95 shadow-xl">
-            Build another one
-          </button>
+            {/* Action buttons */}
+            <div className="flex flex-col gap-2.5">
+              <button onClick={handleSaveBuild} className="h-11 bg-zinc-800/80 hover:bg-zinc-700/80 border border-white/8 text-white rounded-lg font-black uppercase text-[9px] tracking-widest transition-all active:scale-[0.97] flex items-center justify-center gap-2">
+                <Save size=12 /> Save to Garage
+              </button>
+
+              <button onClick={handleExport} disabled={isExporting} className="relative h-11 bg-zinc-800/80 hover:bg-zinc-700/80 border border-white/8 text-white rounded-lg font-black uppercase text-[9px] tracking-widest transition-all active:scale-[0.97] flex items-center justify-center gap-2 overflow-hidden">
+                {isExporting && <motion.div className="absolute left-0 top-0 bottom-0 bg-red-600/80 z-0" animate={{ width: `${progress}%` }} transition={{ ease: "linear" }} />}
+                <span className="relative z-10 flex items-center justify-center gap-2 text-white">
+                  {isExporting ? `SAVING ${progress}%` : <><Download size={13} /> Export PDF</>}
+                </span>
+              </button>
+
+              <ShareMenu buildName={selections.find((c: any) => c.stepTitle === 'Frame')?.name} message="Look at this! Its my dream!" />
+
+              <button onClick={onReset} className="h-11 bg-zinc-800/80 hover:bg-zinc-700/80 border border-white/8 text-white rounded-lg font-black uppercase text-[9px] tracking-widest transition-all active:scale-[0.97] flex items-center justify-center gap-2 text-zinc-400 hover:text-white">
+                <svg width="13" height="13" viewBox="0 0 12 12" fill="none"><path d="M2 6a4 4 0 1 1 4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><path d="M2 4V6h2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                Build Another One
+              </button>
+            </div>
+
+          </div>
+
+          {/* Footer */}
+          <div className="px-5 py-3 border-t border-white/5 flex items-center justify-center gap-4">
+            <a href="https://wa.me/34674262622" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-zinc-600 hover:text-green-400 transition-colors">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.124.558 4.115 1.529 5.845L0 24l6.335-1.508A11.933 11.933 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 0 1-5.006-1.368l-.359-.214-3.722.886.938-3.623-.234-.372A9.818 9.818 0 1 1 12 21.818z"/></svg>
+              <span className="text-[6px] font-black uppercase italic tracking-widest">+34 674 262 622</span>
+            </a>
+            <p className="text-[6px] font-black uppercase italic text-red-600/50 tracking-widest">Adicto.Bike | 2026</p>
+            <a href="mailto:hello@adicto.bike" className="flex items-center gap-1 text-zinc-600 hover:text-red-400 transition-colors">
+              <span className="text-[6px] font-black uppercase italic tracking-widest">hello@adicto.bike</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+            </a>
+          </div>
         </div>
       </div>
     </div>
