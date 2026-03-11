@@ -1615,7 +1615,7 @@ function SummaryView({ selections, onReset, setSavedBuilds, user, onOpenGarage, 
             {/* Action buttons */}
             <div className="flex flex-col gap-2.5">
               <button onClick={handleSaveBuild} className="h-11 bg-zinc-800/80 hover:bg-zinc-700/80 border border-white/8 text-white rounded-lg font-black uppercase text-[9px] tracking-widest transition-all active:scale-[0.97] flex items-center justify-center gap-2">
-                <Save size=12 /> Save to Garage
+                <Save size={12} /> Save to Garage
               </button>
 
               <button onClick={handleExport} disabled={isExporting} className="relative h-11 bg-zinc-800/80 hover:bg-zinc-700/80 border border-white/8 text-white rounded-lg font-black uppercase text-[9px] tracking-widest transition-all active:scale-[0.97] flex items-center justify-center gap-2 overflow-hidden">
