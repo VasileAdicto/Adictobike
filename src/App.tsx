@@ -658,16 +658,16 @@ const OptionCard = ({ component, allOptions = [], isSelected, onClick }: { compo
             const mostExpensive = allOptions.length > 0 ? allOptions.reduce((a, b) => b.price > a.price ? b : a, allOptions[0]) : null;
             const priceDiff = mostExpensive ? component.price - mostExpensive.price : 0;
             const weightDiff = mostExpensive ? component.weight - mostExpensive.weight : 0;
-            const priceDiffStr = priceDiff === 0 ? '±0' : (priceDiff > 0 ? `+${priceDiff}€` : `${priceDiff}€`);
-            const weightDiffStr = weightDiff === 0 ? '±0' : (weightDiff > 0 ? `+${weightDiff}g` : `${weightDiff}g`);
+            const priceDiffStr = priceDiff === 0 ? '' : (priceDiff > 0 ? `+${priceDiff}€` : `${priceDiff}€`);
+            const weightDiffStr = weightDiff === 0 ? '' : (weightDiff > 0 ? `+${weightDiff}g` : `${weightDiff}g`);
             const priceColor = priceDiff === 0 ? 'text-zinc-600' : priceDiff < 0 ? 'text-green-400' : 'text-red-400';
             const weightColor = weightDiff === 0 ? 'text-zinc-600' : weightDiff > 0 ? 'text-red-400' : 'text-green-400';
             return (
               <>
-                {mostExpensive && mostExpensive.id !== component.id && (
+                {mostExpensive && mostExpensive.id !== component.id && (priceDiffStr || weightDiffStr) && (
                   <>
-                    <span className={cn("absolute top-[3px] left-0.5 z-20 font-mono text-[9px] lg:text-[11px] italic leading-none", priceColor)}>{priceDiffStr}</span>
-                    <span className={cn("absolute top-[3px] right-0.5 z-20 font-mono text-[9px] lg:text-[11px] italic leading-none", weightColor)}>{weightDiffStr}</span>
+                    <span className={cn("absolute top-[6px] left-[2px] z-20 font-mono text-[9px] lg:text-[11px] italic leading-none", priceColor)}>{priceDiffStr}</span>
+                    <span className={cn("absolute top-[6px] right-[2px] z-20 font-mono text-[9px] lg:text-[11px] italic leading-none", weightColor)}>{weightDiffStr}</span>
                   </>
                 )}
                 <div className="flex items-center justify-between mt-0.5 gap-0.5">
@@ -1134,7 +1134,7 @@ export default function BikeConfigurator() {
                   else { setIsFinished(true); }
                 }
               }}
-              className="bg-red-600 text-white rounded-md font-black uppercase italic flex items-center gap-1.5 shadow-lg shadow-red-600/20 active:scale-95 transition-all shrink-0" style={{ padding: "2px 10px", height: "20px", fontSize: "7px", lineHeight: 1 }}
+              className="bg-red-600 text-white font-black uppercase text-[10px] italic flex items-center gap-1 px-3 h-auto py-1 rounded-md shadow-lg shadow-red-600/20 active:scale-95 transition-all"
             >
               {currentStepIndex === steps.length - 1 ? 'Finish' : 'Next'} <ChevronRight size={14} />
             </button>
@@ -1189,7 +1189,7 @@ const CompareView = ({ builds, onBack }: { builds: any[], onBack: () => void }) 
   };
 
   const isMobile = typeof window !== "undefined" && window.innerWidth < 1024;
-  const colWidth = isMobile ? 80 : 120;
+  const colWidth = isMobile ? 80 : 40;
 
   return (
     <div className="fixed inset-0 z-[1100] bg-black text-white font-sans flex flex-col">
@@ -1213,7 +1213,7 @@ const CompareView = ({ builds, onBack }: { builds: any[], onBack: () => void }) 
       </div>
 
       <div className="flex-1 overflow-auto custom-scroll-container">
-        <table className="border-collapse" style={{ width: '100%', minWidth: `${100 + builds.length * colWidth}px` }}>
+        <table className="border-collapse" style={{ tableLayout: 'fixed', width: `${100 + builds.length * colWidth}px` }}>
           <thead className="sticky top-0 z-20">
             <tr>
               <th className="sticky left-0 z-30 bg-zinc-950 border-b border-r border-white/10 p-1 lg:p-2 text-left w-16 lg:w-28">
