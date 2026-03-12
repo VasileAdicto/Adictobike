@@ -1588,36 +1588,42 @@ const generateAdictoPDF = async (components: any[]) => {
 
   const getBase64Image = async (url: string): Promise<string> => {
     try {
-      const res = await fetch(url);
+      const res = await fetch(url, { mode: 'cors' });
+      if (!res.ok) return "";
       const blob = await res.blob();
-      return new Promise((resolve, reject) => {
+      if (!blob.type.startsWith('image/')) return "";
+      return await new Promise<string>((resolve) => {
         const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result as string);
-        reader.onerror = reject;
+        reader.onloadend = () => resolve(reader.result as string || "");
+        reader.onerror = () => resolve("");
         reader.readAsDataURL(blob);
       });
-    } catch (e) { return ""; }
+    } catch { return ""; }
   };
 
-  try {
-    const logoBase64 = await getBase64Image("/design/Logo.png");
-    if (logoBase64) doc.addImage(logoBase64, 'PNG', (pageWidth / 2) - 15, 8, 10, 10);
-  } catch (e) { }
+  const safeAddImage = (base64: string, x: number, y: number, w: number, h: number, alias?: string) => {
+    try {
+      if (!base64 || !base64.includes(',')) return;
+      const fmt = base64.split(';')[0].split('/')[1]?.toUpperCase();
+      if (!fmt || !['PNG','JPEG','JPG','WEBP'].includes(fmt)) return;
+      doc.addImage(base64, fmt as any, x, y, w, h, alias, 'FAST');
+    } catch { /* skip broken image silently */ }
+  };
 
-  try {
-    const sortedByZ = [...components].sort((a, b) => (Number(a.zIndex) || 0) - (Number(b.zIndex) || 0));
-    for (const comp of sortedByZ) {
-      if (comp.imageUrl) {
-        const imgBase64 = await getBase64Image(comp.imageUrl);
-        if (imgBase64) {
-          doc.addImage(imgBase64, 'PNG', 15, 20, 180, 110, undefined, 'FAST');
-        }
-      }
+  // 1. Logo
+  const logoBase64 = await getBase64Image("/design/Logo.png");
+  safeAddImage(logoBase64, (pageWidth / 2) - 15, 8, 10, 10);
+
+  // 2. Layered bike render
+  const sortedByZ = [...components].sort((a, b) => (Number(a.zIndex) || 0) - (Number(b.zIndex) || 0));
+  for (const comp of sortedByZ) {
+    if (comp.imageUrl) {
+      const imgBase64 = await getBase64Image(comp.imageUrl);
+      safeAddImage(imgBase64, 15, 20, 180, 110, comp.id);
     }
-  } catch (e) {
-    console.error("PDF Image Error:", e);
   }
 
+  // 3. Specs table
   autoTable(doc, {
     startY: 135,
     head: [['SECTION', 'COMPONENT', 'BRAND', 'WEIGHT', 'PRICE']],
@@ -1626,28 +1632,30 @@ const generateAdictoPDF = async (components: any[]) => {
       cleanText(c.name),
       cleanText(c.brand),
       `${c.weight} g`,
-      `${c.price?.toLocaleString()} €`,
+      `${c.price?.toLocaleString()} \u20ac`,
     ]),
     styles: { font: "helvetica", fontSize: 6, cellPadding: 2 },
     headStyles: { fillColor: [20, 20, 20], textColor: [255, 255, 255] },
-    foot: [['TOTAL', '', '', `${totalWeight} g`, `${totalPrice?.toLocaleString()} €`]],
+    foot: [['TOTAL', '', '', `${totalWeight} g`, `${totalPrice?.toLocaleString()} \u20ac`]],
     footStyles: { fillColor: [220, 38, 38], textColor: [255, 255, 255], fontSize: 8, fontStyle: 'bold' },
     theme: 'grid',
   });
 
-  const finalY = (doc as any).lastAutoTable.finalY + 10;
-  doc.setFontSize(6);
-  doc.setTextColor(100);
-  const disclaimer = "NOTICE: THE WEIGHT AND PRICE INDICATED ARE PRELIMINARY AND SUBJECT TO MINOR CHANGES BASED ON COMPONENT AVAILABILITY. ADICTO.BIKE RESERVES THE RIGHT TO MODIFY SPECIFICATIONS WITHOUT PRIOR NOTICE.";
-  doc.text(doc.splitTextToSize(disclaimer, pageWidth - 30), 15, finalY);
+  // 4. Disclaimer
+  try {
+    const finalY = (doc as any).lastAutoTable.finalY + 10;
+    doc.setFontSize(6);
+    doc.setTextColor(100);
+    const disclaimer = "NOTICE: THE WEIGHT AND PRICE INDICATED ARE PRELIMINARY AND SUBJECT TO MINOR CHANGES BASED ON COMPONENT AVAILABILITY. ADICTO.BIKE RESERVES THE RIGHT TO MODIFY SPECIFICATIONS WITHOUT PRIOR NOTICE.";
+    doc.text(doc.splitTextToSize(disclaimer, pageWidth - 30), 15, finalY);
+  } catch { }
 
+  // 5. Footer + QR
   doc.setFontSize(7);
   doc.setTextColor(20);
   doc.text("WWW.ADICTO.BIKE  |  @ADICTO.BIKE", pageWidth / 2, pageHeight - 15, { align: 'center' });
-  try {
-    const qrBase64 = await getBase64Image("/design/qr-code.png");
-    if (qrBase64) doc.addImage(qrBase64, 'PNG', pageWidth - 45, pageHeight - 45, 30, 30);
-  } catch (e) { }
+  const qrBase64 = await getBase64Image("/design/qr-code.png");
+  safeAddImage(qrBase64, pageWidth - 45, pageHeight - 45, 30, 30);
 
   doc.save(`ADICTO_${buildName.replace(/\s+/g, '_')}.pdf`);
 };
