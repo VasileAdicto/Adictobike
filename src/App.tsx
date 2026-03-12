@@ -438,7 +438,7 @@ const EmptyVisualizerState = ({ layers = [] }: { layers?: BikeLayer[] }) => {
         {phase === 'logo' && (
           <motion.div
             key="logo"
-            className="absolute inset-0 flex flex-col items-center justify-center gap-0"
+            className="absolute inset-0 flex flex-col items-center justify-center gap-5 lg:gap-6"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -455,7 +455,7 @@ const EmptyVisualizerState = ({ layers = [] }: { layers?: BikeLayer[] }) => {
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: item.delay, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-                className="text-[9px] lg:text-[11px] font-black uppercase italic tracking-widest text-zinc-500 leading-relaxed text-center"
+                className="text-[9px] lg:text-[11px] font-black uppercase italic tracking-widest text-zinc-500 text-center leading-none"
               >
                 {item.text}
               </motion.p>
@@ -666,8 +666,8 @@ const OptionCard = ({ component, allOptions = [], isSelected, onClick }: { compo
               <>
                 {mostExpensive && mostExpensive.id !== component.id && (
                   <>
-                    <span className={cn("absolute top-0 left-0 z-20 font-mono text-[5px] lg:text-[7px] italic leading-none px-0.5 pt-0.5", priceColor)}>{priceDiffStr}</span>
-                    <span className={cn("absolute top-0 right-0 z-20 font-mono text-[5px] lg:text-[7px] italic leading-none px-0.5 pt-0.5", weightColor)}>{weightDiffStr}</span>
+                    <span className={cn("absolute top-2 left-0 z-20 font-mono text-[7px] lg:text-[9px] italic leading-none px-0.5", priceColor)}>{priceDiffStr}</span>
+                    <span className={cn("absolute top-2 right-0 z-20 font-mono text-[7px] lg:text-[9px] italic leading-none px-0.5", weightColor)}>{weightDiffStr}</span>
                   </>
                 )}
                 <div className="flex items-center justify-between mt-0.5 gap-0.5">
@@ -1134,7 +1134,7 @@ export default function BikeConfigurator() {
                   else { setIsFinished(true); }
                 }
               }}
-              className="bg-red-600 text-white h-[32px] px-4 lg:px-6 rounded-lg font-black uppercase text-[10px] italic flex items-center gap-2 shadow-lg shadow-red-600/20 active:scale-95 transition-all"
+              className="bg-red-600 text-white h-[32px] lg:h-[22px] px-4 lg:px-3 rounded-lg lg:rounded-md font-black uppercase text-[10px] lg:text-[8px] italic flex items-center gap-2 shadow-lg shadow-red-600/20 active:scale-95 transition-all"
             >
               {currentStepIndex === steps.length - 1 ? 'Finish' : 'Next'} <ChevronRight size={14} />
             </button>
@@ -1189,7 +1189,7 @@ const CompareView = ({ builds, onBack }: { builds: any[], onBack: () => void }) 
   };
 
   const isMobile = typeof window !== "undefined" && window.innerWidth < 1024;
-  const colWidth = isMobile ? Math.max(80, Math.floor(260 / builds.length)) : Math.max(160, Math.floor(800 / builds.length));
+  const colWidth = isMobile ? Math.max(72, Math.floor(220 / builds.length)) : Math.max(100, Math.floor(400 / builds.length));
 
   return (
     <div className="fixed inset-0 z-[1100] bg-black text-white font-sans flex flex-col">
