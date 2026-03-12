@@ -593,7 +593,7 @@ const useSounds = () => {
   const play = (file: string) => {
     try {
       const a = new Audio('/parts/sounds/' + file + '?v=' + _v);
-      a.volume = isMobile ? 0.15 : 1.0;
+      a.volume = isMobile ? 0.02 : 1.0;
       a.play().catch(() => {});
     } catch {}
   };
