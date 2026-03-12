@@ -1400,7 +1400,7 @@ function SummaryView({ selections, onBack, onReset, setSavedBuilds, user, onOpen
   };
 
   return (
-    <div className="h-screen bg-black text-white font-sans selection:bg-red-600 flex flex-col overflow-hidden">
+    <div className="h-full bg-black text-white font-sans selection:bg-red-600 flex flex-col overflow-hidden">
       <nav className="border-b border-white/5 px-4 lg:px-6 py-2 flex justify-between items-center bg-black/80 backdrop-blur-2xl sticky top-0 z-50 w-full">
         <div className="flex flex-col gap-0.5">
           <button onClick={onReset} className="flex items-center gap-3 group active:scale-95 transition-transform" title="Back to start">
@@ -1425,7 +1425,7 @@ function SummaryView({ selections, onBack, onReset, setSavedBuilds, user, onOpen
 
       <div className="flex-1 flex flex-col lg:flex-row min-h-0 overflow-hidden">
 
-        <div className="flex flex-col min-h-0 lg:flex-1">
+        <div className="flex flex-col min-h-0 min-w-0 lg:flex-1">
           <div className="h-[350px] lg:flex-1 relative shrink-0 lg:shrink">
             <SummaryVisualizer selections={selections} />
           </div>
@@ -1447,7 +1447,7 @@ function SummaryView({ selections, onBack, onReset, setSavedBuilds, user, onOpen
             </div>
           </div>
 
-          <div className="hidden lg:block shrink-0 px-8 pb-3 pt-2">
+          <div className="hidden lg:block shrink-0 px-8 pb-3 pt-2 min-h-[60px]">
             <div className="flex gap-3 overflow-x-auto pb-2 custom-scroll-container">
               {selections.map((c: any, i: number) => (
                 <div key={i} className="shrink-0 bg-zinc-900/70 border border-white/5 rounded-xl px-4 py-3 flex flex-col gap-1 min-w-[160px] backdrop-blur-sm">
@@ -1465,7 +1465,7 @@ function SummaryView({ selections, onBack, onReset, setSavedBuilds, user, onOpen
           </div>
         </div>
 
-        <div className="w-full lg:w-[280px] shrink-0 flex flex-col border-t lg:border-t-0 lg:border-l border-white/5 bg-zinc-950/60 backdrop-blur-xl overflow-y-auto lg:overflow-y-auto">
+        <div className="w-full lg:w-[280px] lg:min-w-[280px] shrink-0 flex flex-col border-t lg:border-t-0 lg:border-l border-white/5 bg-zinc-950/60 backdrop-blur-xl overflow-y-auto">
 
           <div className="flex gap-2 px-3 lg:px-5 pt-1.5 pb-1 lg:pt-5 lg:pb-0 shrink-0">
             <div className="flex-1 bg-black/40 border border-white/5 rounded-xl p-2 lg:p-3 flex flex-col items-center justify-center text-center">
