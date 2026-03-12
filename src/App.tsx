@@ -122,7 +122,6 @@ const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
   const [rememberMe, setRememberMe] = useState(true);
   const [error, setError] = useState('');
 
-  // stable callback to avoid infinite loop in useEffect
   const stableOnLogin = useCallback(onLogin, []); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (localStorage.getItem('adicto_auth') === 'true') stableOnLogin();
@@ -165,7 +164,6 @@ const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
 
 // --- ADMIN PANEL COMPONENT ---
 const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, selectedFrameId, showGrid, setShowGrid, gridSize, setGridSize, isZoomed, setIsZoomed, zoomScale, setZoomScale, onLogout }: any) => {
-  // offset key = "{frameId}__{compId}" — unique per frame
   const offsetKey = (compId: string) => selectedFrameId ? `${selectedFrameId}__${compId}` : `__${compId}`;
   const [selectedCat, setSelectedCat] = useState('excel');
   const [status, setStatus] = useState('');
@@ -278,7 +276,6 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, selected
             <input type="file" className="hidden" {...{ webkitdirectory: "" } as any} onChange={(e: any) => handleUpload(e, true)} />
           </label>
         </div>
-        {/* Grid button + inline slider */}
         <div className="flex items-center gap-1.5 bg-black/40 px-1.5 py-1 rounded-lg border border-white/5">
           <button onClick={() => setShowGrid(!showGrid)} className={cn("px-2 py-1 rounded text-[9px] font-bold uppercase transition-all flex items-center gap-1", showGrid ? "bg-red-600 text-white" : "bg-zinc-800 text-zinc-400")}>
             <Grid3X3 size={10}/> Grid
@@ -291,7 +288,6 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, selected
             </div>
           )}
         </div>
-        {/* Zoom button + inline slider */}
         <div className="flex items-center gap-1.5 bg-black/40 px-1.5 py-1 rounded-lg border border-white/5">
           <button onClick={() => setIsZoomed(!isZoomed)} className={cn("px-2 py-1 rounded text-[9px] font-bold uppercase transition-all flex items-center gap-1", isZoomed ? "bg-red-600 text-white" : "bg-zinc-800 text-zinc-400")}>
             <Search size={10}/> {isZoomed ? `${zoomScale.toFixed(1)}X` : 'Zoom'}
@@ -309,7 +305,6 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, selected
       </motion.div>
       {activeComponent && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-black/80 border-b border-white/5 p-2 flex justify-between items-center px-6 backdrop-blur-xl gap-10">
-          {/* Frame context indicator */}
           {selectedFrameId && (
             <div className="absolute top-1 left-6 flex items-center gap-1.5">
               <span className="text-[7px] font-black uppercase text-zinc-600 italic tracking-widest">Frame:</span>
@@ -344,11 +339,9 @@ interface BikeLayer { imageUrl: string; zIndex: number; }
 
 type IntroPhase = 'hidden' | 'assembling' | 'hold' | 'fadeout' | 'logo';
 
-// ms gap BEFORE each layer index appears (index 0 = first gap before frame)
 const LAYER_GAPS = [350, 460, 420, 390, 370, 240, 340, 360, 360, 360, 340];
 
 const LOGO_CHARS = 'ADICTO.BIKE'.split('');
-// Same stagger but slower — 120ms per char
 const LOGO_CHAR_DELAY = 0.12;
 
 const EmptyVisualizerState = ({ layers = [] }: { layers?: BikeLayer[] }) => {
@@ -359,16 +352,15 @@ const EmptyVisualizerState = ({ layers = [] }: { layers?: BikeLayer[] }) => {
   const FADEOUT_MS = 900;
 
   useEffect(() => {
-    if (layers.length === 0) return; // wait until images loaded
+    if (layers.length === 0) return;
     const timers: ReturnType<typeof setTimeout>[] = [];
 
-    // Start assembling on next frame — guarantees no flash before timers fire
     timers.push(setTimeout(() => setPhase('assembling'), 0));
 
     let elapsed = 0;
     layers.forEach((_, i) => {
       elapsed += LAYER_GAPS[i] ?? 380;
-      const idx = i; // capture
+      const idx = i;
       timers.push(setTimeout(() => setVisibleCount(idx + 1), elapsed));
     });
 
@@ -384,14 +376,10 @@ const EmptyVisualizerState = ({ layers = [] }: { layers?: BikeLayer[] }) => {
   }, [layers.length]);
 
   const showBike = phase === 'assembling' || phase === 'hold' || phase === 'fadeout';
-
-  // Only render layers that have been "unlocked" — avoids any invisible DOM elements
   const renderedLayers = showBike ? layers.slice(0, visibleCount) : [];
 
   return (
     <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
-
-      {/* ── BIKE LAYERS — only rendered once unlocked ── */}
       <AnimatePresence>
         {showBike && (
           <motion.div
@@ -419,7 +407,6 @@ const EmptyVisualizerState = ({ layers = [] }: { layers?: BikeLayer[] }) => {
         )}
       </AnimatePresence>
 
-      {/* ── LOGO FINALE ── */}
       <AnimatePresence>
         {phase === 'logo' && (
           <motion.div
@@ -428,7 +415,6 @@ const EmptyVisualizerState = ({ layers = [] }: { layers?: BikeLayer[] }) => {
             initial={{ opacity: 1 }}
             animate={{ opacity: 1 }}
           >
-            {/* ADICTO.BIKE — slide in char by char, same feel as bike parts */}
             <div className="flex items-end" style={{ paddingBottom: 8 }}>
               {LOGO_CHARS.map((char, i) => (
                 <motion.span
@@ -448,7 +434,6 @@ const EmptyVisualizerState = ({ layers = [] }: { layers?: BikeLayer[] }) => {
               ))}
             </div>
 
-            {/* Red underline — grows left→right after last char */}
             <motion.div
               initial={{ scaleX: 0 }}
               animate={{ scaleX: 1 }}
@@ -461,7 +446,6 @@ const EmptyVisualizerState = ({ layers = [] }: { layers?: BikeLayer[] }) => {
               style={{ marginTop: -2 }}
             />
 
-            {/* Tagline — letter by letter, after underline */}
             {(() => {
               const tagline = "Let's start to build your dream";
               const tagDelay = LOGO_CHARS.length * LOGO_CHAR_DELAY + 0.6;
@@ -483,7 +467,6 @@ const EmptyVisualizerState = ({ layers = [] }: { layers?: BikeLayer[] }) => {
               );
             })()}
 
-            {/* Arrow + First step hint */}
             {(() => {
               const hintDelay = LOGO_CHARS.length * LOGO_CHAR_DELAY + 1.5;
               return (
@@ -517,12 +500,10 @@ const EmptyVisualizerState = ({ layers = [] }: { layers?: BikeLayer[] }) => {
 
 // --- VISUALIZER ---
 const Visualizer = ({ selectedComponents, offsets, showGrid, gridSize, isZoomed, zoomScale, steps, selectedFrameId }: any) => {
-  // Build offset key: "{frameId}__{compId}" — falls back to "__{compId}" if no frame
   const getOffset = (compId: string) => {
     const k = selectedFrameId ? `${selectedFrameId}__${compId}` : `__${compId}`;
     return offsets?.[k] || offsets?.[compId] || { s: 1, x: 0, y: 0 };
   };
-  // Collect first imageUrl from each step as preview layers
   const previewLayers = useMemo(() => {
     if (!steps) return [];
     return steps
@@ -535,7 +516,6 @@ const Visualizer = ({ selectedComponents, offsets, showGrid, gridSize, isZoomed,
         <div className="absolute inset-0 z-[60] pointer-events-none opacity-[0.2]"
           style={{ backgroundImage: `linear-gradient(to right, rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.5) 1px, transparent 1px)`, backgroundSize: `${gridSize}px ${gridSize}px` }} />
       )}
-      {/* EMPTY STATE: Cyclist intro animation */}
       {(!selectedComponents || selectedComponents.length === 0) && (
         <EmptyVisualizerState layers={previewLayers} />
       )}
@@ -582,131 +562,22 @@ const OptionCard = ({ component, isSelected, onClick }: { component: Component, 
 );
 
 // --- SOUND ENGINE ---
-// All sounds generated via Web Audio API — no external files needed
-
-// Mobile volume — checked fresh each call
-const getMobVol = (v: number): number => {
-  try { if (window.innerWidth < 1024) return v * 0.6; } catch {}
-  return v;
-};
-
+// MP3-based — volume is baked into the files, so it works correctly on iOS/Android.
+// Files must be uploaded to: public/parts/sounds/{select,next,back,pop,success}.mp3
+// Use the pre-processed -16dB versions generated by ffmpeg for comfortable mobile volume.
 const useSounds = () => {
-  const ctx = useRef<AudioContext | null>(null);
-
-  const getCtx = async () => {
-    if (!ctx.current) ctx.current = new (window.AudioContext || (window as any).webkitAudioContext)();
-    if (ctx.current.state === 'suspended') await ctx.current.resume();
-    return ctx.current;
-  };
-  const vol = getMobVol;
-
-  // Soft mechanical click — selecting a card
-  const playSelect = async () => {
+  const play = (file: string) => {
     try {
-      const ac = await getCtx();
-      const o = ac.createOscillator();
-      const g = ac.createGain();
-      o.connect(g); g.connect(ctx.current!.destination);
-      o.type = 'sine';
-      o.frequency.setValueAtTime(900, ac.currentTime);
-      o.frequency.exponentialRampToValueAtTime(600, ac.currentTime + 0.06);
-      g.gain.setValueAtTime(vol(0.04), ac.currentTime);
-      g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.08);
-      o.start(ac.currentTime);
-      o.stop(ac.currentTime + 0.08);
+      const a = new Audio('/parts/sounds/' + file);
+      a.volume = 1.0; // volume is baked into the MP3 file
+      a.play().catch(() => {});
     } catch {}
   };
-
-  // Soft swipe — next step
-  const playNext = async () => {
-    try {
-      const ac = await getCtx();
-      const dur = 0.18;
-      const buf = ac.createBuffer(1, Math.floor(ac.sampleRate * dur), ac.sampleRate);
-      const d = buf.getChannelData(0);
-      for (let i = 0; i < d.length; i++) {
-        const t = i / d.length;
-        // white noise shaped with smooth ramp up + fast fade out
-        d[i] = (Math.random() * 2 - 1) * Math.pow(t < 0.15 ? t / 0.15 : 1 - (t - 0.15) / 0.85, 1.4);
-      }
-      const noise = ac.createBufferSource();
-      noise.buffer = buf;
-      // Highpass to keep it airy, not rumble
-      const hp = ac.createBiquadFilter();
-      hp.type = 'highpass';
-      hp.frequency.value = 3200;
-      // Lowpass ceiling so it stays soft
-      const lp = ac.createBiquadFilter();
-      lp.type = 'lowpass';
-      lp.frequency.setValueAtTime(7000, ac.currentTime);
-      lp.frequency.linearRampToValueAtTime(12000, ac.currentTime + dur);
-      const g = ac.createGain();
-      g.gain.setValueAtTime(vol(0.13), ac.currentTime);
-      g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + dur);
-      noise.connect(hp); hp.connect(lp); lp.connect(g); g.connect(ctx.current!.destination);
-      noise.start();
-    } catch {}
-  };
-
-  // Soft whoosh back — prev step
-  const playBack = async () => {
-    try {
-      const ac = await getCtx();
-      const buf = ac.createBuffer(1, ac.sampleRate * 0.1, ac.sampleRate);
-      const d = buf.getChannelData(0);
-      for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (i / d.length) * 0.7;
-      const src = ac.createBufferSource();
-      src.buffer = buf;
-      const f = ac.createBiquadFilter();
-      f.type = 'bandpass';
-      f.frequency.setValueAtTime(3000, ac.currentTime);
-      f.frequency.exponentialRampToValueAtTime(800, ac.currentTime + 0.1);
-      f.Q.value = 1;
-      const g = ac.createGain();
-      g.gain.setValueAtTime(vol(0.04), ac.currentTime);
-      g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.1);
-      src.connect(f); f.connect(g); g.connect(ctx.current!.destination);
-      src.start();
-    } catch {}
-  };
-
-  // Success chime — bike finished / saved
-  const playSuccess = async () => {
-    try {
-      const ac = await getCtx();
-      [0, 0.1, 0.2].forEach((t, i) => {
-        const o = ac.createOscillator();
-        const g = ac.createGain();
-        o.connect(g); g.connect(ctx.current!.destination);
-        o.type = 'sine';
-        const freqs = [523, 659, 784]; // C5 E5 G5
-        o.frequency.value = freqs[i];
-        g.gain.setValueAtTime(0, ac.currentTime + t);
-        g.gain.linearRampToValueAtTime(vol(0.07), ac.currentTime + t + 0.02);
-        g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + t + 0.4);
-        o.start(ac.currentTime + t);
-        o.stop(ac.currentTime + t + 0.4);
-      });
-    } catch {}
-  };
-
-  // Soft pop — save/garage open
-  const playPop = async () => {
-    try {
-      const ac = await getCtx();
-      const o = ac.createOscillator();
-      const g = ac.createGain();
-      o.connect(g); g.connect(ctx.current!.destination);
-      o.type = 'sine';
-      o.frequency.setValueAtTime(300, ac.currentTime);
-      o.frequency.exponentialRampToValueAtTime(180, ac.currentTime + 0.1);
-      g.gain.setValueAtTime(vol(0.07), ac.currentTime);
-      g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.12);
-      o.start(ac.currentTime);
-      o.stop(ac.currentTime + 0.12);
-    } catch {}
-  };
-
+  const playSelect  = () => play('select.mp3');
+  const playNext    = () => play('next.mp3');
+  const playBack    = () => play('back.mp3');
+  const playSuccess = () => play('success.mp3');
+  const playPop     = () => play('pop.mp3');
   return { playSelect, playNext, playBack, playSuccess, playPop };
 };
 
@@ -739,7 +610,6 @@ export default function BikeConfigurator() {
   const [isFinished, setIsFinished] = useState(false);
   const stepsNavRef = useRef<HTMLDivElement>(null);
 
-  // AUTH & GARAGE STATES
   const [user, setUser] = useState<any>(JSON.parse(localStorage.getItem('adicto_user') || 'null'));
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isGarageOpen, setIsGarageOpen] = useState(false);
@@ -763,7 +633,6 @@ export default function BikeConfigurator() {
     const newSelections: Record<string, string> = {};
 
     build.components.forEach((savedComp: any) => {
-      // FIX #5: guard against undefined stepTitle
       if (!savedComp.stepTitle) { missingSome = true; return; }
       const step = steps.find(s => s.title.toUpperCase() === savedComp.stepTitle.toUpperCase());
       const exists = step?.options.find(o => o.name === savedComp.name);
@@ -812,7 +681,6 @@ export default function BikeConfigurator() {
             return {
               ...step, options: data.map((row: any, idx: number) => {
                 const findKey = (name: string) => Object.keys(row).find(k => k.toLowerCase().trim() === name.toLowerCase());
-                // FIX #8: safer image key fallback using empty string instead of literal 'image'
                 const imageKey = findKey('imageurl');
                 const cardKey = findKey('cardimg') || findKey('cardimage');
                 return {
@@ -865,14 +733,12 @@ export default function BikeConfigurator() {
     [currentStep, selections]
   );
 
-  // Admin mode: show login screen if ?admin=true or /admin path
   if (isAdminMode && !isLoggedIn) {
     return <AdminLogin onLogin={() => setIsLoggedIn(true)} />;
   }
 
   return (
     <div className="h-screen bg-black text-white font-sans selection:bg-red-600 overflow-hidden flex flex-col lg:overscroll-none lg:touch-none">
-      {/* AUTH MODAL */}
       <AuthModal
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
@@ -883,7 +749,6 @@ export default function BikeConfigurator() {
         }}
       />
 
-      {/* FINAL SCREEN OVERLAY */}
       <AnimatePresence>
         {isFinished && (
           <motion.div
@@ -906,22 +771,18 @@ export default function BikeConfigurator() {
       </AnimatePresence>
 
       <style>{`
-        /* Mobile horizontal scroll */
         .mob-scroll { overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; }
         .mob-scroll::-webkit-scrollbar { height: 2px; }
         .mob-scroll::-webkit-scrollbar-track { background: transparent; }
         .mob-scroll::-webkit-scrollbar-thumb { background: #ef4444; border-radius: 10px; }
-        /* Desktop vertical scroll — CARDS */
         .desk-scroll { overflow-y: auto; overflow-x: hidden; }
         .desk-scroll::-webkit-scrollbar { width: 3px; }
         .desk-scroll::-webkit-scrollbar-track { background: transparent; }
         .desk-scroll::-webkit-scrollbar-thumb { background: #ef4444; border-radius: 10px; }
         .desk-scroll::-webkit-scrollbar-thumb:hover { background: #dc2626; }
-        /* Garage panel scrollbar */
         .custom-scroll-container::-webkit-scrollbar { width: 2px; height: 2px; }
         .custom-scroll-container::-webkit-scrollbar-track { background: transparent; }
         .custom-scroll-container::-webkit-scrollbar-thumb { background: #ef4444; border-radius: 10px; }
-        /* Allow pull-to-refresh on mobile only */
         @media (max-width: 1024px) {
           html { overscroll-behavior-y: auto; }
           body { overflow: hidden; height: 100%; }
@@ -976,11 +837,8 @@ export default function BikeConfigurator() {
         </nav>
       )}
 
-      {/* MAIN CONTENT */}
       <main className="flex-1 max-w-[1500px] mx-auto px-0 lg:px-6 pt-3 lg:pt-1 w-full overflow-hidden flex flex-col">
         <div className="flex flex-col lg:grid lg:grid-cols-12 gap-0 lg:gap-6 h-full items-stretch pb-[75px] lg:pb-24">
-
-          {/* LEFT: VISUALIZER — on mobile fixed height with more bottom margin */}
           <div className="lg:col-span-9 flex flex-col gap-1 order-1 h-[350px] md:h-[350px] lg:h-full shrink-0 mb-3 lg:mb-0">
             <div ref={stepsNavRef} className="flex overflow-x-auto no-scrollbar gap-x-3 pb-3 lg:pb-1 mt-2 lg:mt-0 shrink-0 px-2 lg:px-0">
               {steps.map((step, idx) => (
@@ -1001,11 +859,8 @@ export default function BikeConfigurator() {
             </div>
           </div>
 
-          {/* RIGHT: OPTION CARDS — on mobile fixed height, horizontal scroll only */}
           <div className="lg:col-span-3 flex flex-col order-2 shrink-0 lg:h-full min-h-0">
             <div className="flex flex-col pointer-events-auto relative h-full">
-              {/* Mobile: fixed-height container, cards scroll horizontally, no vertical movement */}
-              {/* Mobile: horizontal scroll; Desktop: vertical scroll with red scrollbar */}
               <div className="mob-scroll lg:hidden px-2 pb-1 h-[160px]">
                 <div className="flex flex-row gap-2 h-full items-stretch">
                   <AnimatePresence mode="popLayout">
@@ -1033,7 +888,6 @@ export default function BikeConfigurator() {
         </div>
       </main>
 
-      {/* FOOTER */}
       <div className="fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur-2xl border-t border-white/5 z-40 shrink-0">
         <div className="max-w-[1500px] mx-auto px-4 lg:px-6 py-4 lg:py-6 grid grid-cols-12 gap-2 items-center">
           <button onClick={() => { if (currentStepIndex > 0) { playBack(); setCurrentStepIndex(currentStepIndex - 1); } }} className="col-span-3 lg:col-span-2 flex items-center gap-1 text-zinc-500 hover:text-white transition-all font-black uppercase text-[10px] italic">
@@ -1102,7 +956,6 @@ const CompareView = ({ builds, onBack }: { builds: any[], onBack: () => void }) 
   const getComp = (build: any, cat: string) =>
     build.components?.find((c: any) => c.stepTitle === cat);
 
-  // Highlight: green if best, red if worst
   const highlight = (vals: number[], val: number, lower = true) => {
     const best = lower ? Math.min(...vals) : Math.max(...vals);
     const worst = lower ? Math.max(...vals) : Math.min(...vals);
@@ -1116,7 +969,6 @@ const CompareView = ({ builds, onBack }: { builds: any[], onBack: () => void }) 
 
   return (
     <div className="fixed inset-0 z-[1100] bg-black text-white font-sans flex flex-col">
-      {/* HEADER */}
       <div className="shrink-0 px-3 lg:px-8 py-2 lg:py-4 border-b border-white/5 bg-zinc-900/60 backdrop-blur-xl flex items-center justify-between gap-2">
         <div className="flex items-center gap-4">
           <button onClick={onBack} className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center transition-all active:scale-95">
@@ -1136,7 +988,6 @@ const CompareView = ({ builds, onBack }: { builds: any[], onBack: () => void }) 
         </button>
       </div>
 
-      {/* TABLE */}
       <div className="flex-1 overflow-auto custom-scroll-container">
         <table className="border-collapse" style={{ width: '100%', minWidth: `${180 + builds.length * colWidth}px` }}>
           <thead className="sticky top-0 z-20">
@@ -1171,7 +1022,6 @@ const CompareView = ({ builds, onBack }: { builds: any[], onBack: () => void }) 
             </tr>
           </thead>
           <tbody>
-            {/* Totals rows — scrollable, not sticky */}
             <tr className="bg-zinc-900/40 border-b border-white/10">
               <td className="sticky left-0 z-10 bg-zinc-900/80 border-r border-white/10 p-1.5 lg:p-3">
                 <span className="text-[8px] font-black uppercase italic text-zinc-400">Total Weight</span>
@@ -1281,7 +1131,6 @@ const GarageShareBtn = ({ buildName }: { buildName: string }) => {
 };
 
 // --- GARAGE PANEL ---
-// FIX #2 & #3: Merged into a single component definition with handleDownloadPDF inside
 const GaragePanel = ({ isOpen, onClose, builds, user, onLogout, onSelectBuild, onDeleteBuild }: any) => {
   const [exportingId, setExportingId] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
@@ -1294,7 +1143,6 @@ const GaragePanel = ({ isOpen, onClose, builds, user, onLogout, onSelectBuild, o
     );
   };
 
-  // FIX #3: handleDownloadPDF is now correctly inside GaragePanel where state setters live
   const handleDownloadPDF = async (build: any) => {
     setExportingId(build.id);
     setProgress(0);
@@ -1311,12 +1159,10 @@ const GaragePanel = ({ isOpen, onClose, builds, user, onLogout, onSelectBuild, o
 
   return (
     <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} className="fixed inset-0 z-[999] bg-black/98 backdrop-blur-3xl flex flex-col font-sans text-white">
-      {/* COMPARE VIEW */}
       {isComparing && compareIds.length >= 2 && (
         <CompareView builds={selectedBuilds} onBack={() => setIsComparing(false)} />
       )}
       {!(isComparing && compareIds.length >= 2) && <>
-      {/* HEADER */}
       <div className="p-4 lg:p-6 border-b border-white/5 flex justify-between items-start relative">
         <div className="flex gap-4">
           <div className="w-10 h-10 lg:w-12 lg:h-12 bg-zinc-900 border border-white/10 rounded-full flex items-center justify-center font-black italic text-red-600 text-[12px] lg:text-[14px] shadow-xl">
@@ -1405,24 +1251,14 @@ const GaragePanel = ({ isOpen, onClose, builds, user, onLogout, onSelectBuild, o
         </div>
       </div>
       <div className="px-6 py-3 border-t border-white/5 bg-black flex items-center justify-center gap-6">
-        {/* WhatsApp business */}
-        <a
-          href="https://wa.me/34674262622"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-1.5 text-zinc-600 hover:text-green-400 transition-colors group"
-        >
+        <a href="https://wa.me/34674262622" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-zinc-600 hover:text-green-400 transition-colors group">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className="shrink-0">
             <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
             <path d="M12 0C5.373 0 0 5.373 0 12c0 2.124.558 4.115 1.529 5.845L0 24l6.335-1.508A11.933 11.933 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 0 1-5.006-1.368l-.359-.214-3.722.886.938-3.623-.234-.372A9.818 9.818 0 1 1 12 21.818z"/>
           </svg>
           <span className="text-[7px] font-black uppercase italic tracking-widest">+34 674 262 622</span>
         </a>
-        {/* Email */}
-        <a
-          href="mailto:hello@adicto.bike"
-          className="flex items-center gap-1.5 text-zinc-600 hover:text-red-400 transition-colors group"
-        >
+        <a href="mailto:hello@adicto.bike" className="flex items-center gap-1.5 text-zinc-600 hover:text-red-400 transition-colors group">
           <span className="text-[7px] font-black uppercase italic tracking-widest">hello@adicto.bike</span>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
             <rect x="2" y="4" width="20" height="16" rx="2"/>
@@ -1462,12 +1298,10 @@ const FreewheelSound = ({ immediate = false }: { immediate?: boolean }) => {
     const t = setTimeout(async () => {
       try {
         const audio = new Audio('/parts/sounds/freesound_community-bike-freewheel-37985.mp3');
-        audio.volume = getMobVol(0.55);
-        // Trim: play only first ~1.8 seconds
+        audio.volume = 0.9; // file is already at 25% volume (pre-processed)
         audio.currentTime = 0;
         await audio.play();
         setTimeout(() => {
-          // Fade out
           const fade = setInterval(() => {
             if (audio.volume > 0.04) {
               audio.volume = Math.max(0, audio.volume - 0.06);
@@ -1481,16 +1315,14 @@ const FreewheelSound = ({ immediate = false }: { immediate?: boolean }) => {
     }, delay);
     return () => clearTimeout(t);
   }, [immediate]);
-  return null; // invisible — audio only
+  return null;
 };
 
 // --- SUMMARY VISUALIZER ---
-// Renders the completed bike from selected components (read-only, no offsets needed)
 const SummaryVisualizer = ({ selections }: { selections: any[] }) => {
   const sorted = [...selections].sort((a, b) => (Number(a.zIndex) || 0) - (Number(b.zIndex) || 0));
   return (
     <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
-      {/* Subtle radial glow */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_55%,rgba(239,68,68,0.06),transparent)] pointer-events-none" />
       {sorted.map((comp, i) => (
         comp.imageUrl ? (
@@ -1551,7 +1383,6 @@ function SummaryView({ selections, onBack, onReset, setSavedBuilds, user, onOpen
       })),
     };
     const current = JSON.parse(localStorage.getItem('adicto_saved_builds') || '[]');
-    // Auto-rename duplicate names: append " 2", " 3", etc.
     let finalName = newBuild.name;
     const existingNames = current.map((b: any) => b.name);
     if (existingNames.includes(finalName)) {
@@ -1563,20 +1394,8 @@ function SummaryView({ selections, onBack, onReset, setSavedBuilds, user, onOpen
     const updated = [...current, newBuild];
     localStorage.setItem('adicto_saved_builds', JSON.stringify(updated));
     setSavedBuilds(updated);
-    // play success sound
-    try {
-      const ac = new (window.AudioContext || (window as any).webkitAudioContext)();
-      if (ac.state === 'suspended') ac.resume();
-      [0, 0.12, 0.24].forEach((t, i) => {
-        const o = ac.createOscillator(); const g = ac.createGain();
-        o.connect(g); g.connect(ac.destination);
-        o.type = 'sine'; o.frequency.value = [523, 659, 784][i];
-        g.gain.setValueAtTime(0, ac.currentTime + t);
-        g.gain.linearRampToValueAtTime(getMobVol(0.07), ac.currentTime + t + 0.02);
-        g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + t + 0.4);
-        o.start(ac.currentTime + t); o.stop(ac.currentTime + t + 0.4);
-      });
-    } catch {}
+    // play success sound via MP3
+    try { const a = new Audio('/parts/sounds/success.mp3'); a.volume = 1.0; a.play().catch(() => {}); } catch {}
     alert(`Build "${finalName}" saved to your Garage!`);
   };
 
@@ -1604,21 +1423,13 @@ function SummaryView({ selections, onBack, onReset, setSavedBuilds, user, onOpen
         </div>
       </nav>
 
-      {/* MAIN LAYOUT
-           MOBILE: visualizer (350px) → component cards scroll (same as configurator) → stats+buttons
-           DESKTOP: visualizer left + cards below | buttons right panel
-      */}
-      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden min-h-0">
+      <div className="flex-1 flex flex-col lg:flex-row min-h-0 overflow-hidden">
 
-        {/* ── VISUALIZER COLUMN (left on desktop, top on mobile) ── */}
         <div className="flex flex-col min-h-0 lg:flex-1">
-
-          {/* Visualizer — exact same height as configurator on mobile */}
           <div className="h-[350px] lg:flex-1 relative shrink-0 lg:shrink">
             <SummaryVisualizer selections={selections} />
           </div>
 
-          {/* Component cards — horizontal scroll, same as configurator option cards on mobile */}
           <div className="mob-scroll lg:hidden shrink-0 px-2 pb-1 h-[68px]">
             <div className="flex flex-row gap-2 h-full items-stretch">
               {selections.map((c: any, i: number) => (
@@ -1636,7 +1447,6 @@ function SummaryView({ selections, onBack, onReset, setSavedBuilds, user, onOpen
             </div>
           </div>
 
-          {/* Desktop component cards */}
           <div className="hidden lg:block shrink-0 px-8 pb-3 pt-2">
             <div className="flex gap-3 overflow-x-auto pb-2 custom-scroll-container">
               {selections.map((c: any, i: number) => (
@@ -1655,10 +1465,8 @@ function SummaryView({ selections, onBack, onReset, setSavedBuilds, user, onOpen
           </div>
         </div>
 
-        {/* ── RIGHT / BOTTOM PANEL: stats + buttons ── */}
-        <div className="w-full lg:w-[280px] shrink-0 flex flex-col border-t lg:border-t-0 lg:border-l border-white/5 bg-zinc-950/60 backdrop-blur-xl">
+        <div className="w-full lg:w-[280px] shrink-0 flex flex-col border-t lg:border-t-0 lg:border-l border-white/5 bg-zinc-950/60 backdrop-blur-xl overflow-y-auto lg:overflow-y-auto">
 
-          {/* Stats row */}
           <div className="flex gap-2 px-3 lg:px-5 pt-1.5 pb-1 lg:pt-5 lg:pb-0 shrink-0">
             <div className="flex-1 bg-black/40 border border-white/5 rounded-xl p-2 lg:p-3 flex flex-col items-center justify-center text-center">
               <p className="text-zinc-600 text-[6px] lg:text-[7px] uppercase font-black italic tracking-widest leading-none mb-0.5 lg:mb-1">Price</p>
@@ -1670,7 +1478,6 @@ function SummaryView({ selections, onBack, onReset, setSavedBuilds, user, onOpen
             </div>
           </div>
 
-          {/* 2×2 button grid on mobile, column on desktop */}
           <div className="flex-1 flex flex-col justify-start lg:justify-center px-3 lg:px-5 py-1 lg:py-5 gap-1 lg:gap-2">
             <div className="grid grid-cols-2 lg:grid-cols-1 gap-1 lg:gap-2">
               <button onClick={handleSaveBuild} className="h-10 lg:h-11 bg-zinc-800/80 hover:bg-zinc-700/80 border border-white/10 text-white rounded-lg font-black uppercase text-[8px] lg:text-[9px] tracking-widest transition-all active:scale-[0.97] flex items-center justify-center gap-1.5">
@@ -1691,7 +1498,6 @@ function SummaryView({ selections, onBack, onReset, setSavedBuilds, user, onOpen
             <FreewheelSound immediate={true} />
           </div>
 
-          {/* Footer — WA left, email right */}
           <div className="px-3 lg:px-5 py-2 lg:py-3 border-t border-white/5 flex items-center justify-between shrink-0">
             <a href="https://wa.me/34674262622" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-zinc-500 hover:text-green-400 transition-colors">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" className="shrink-0"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.124.558 4.115 1.529 5.845L0 24l6.335-1.508A11.933 11.933 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 0 1-5.006-1.368l-.359-.214-3.722.886.938-3.623-.234-.372A9.818 9.818 0 1 1 12 21.818z"/></svg>
@@ -1733,13 +1539,11 @@ const generateAdictoPDF = async (components: any[]) => {
     } catch (e) { return ""; }
   };
 
-  // 1. Logo
   try {
     const logoBase64 = await getBase64Image("/design/Logo.png");
     if (logoBase64) doc.addImage(logoBase64, 'PNG', (pageWidth / 2) - 15, 8, 10, 10);
   } catch (e) { }
 
-  // 2. Layered bike render
   try {
     const sortedByZ = [...components].sort((a, b) => (Number(a.zIndex) || 0) - (Number(b.zIndex) || 0));
     for (const comp of sortedByZ) {
@@ -1754,7 +1558,6 @@ const generateAdictoPDF = async (components: any[]) => {
     console.error("PDF Image Error:", e);
   }
 
-  // 3. Specs table
   autoTable(doc, {
     startY: 135,
     head: [['SECTION', 'COMPONENT', 'BRAND', 'WEIGHT', 'PRICE']],
@@ -1772,14 +1575,12 @@ const generateAdictoPDF = async (components: any[]) => {
     theme: 'grid',
   });
 
-  // 4. Disclaimer
   const finalY = (doc as any).lastAutoTable.finalY + 10;
   doc.setFontSize(6);
   doc.setTextColor(100);
   const disclaimer = "NOTICE: THE WEIGHT AND PRICE INDICATED ARE PRELIMINARY AND SUBJECT TO MINOR CHANGES BASED ON COMPONENT AVAILABILITY. ADICTO.BIKE RESERVES THE RIGHT TO MODIFY SPECIFICATIONS WITHOUT PRIOR NOTICE.";
   doc.text(doc.splitTextToSize(disclaimer, pageWidth - 30), 15, finalY);
 
-  // 5. Footer + QR
   doc.setFontSize(7);
   doc.setTextColor(20);
   doc.text("WWW.ADICTO.BIKE  |  @ADICTO.BIKE", pageWidth / 2, pageHeight - 15, { align: 'center' });
