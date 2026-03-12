@@ -367,8 +367,6 @@ type IntroPhase = 'hidden' | 'assembling' | 'hold' | 'fadeout' | 'logo';
 
 const LAYER_GAPS = [350, 460, 420, 390, 370, 240, 340, 360, 360, 360, 340];
 
-const LOGO_CHARS = 'ADICTO.BIKE'.split('');
-const LOGO_CHAR_DELAY = 0.12;
 
 const EmptyVisualizerState = ({ layers = [] }: { layers?: BikeLayer[] }) => {
   const [phase, setPhase]               = useState<IntroPhase>('hidden');
@@ -440,86 +438,28 @@ const EmptyVisualizerState = ({ layers = [] }: { layers?: BikeLayer[] }) => {
         {phase === 'logo' && (
           <motion.div
             key="logo"
-            className="absolute inset-0 flex flex-col items-center justify-center"
-            initial={{ opacity: 1 }}
+            className="absolute inset-0 flex flex-col items-center justify-center gap-0"
+            initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5 }}
           >
-            <div className="flex items-end" style={{ paddingBottom: 8 }}>
-              {LOGO_CHARS.map((char, i) => (
-                <motion.span
-                  key={i}
-                  initial={{ opacity: 0, y: 14, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  transition={{
-                    delay: i * LOGO_CHAR_DELAY,
-                    duration: 0.42,
-                    ease: [0.22, 1, 0.36, 1],
-                  }}
-                  className="text-[30px] lg:text-[40px] font-black italic uppercase leading-none"
-                  style={{ letterSpacing: '-0.02em', display: 'inline-block', color: char === '.' ? '#ef4444' : '#ffffff' }}
-                >
-                  {char}
-                </motion.span>
-              ))}
-            </div>
-
-            <motion.div
-              initial={{ scaleX: 0 }}
-              animate={{ scaleX: 1 }}
-              transition={{
-                delay: LOGO_CHARS.length * LOGO_CHAR_DELAY + 0.05,
-                duration: 0.45,
-                ease: [0.22, 1, 0.36, 1],
-              }}
-              className="h-px w-36 bg-red-600 origin-left"
-              style={{ marginTop: -2 }}
-            />
-
-            {(() => {
-              const tagline = "Let's start to build your dream";
-              const tagDelay = LOGO_CHARS.length * LOGO_CHAR_DELAY + 0.6;
-              return (
-                <div className="flex mt-3" style={{ flexWrap: 'nowrap' }}>
-                  {tagline.split('').map((ch, i) => (
-                    <motion.span
-                      key={i}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: tagDelay + i * 0.028, duration: 0.2 }}
-                      className="text-[9px] lg:text-[10px] font-black uppercase italic text-white/25"
-                      style={{ letterSpacing: '0.18em', whiteSpace: 'pre' }}
-                    >
-                      {ch}
-                    </motion.span>
-                  ))}
-                </div>
-              );
-            })()}
-
-            {(() => {
-              const hintDelay = LOGO_CHARS.length * LOGO_CHAR_DELAY + 1.5;
-              return (
-                <motion.div
-                  initial={{ opacity: 0, x: -6 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: hintDelay, duration: 0.45 }}
-                  className="flex items-center gap-2 mt-5"
-                >
-                  <span className="text-[9px] lg:text-[10px] font-black uppercase italic tracking-widest text-zinc-500">
-                    First step: choose the Frameset
-                  </span>
-                  <motion.span
-                    animate={{ y: [0, 5, 0] }}
-                    transition={{ duration: 1.1, repeat: Infinity, ease: 'easeInOut', delay: hintDelay }}
-                    className="text-zinc-500"
-                  >
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                      <path d="M8 3v10M4 9l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </motion.span>
-                </motion.div>
-              );
-            })()}
+            {[
+              { text: "First step: choose the Frameset", delay: 0.1 },
+              { text: "Select components step by step", delay: 1.1 },
+              { text: "For more info, double‑click on the product", delay: 2.1 },
+              { text: 'Login to save bikes in the "Garage"', delay: 3.1 },
+            ].map((item, i) => (
+              <motion.p
+                key={i}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: item.delay, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                className="text-[9px] lg:text-[11px] font-black uppercase italic tracking-widest text-zinc-500 leading-relaxed text-center"
+              >
+                {item.text}
+              </motion.p>
+            ))}
           </motion.div>
         )}
       </AnimatePresence>
@@ -700,9 +640,9 @@ const OptionCard = ({ component, allOptions = [], isSelected, onClick }: { compo
         )}
       >
         <div className="relative">
-          <div className="absolute top-0 left-0 z-10 leading-none px-0.5"><span className="hidden lg:inline text-[7px] font-black uppercase italic tracking-widest text-zinc-500">Double click for more info</span><span className="lg:hidden text-[6px] font-black uppercase italic tracking-widest text-zinc-500">Hold for info</span></div>
+          
           {allOptions.length > 0 && allOptions[0].id === component.id && (
-            <div className="absolute top-0 right-0 z-10 bg-amber-500/20 text-amber-400 text-[5px] lg:text-[7px] font-black uppercase italic tracking-widest leading-none px-1 py-0.5 rounded-bl-md">Most Expensive</div>
+            <div className="absolute top-0 right-0 z-10 text-[4px] lg:text-[6px] font-black uppercase italic tracking-widest text-zinc-600 leading-none px-0.5">Most Expensive</div>
           )}
           <div className="aspect-square w-full rounded-md bg-black/40 mb-1 lg:mb-2 overflow-hidden relative">
             <img src={component.cardImageUrl} alt={component.name} className="w-full h-full object-contain p-1" />
@@ -718,22 +658,23 @@ const OptionCard = ({ component, allOptions = [], isSelected, onClick }: { compo
             const mostExpensive = allOptions.length > 0 ? allOptions.reduce((a, b) => b.price > a.price ? b : a, allOptions[0]) : null;
             const priceDiff = mostExpensive ? component.price - mostExpensive.price : 0;
             const weightDiff = mostExpensive ? component.weight - mostExpensive.weight : 0;
-            const priceDiffStr = priceDiff === 0 ? '0' : (priceDiff > 0 ? `+${priceDiff}` : `${priceDiff}`);
-            const weightDiffStr = weightDiff === 0 ? '0' : (weightDiff > 0 ? `+${weightDiff}g` : `${weightDiff}g`);
+            const priceDiffStr = priceDiff === 0 ? '±0' : (priceDiff > 0 ? `+${priceDiff}€` : `${priceDiff}€`);
+            const weightDiffStr = weightDiff === 0 ? '±0' : (weightDiff > 0 ? `+${weightDiff}g` : `${weightDiff}g`);
             const priceColor = priceDiff === 0 ? 'text-zinc-600' : priceDiff < 0 ? 'text-green-400' : 'text-red-400';
             const weightColor = weightDiff === 0 ? 'text-zinc-600' : weightDiff > 0 ? 'text-red-400' : 'text-green-400';
             return (
-              <div className="flex items-center justify-between mt-0.5 gap-0.5">
-                <p className="font-mono text-[8px] lg:text-[11px] text-red-600 tracking-tighter shrink-0">€{component.price}</p>
+              <>
                 {mostExpensive && mostExpensive.id !== component.id && (
-                  <span className="font-mono text-[6px] lg:text-[9px] italic text-center leading-none flex-1 px-0.5">
-                    <span className={priceColor}>{priceDiffStr}€</span>
-                    <span className="text-zinc-700"> / </span>
-                    <span className={weightColor}>{weightDiffStr}</span>
-                  </span>
+                  <>
+                    <span className={cn("absolute top-0 left-0 z-20 font-mono text-[5px] lg:text-[7px] italic leading-none px-0.5 pt-0.5", priceColor)}>{priceDiffStr}</span>
+                    <span className={cn("absolute top-0 right-0 z-20 font-mono text-[5px] lg:text-[7px] italic leading-none px-0.5 pt-0.5", weightColor)}>{weightDiffStr}</span>
+                  </>
                 )}
-                <p className="font-mono text-[7px] lg:text-[10px] text-white shrink-0 ml-auto">{component.weight}g</p>
-              </div>
+                <div className="flex items-center justify-between mt-0.5 gap-0.5">
+                  <p className="font-mono text-[8px] lg:text-[11px] text-red-600 tracking-tighter shrink-0">€{component.price}</p>
+                  <p className="font-mono text-[7px] lg:text-[10px] text-white shrink-0 ml-auto">{component.weight}g</p>
+                </div>
+              </>
             );
           })()}
         </div>
@@ -1183,11 +1124,10 @@ export default function BikeConfigurator() {
             </div>
           </div>
           <div className="col-span-3 flex flex-col items-stretch gap-0.5">
-          <span className="hidden lg:block text-[8px] font-black uppercase italic tracking-widest text-zinc-600 text-center w-full">Push or Swipe</span>
             <button
               onClick={() => {
                 if (filteredOptions.length > 0 && !selections[currentStep.id]) return;
-                if (currentStepIndex < steps.length - 1) { playNext(); if (navigator.vibrate) navigator.vibrate(18); setCurrentStepIndex(currentStepIndex + 1); }
+                if (currentStepIndex < steps.length - 1) { playSelect(); if (navigator.vibrate) navigator.vibrate(18); setCurrentStepIndex(currentStepIndex + 1); }
                 else {
                   const missing = steps.filter(s => s.options.length > 0 && !selections[s.id]);
                   if (missing.length > 0) { setShowMissingWarning(true); }
@@ -1231,7 +1171,8 @@ const CompareView = ({ builds, onBack }: { builds: any[], onBack: () => void }) 
     name: b.name,
     price: b.components?.reduce((a: number, c: any) => a + (Number(c.price) || 0), 0) || 0,
     weight: b.components?.reduce((a: number, c: any) => a + (Number(c.weight) || 0), 0) || 0,
-  }));
+  })).sort((a, b) => b.price - a.price);
+  const sortedBuilds = totals.map(t => builds.find((b: any) => b.id === t.id)).filter(Boolean);
 
   const minPrice = Math.min(...totals.map(t => t.price));
   const minWeight = Math.min(...totals.map(t => t.weight));
@@ -1278,7 +1219,7 @@ const CompareView = ({ builds, onBack }: { builds: any[], onBack: () => void }) 
               <th className="sticky left-0 z-30 bg-zinc-950 border-b border-r border-white/10 p-1 lg:p-3 text-left w-16 lg:w-44">
                 <span className="text-[8px] font-black uppercase text-zinc-600 tracking-widest">Component</span>
               </th>
-              {builds.map((b: any, i: number) => {
+              {sortedBuilds.map((b: any, i: number) => {
                 const t = totals[i];
                 const isCheapest = t.price === minPrice;
                 const isLightest = t.weight === minWeight;
@@ -1309,42 +1250,44 @@ const CompareView = ({ builds, onBack }: { builds: any[], onBack: () => void }) 
               <td className="sticky left-0 z-10 bg-zinc-900/80 border-r border-white/10 p-1.5 lg:p-3">
                 <span className="text-[8px] font-black uppercase italic text-zinc-400">Total Weight</span>
               </td>
-              {totals.map(t => (
-                <td key={t.id} className="border-l border-white/10 p-1.5 lg:p-3 text-center">
-                  <span className={cn("font-mono text-[10px] lg:text-[12px]", highlight(totals.map(x => x.weight), t.weight))}>{t.weight}g</span>
-                </td>
-              ))}
+              {totals.map((t, i) => {
+                const diff = i === 0 ? null : t.weight - totals[0].weight;
+                const diffStr = diff === null ? null : (diff === 0 ? '±0' : diff < 0 ? `${diff}g` : `+${diff}g`);
+                const diffColor = diff === null ? '' : diff < 0 ? 'text-green-400' : diff > 0 ? 'text-red-400' : 'text-zinc-500';
+                return (
+                  <td key={t.id} className="border-l border-white/10 p-1.5 lg:p-3 text-center">
+                    {i === 0 ? (
+                      <span className="font-mono text-[10px] lg:text-[12px] text-zinc-300 font-black">{t.weight}g</span>
+                    ) : (
+                      <span className={cn("font-mono text-[10px] lg:text-[12px] font-black", diffColor)}>{diffStr}</span>
+                    )}
+                  </td>
+                );
+              })}
             </tr>
             <tr className="bg-zinc-900/40 border-b border-white/10">
               <td className="sticky left-0 z-10 bg-zinc-900/80 border-r border-white/10 p-1.5 lg:p-3">
                 <span className="text-[8px] font-black uppercase italic text-zinc-400">Total Price</span>
               </td>
-              {totals.map(t => (
-                <td key={t.id} className="border-l border-white/10 p-1.5 lg:p-3 text-center">
-                  <span className={cn("font-mono text-[10px] lg:text-[12px]", highlight(totals.map(x => x.price), t.price))}>€{t.price.toLocaleString()}</span>
-                </td>
-              ))}
-            </tr>
-            <tr className="bg-zinc-900/40 border-b border-white/10">
-              <td className="sticky left-0 z-10 bg-zinc-900/80 border-r border-white/10 p-1.5 lg:p-3">
-                <span className="text-[8px] font-black uppercase italic text-zinc-400">Ratio €/g</span>
-                <p className="text-[6px] text-zinc-600 italic">lower = better</p>
-              </td>
-              {totals.map(t => {
-                const ratio = t.weight > 0 ? t.price / t.weight : 0;
-                const allRatios = totals.map(x => x.weight > 0 ? x.price / x.weight : 0);
-                const best = Math.min(...allRatios);
-                const worst = Math.max(...allRatios);
+              {totals.map((t, i) => {
+                const diff = i === 0 ? null : t.price - totals[0].price;
+                const diffStr = diff === null ? null : (diff === 0 ? '±0' : diff < 0 ? `${diff.toLocaleString()}€` : `+${diff.toLocaleString()}€`);
+                const diffColor = diff === null ? '' : diff < 0 ? 'text-green-400' : diff > 0 ? 'text-red-400' : 'text-zinc-500';
                 return (
                   <td key={t.id} className="border-l border-white/10 p-1.5 lg:p-3 text-center">
-                    <span className={cn("font-mono text-[10px] lg:text-[12px]", ratio === best ? 'text-green-400 font-black' : ratio === worst && allRatios.length > 1 ? 'text-red-400' : 'text-zinc-300')}>{ratio.toFixed(2)}</span>
+                    {i === 0 ? (
+                      <span className="font-mono text-[10px] lg:text-[12px] text-green-400 font-black">€{t.price.toLocaleString()}</span>
+                    ) : (
+                      <span className={cn("font-mono text-[10px] lg:text-[12px] font-black", diffColor)}>{diffStr}</span>
+                    )}
                   </td>
                 );
               })}
             </tr>
+            
 
             {allCategories.map((cat, rowIdx) => {
-              const comps = builds.map(b => getComp(b, cat));
+              const comps = sortedBuilds.map((b: any) => getComp(b, cat));
               const prices = comps.map(c => c ? Number(c.price) || 0 : 0).filter(v => v > 0);
               const weights = comps.map(c => c ? Number(c.weight) || 0 : 0).filter(v => v > 0);
               return (
@@ -1352,7 +1295,7 @@ const CompareView = ({ builds, onBack }: { builds: any[], onBack: () => void }) 
                   <td className="sticky left-0 z-10 bg-zinc-950 border-r border-white/10 p-1 lg:p-3">
                     <span className="text-[6px] lg:text-[8px] font-black uppercase text-zinc-500 tracking-widest">{cat}</span>
                   </td>
-                  {builds.map((b: any, i: number) => {
+                  {sortedBuilds.map((b: any, i: number) => {
                     const comp = comps[i];
                     const priceClass = prices.length > 1 ? highlight(prices, comp ? Number(comp.price) || 0 : 0) : 'text-zinc-300';
                     return (
