@@ -372,6 +372,7 @@ const LOGO_CHAR_DELAY = 0.12;
 const EmptyVisualizerState = ({ layers = [] }: { layers?: BikeLayer[] }) => {
   const [phase, setPhase]               = useState<IntroPhase>('hidden');
   const [visibleCount, setVisibleCount] = useState(0);
+  const [playIntroSound, setPlayIntroSound] = useState(false);
 
   const HOLD_MS    = 1500;
   const FADEOUT_MS = 900;
@@ -381,6 +382,7 @@ const EmptyVisualizerState = ({ layers = [] }: { layers?: BikeLayer[] }) => {
     const timers: ReturnType<typeof setTimeout>[] = [];
 
     timers.push(setTimeout(() => setPhase('assembling'), 0));
+    timers.push(setTimeout(() => setPlayIntroSound(true), 0));
 
     let elapsed = 0;
     layers.forEach((_, i) => {
@@ -405,6 +407,7 @@ const EmptyVisualizerState = ({ layers = [] }: { layers?: BikeLayer[] }) => {
 
   return (
     <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
+      {playIntroSound && <FreewheelSound immediate={true} />}
       <AnimatePresence>
         {showBike && (
           <motion.div
@@ -588,7 +591,7 @@ const ComponentDetailModal = ({ component, onClose }: { component: Component, on
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[500] bg-black/90 backdrop-blur-xl flex items-end lg:items-center justify-center p-0 lg:p-6"
+      className="fixed inset-0 z-[2000] bg-black/90 backdrop-blur-xl flex items-end lg:items-center justify-center p-0 lg:p-6"
       onClick={onClose}
     >
       <motion.div
@@ -597,7 +600,7 @@ const ComponentDetailModal = ({ component, onClose }: { component: Component, on
         exit={{ y: 60, opacity: 0 }}
         transition={{ type: 'spring', damping: 28, stiffness: 260 }}
         onClick={e => e.stopPropagation()}
-        className="bg-zinc-950 border border-white/10 rounded-t-[2rem] lg:rounded-[2rem] w-full max-w-[416px] p-5 relative"
+        className="bg-zinc-950 border border-white/10 rounded-t-[2rem] lg:rounded-[2rem] w-full lg:max-w-[416px] p-5 relative max-h-[92vh] overflow-y-auto"
       >
         <button onClick={onClose} className="absolute top-4 right-4 w-7 h-7 bg-red-600 rounded-full flex items-center justify-center text-white font-black text-[10px] z-10 hover:bg-red-700 transition-colors active:scale-90">✕</button>
 
@@ -698,7 +701,7 @@ const OptionCard = ({ component, allOptions = [], isSelected, onClick }: { compo
         )}
       >
         <div className="relative">
-          <div className="hidden lg:block absolute top-0 right-0 z-10 text-[8px] font-black uppercase italic tracking-widest text-zinc-600 leading-none">Double click for more info</div>
+          <div className="absolute top-0 left-0 z-10 text-[5px] lg:text-[7px] font-black uppercase italic tracking-widest text-zinc-600 leading-none">Double click for more info</div>
           <div className="aspect-square w-full rounded-md bg-black/40 mb-1 lg:mb-2 overflow-hidden relative">
             <img src={component.cardImageUrl} alt={component.name} className="w-full h-full object-contain p-1" />
             {isSelected && <div className="absolute top-0.5 right-0.5 bg-red-600 p-0.5 rounded-full shadow-lg z-10"><CheckCircle2 size={8} className="text-white" /></div>}
@@ -718,12 +721,16 @@ const OptionCard = ({ component, allOptions = [], isSelected, onClick }: { compo
             const priceColor = priceDiff === 0 ? 'text-zinc-600' : priceDiff < 0 ? 'text-green-400' : 'text-red-400';
             const weightColor = weightDiff === 0 ? 'text-zinc-600' : weightDiff > 0 ? 'text-red-400' : 'text-green-400';
             return (
-              <div className="flex flex-col mt-0.5">
-                <p className="font-mono text-[8px] lg:text-[12px] text-red-600 tracking-tighter">€{component.price}</p>
-                <div className="flex justify-between items-center">
-                  <span className={cn("font-mono text-[6px] lg:text-[9px] italic", priceColor)}>{priceDiffStr} €</span>
-                  <span className={cn("font-mono text-[6px] lg:text-[9px] italic", weightColor)}>{weightDiffStr}</span>
-                </div>
+              <div className="flex items-center justify-between mt-0.5 gap-0.5">
+                <p className="font-mono text-[8px] lg:text-[11px] text-red-600 tracking-tighter shrink-0">€{component.price}</p>
+                {mostExpensive && mostExpensive.id !== component.id && (
+                  <span className="font-mono text-[5px] lg:text-[8px] italic text-center leading-none shrink-0">
+                    <span className={priceColor}>{priceDiffStr}€</span>
+                    <span className="text-zinc-700"> / </span>
+                    <span className={weightColor}>{weightDiffStr}</span>
+                  </span>
+                )}
+                <p className="font-mono text-[7px] lg:text-[10px] text-white shrink-0 ml-auto">{component.weight}g</p>
               </div>
             );
           })()}
@@ -783,6 +790,7 @@ export default function BikeConfigurator() {
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [selections, setSelections] = useState<Record<string, string>>({});
   const [isFinished, setIsFinished] = useState(false);
+  const [showMissingWarning, setShowMissingWarning] = useState(false);
   const stepsNavRef = useRef<HTMLDivElement>(null);
   const touchStartX = useRef<number | null>(null);
   const mouseStartX = useRef<number | null>(null);
@@ -792,8 +800,8 @@ export default function BikeConfigurator() {
     const dx = e.changedTouches[0].clientX - touchStartX.current;
     touchStartX.current = null;
     if (Math.abs(dx) < 50) return;
-    if (dx < 0 && currentStepIndex < steps.length - 1) { playSelect(); if (navigator.vibrate) navigator.vibrate(18); setCurrentStepIndex(i => i + 1); }
-    if (dx > 0 && currentStepIndex > 0) { playSelect(); setCurrentStepIndex(i => i - 1); }
+    if (dx < 0 && currentStepIndex < steps.length - 1) { playNext(); if (navigator.vibrate) navigator.vibrate(18); setCurrentStepIndex(i => i + 1); }
+    if (dx > 0 && currentStepIndex > 0) { playBack(); setCurrentStepIndex(i => i - 1); }
   };
   const handleMouseDownSwipe = (e: React.MouseEvent) => { mouseStartX.current = e.clientX; };
   const handleMouseUpSwipe = (e: React.MouseEvent) => {
@@ -801,8 +809,8 @@ export default function BikeConfigurator() {
     const dx = e.clientX - mouseStartX.current;
     mouseStartX.current = null;
     if (Math.abs(dx) < 60) return;
-    if (dx < 0 && currentStepIndex < steps.length - 1) { playSelect(); setCurrentStepIndex(i => i + 1); }
-    if (dx > 0 && currentStepIndex > 0) { playSelect(); setCurrentStepIndex(i => i - 1); }
+    if (dx < 0 && currentStepIndex < steps.length - 1) { playNext(); setCurrentStepIndex(i => i + 1); }
+    if (dx > 0 && currentStepIndex > 0) { playBack(); setCurrentStepIndex(i => i - 1); }
   };
 
   const [user, setUser] = useState<any>(JSON.parse(localStorage.getItem('adicto_user') || 'null'));
@@ -973,6 +981,50 @@ export default function BikeConfigurator() {
       />
 
       <AnimatePresence>
+        {showMissingWarning && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[1500] bg-black/95 backdrop-blur-xl flex items-center justify-center p-6"
+          >
+            <motion.div
+              initial={{ scale: 0.92, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.92, opacity: 0 }}
+              transition={{ type: 'spring', damping: 26, stiffness: 260 }}
+              className="bg-zinc-950 border border-white/10 rounded-2xl p-8 max-w-sm w-full"
+            >
+              <p className="text-[11px] font-black uppercase italic tracking-widest text-red-500 mb-2">⚠ Ви забули обрати</p>
+              <ul className="flex flex-col gap-1 mb-6">
+                {steps.filter(s => s.options.length > 0 && !selections[s.id]).map(s => (
+                  <li key={s.id} className="text-[13px] font-black uppercase text-zinc-300 italic tracking-wide">— {s.title}</li>
+                ))}
+              </ul>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    const firstMissing = steps.findIndex(s => s.options.length > 0 && !selections[s.id]);
+                    if (firstMissing >= 0) setCurrentStepIndex(firstMissing);
+                    setShowMissingWarning(false);
+                  }}
+                  className="flex-1 h-11 bg-zinc-800 hover:bg-zinc-700 text-white font-black uppercase text-[11px] italic tracking-widest rounded-xl transition-colors"
+                >
+                  ← Return
+                </button>
+                <button
+                  onClick={() => { setShowMissingWarning(false); setIsFinished(true); }}
+                  className="flex-1 h-11 bg-red-600 hover:bg-red-500 text-white font-black uppercase text-[11px] italic tracking-widest rounded-xl transition-colors"
+                >
+                  Ignore →
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
         {isFinished && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -1129,12 +1181,16 @@ export default function BikeConfigurator() {
             </div>
           </div>
           <div className="col-span-3 flex flex-col items-end gap-0.5">
-          <span className="text-[8px] font-black uppercase italic tracking-widest text-zinc-600 w-full text-center">Push or Swipe</span>
+          <span className="hidden lg:inline-block text-[8px] font-black uppercase italic tracking-widest text-zinc-600 w-full text-center">Push or Swipe</span>
             <button
               onClick={() => {
                 if (filteredOptions.length > 0 && !selections[currentStep.id]) return;
-                if (currentStepIndex < steps.length - 1) { playSelect(); if (navigator.vibrate) navigator.vibrate(18); setCurrentStepIndex(currentStepIndex + 1); }
-                else { setIsFinished(true); }
+                if (currentStepIndex < steps.length - 1) { playNext(); if (navigator.vibrate) navigator.vibrate(18); setCurrentStepIndex(currentStepIndex + 1); }
+                else {
+                  const missing = steps.filter(s => s.options.length > 0 && !selections[s.id]);
+                  if (missing.length > 0) { setShowMissingWarning(true); }
+                  else { setIsFinished(true); }
+                }
               }}
               className="bg-red-600 text-white h-[32px] px-4 lg:px-6 rounded-lg font-black uppercase text-[10px] italic flex items-center gap-2 shadow-lg shadow-red-600/20 active:scale-95 transition-all"
             >
@@ -1564,6 +1620,7 @@ const FreewheelSound = ({ immediate = false }: { immediate?: boolean }) => {
         audio.volume = 0.9; // file is already at 25% volume (pre-processed)
         audio.currentTime = 0;
         await audio.play();
+        if (navigator.vibrate) navigator.vibrate([80, 40, 80]);
         setTimeout(() => {
           const fade = setInterval(() => {
             if (audio.volume > 0.04) {
