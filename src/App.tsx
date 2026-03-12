@@ -656,11 +656,11 @@ const OptionCard = ({ component, isSelected, onClick }: { component: Component, 
           <div className="flex flex-col mt-0.5">
             <div className="flex justify-between items-center">
               <p className="font-mono text-[8px] lg:text-[12px] text-red-600 tracking-tighter">€{component.price}</p>
-              <p className="text-[7px] lg:text-[11px] text-zinc-600 font-mono italic">{component.weight}g</p>
+              {component.price > 0 && component.weight > 0 && (
+                <p className="text-[7px] lg:text-[11px] text-zinc-600 font-mono italic">{(component.price / component.weight).toFixed(2)} €/g</p>
+              )}
+              <p className="text-[7px] lg:text-[11px] text-white font-mono italic">{component.weight}g</p>
             </div>
-            {component.price > 0 && component.weight > 0 && (
-              <p className="text-[5px] lg:text-[8px] text-zinc-700 font-mono italic text-right">{(component.price / component.weight).toFixed(2)} €/g</p>
-            )}
           </div>
         </div>
       </motion.button>
@@ -1637,7 +1637,9 @@ function SummaryView({ selections, rawSelections, onBack, onReset, setSavedBuild
                   <div className="flex items-center gap-1 mt-0.5">
                     <span className="text-[7px] font-mono text-red-500">€{c.price}</span>
                     <span className="text-zinc-700 text-[6px]">·</span>
-                    <span className="text-[7px] font-mono text-zinc-500">{c.weight}g</span>
+                    <span className="text-[7px] font-mono text-zinc-500">{(c.price > 0 && c.weight > 0) ? (c.price/c.weight).toFixed(2)+' €/g' : ''}</span>
+                    <span className="text-zinc-700 text-[6px]">·</span>
+                    <span className="text-[7px] font-mono text-white">{c.weight}g</span>
                   </div>
                 </div>
               ))}
@@ -1654,7 +1656,9 @@ function SummaryView({ selections, rawSelections, onBack, onReset, setSavedBuild
                   <div className="flex items-center gap-1.5 mt-1">
                     <span className="text-[10px] font-mono text-red-500">€{c.price}</span>
                     <span className="text-zinc-700 text-[9px]">·</span>
-                    <span className="text-[10px] font-mono text-zinc-500">{c.weight}g</span>
+                    <span className="text-[10px] font-mono text-zinc-500">{(c.price > 0 && c.weight > 0) ? (c.price/c.weight).toFixed(2)+' €/g' : ''}</span>
+                    <span className="text-zinc-700 text-[9px]">·</span>
+                    <span className="text-[10px] font-mono text-white">{c.weight}g</span>
                   </div>
                 </div>
               ))}
