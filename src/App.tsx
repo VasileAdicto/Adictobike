@@ -533,7 +533,7 @@ const Visualizer = ({ selectedComponents, offsets, showGrid, gridSize, isZoomed,
       .filter((x): x is { imageUrl: string; zIndex: number } => !!x && !!x.imageUrl);
   }, [steps]);
   return (
-    <div id="bike-visualizer" className="relative w-full h-full bg-zinc-950 rounded-none lg:rounded-[2.5rem] overflow-hidden border-0 lg:border border-white/5 shadow-[0_0_100px_rgba(0,0,0,0.5)] flex items-center justify-center cursor-crosshair">
+    <div id="bike-visualizer" onTouchStart={handleTouchStartSwipe} onTouchEnd={handleTouchEndSwipe} className="relative w-full h-full bg-zinc-950 rounded-none lg:rounded-[2.5rem] overflow-hidden border-0 lg:border border-white/5 shadow-[0_0_100px_rgba(0,0,0,0.5)] flex items-center justify-center cursor-crosshair">
       {showGrid && (
         <div className="absolute inset-0 z-[60] pointer-events-none opacity-[0.2]"
           style={{ backgroundImage: `linear-gradient(to right, rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.5) 1px, transparent 1px)`, backgroundSize: `${gridSize}px ${gridSize}px` }} />
@@ -557,31 +557,117 @@ const Visualizer = ({ selectedComponents, offsets, showGrid, gridSize, isZoomed,
 };
 
 // --- OPTION CARD ---
-const OptionCard = ({ component, isSelected, onClick }: { component: Component, isSelected: boolean, onClick: () => void }) => (
-  <motion.button
-    layout
-    onClick={(e) => { e.preventDefault(); onClick(); }}
-    className={cn(
-      "relative flex flex-col p-1 lg:p-3 rounded-xl border text-left transition-all group w-full shrink-0",
-      isSelected ? "border-red-600 bg-red-600/5 ring-1 ring-red-600/20" : "border-white/5 bg-zinc-900/50 hover:border-white/20"
-    )}
+const ComponentDetailModal = ({ component, onClose }: { component: Component, onClose: () => void }) => (
+  <motion.div
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    exit={{ opacity: 0 }}
+    className="fixed inset-0 z-[500] bg-black/90 backdrop-blur-xl flex items-end lg:items-center justify-center p-0 lg:p-6"
+    onClick={onClose}
   >
-    <div className="aspect-square w-full rounded-md bg-black/40 mb-1 lg:mb-2 overflow-hidden relative">
-      <img src={component.cardImageUrl} alt={component.name} className="w-full h-full object-contain p-1" />
-      {isSelected && <div className="absolute top-0.5 right-0.5 bg-red-600 p-0.5 rounded-full shadow-lg z-10"><CheckCircle2 size={8} className="text-white" /></div>}
-    </div>
-    <div className="flex-1 flex flex-col justify-between overflow-hidden">
-      <div>
-        <h3 className="text-[7px] lg:text-[11px] font-bold leading-none line-clamp-1 text-zinc-300 uppercase">{component.name}</h3>
-        <p className="text-[6px] lg:text-[8px] text-zinc-500 uppercase font-black truncate">{component.brand}</p>
+    <motion.div
+      initial={{ y: 60, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      exit={{ y: 60, opacity: 0 }}
+      transition={{ type: 'spring', damping: 28, stiffness: 260 }}
+      onClick={e => e.stopPropagation()}
+      className="bg-zinc-950 border border-white/10 rounded-t-[2rem] lg:rounded-[2rem] w-full max-w-sm p-5 relative"
+    >
+      <button onClick={onClose} className="absolute top-4 right-4 w-7 h-7 bg-red-600 rounded-full flex items-center justify-center text-white font-black text-[10px] z-10 hover:bg-red-700 transition-colors active:scale-90">✕</button>
+      <div className="aspect-square w-full rounded-xl bg-black/60 mb-4 overflow-hidden">
+        <img src={component.cardImageUrl || component.imageUrl} alt={component.name} className="w-full h-full object-contain p-3" />
       </div>
-      <div className="flex justify-between items-center mt-0.5">
-        <p className="font-mono text-[8px] lg:text-[12px] text-red-600 tracking-tighter">€{component.price}</p>
-        <p className="text-[7px] lg:text-[11px] text-zinc-600 font-mono italic">{component.weight}g</p>
+      <div className="mb-1">
+        <p className="text-[8px] font-black uppercase italic text-zinc-500 tracking-widest">{component.brand}</p>
+        <h3 className="text-[14px] font-black uppercase text-white leading-tight">{component.name}</h3>
       </div>
-    </div>
-  </motion.button>
+      <div className="flex items-center gap-3 mb-3">
+        <span className="font-mono text-[13px] text-red-500 font-black">€{component.price}</span>
+        <span className="text-zinc-700">·</span>
+        <span className="font-mono text-[12px] text-zinc-400">{component.weight}g</span>
+        {component.price > 0 && component.weight > 0 && (
+          <>
+            <span className="text-zinc-700">·</span>
+            <span className="font-mono text-[10px] text-zinc-500">{(component.price / component.weight).toFixed(2)} €/g</span>
+          </>
+        )}
+      </div>
+      {component.description ? (
+        <p className="text-[11px] text-zinc-400 leading-relaxed">{component.description}</p>
+      ) : (
+        <p className="text-[10px] text-zinc-600 italic">No description available.</p>
+      )}
+    </motion.div>
+  </motion.div>
 );
+
+const OptionCard = ({ component, isSelected, onClick }: { component: Component, isSelected: boolean, onClick: () => void }) => {
+  const [showDetail, setShowDetail] = React.useState(false);
+  const longPressTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const didLongPress = React.useRef(false);
+
+  const handleTouchStart = () => {
+    didLongPress.current = false;
+    longPressTimer.current = setTimeout(() => {
+      didLongPress.current = true;
+      if (navigator.vibrate) navigator.vibrate(30);
+      setShowDetail(true);
+    }, 500);
+  };
+  const handleTouchEnd = () => {
+    if (longPressTimer.current) clearTimeout(longPressTimer.current);
+  };
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (didLongPress.current) return;
+    onClick();
+  };
+  const handleDoubleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setShowDetail(true);
+  };
+
+  return (
+    <>
+      <AnimatePresence>
+        {showDetail && <ComponentDetailModal component={component} onClose={() => setShowDetail(false)} />}
+      </AnimatePresence>
+      <motion.button
+        layout
+        onClick={handleClick}
+        onDoubleClick={handleDoubleClick}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        onTouchMove={handleTouchEnd}
+        className={cn(
+          "relative flex flex-col p-1 lg:p-3 rounded-xl border text-left transition-all group w-full shrink-0",
+          isSelected ? "border-red-600 bg-red-600/5 ring-1 ring-red-600/20" : "border-white/5 bg-zinc-900/50 hover:border-white/20"
+        )}
+      >
+        <div className="aspect-square w-full rounded-md bg-black/40 mb-1 lg:mb-2 overflow-hidden relative">
+          <img src={component.cardImageUrl} alt={component.name} className="w-full h-full object-contain p-1" />
+          {isSelected && <div className="absolute top-0.5 right-0.5 bg-red-600 p-0.5 rounded-full shadow-lg z-10"><CheckCircle2 size={8} className="text-white" /></div>}
+        </div>
+        <div className="flex-1 flex flex-col justify-between overflow-hidden">
+          <div>
+            <h3 className="text-[7px] lg:text-[11px] font-bold leading-none line-clamp-1 text-zinc-300 uppercase">{component.name}</h3>
+            <p className="text-[6px] lg:text-[8px] text-zinc-500 uppercase font-black truncate">{component.brand}</p>
+          </div>
+          <div className="flex flex-col mt-0.5">
+            <div className="flex justify-between items-center">
+              <p className="font-mono text-[8px] lg:text-[12px] text-red-600 tracking-tighter">€{component.price}</p>
+              <p className="text-[7px] lg:text-[11px] text-zinc-600 font-mono italic">{component.weight}g</p>
+            </div>
+            {component.price > 0 && component.weight > 0 && (
+              <p className="text-[5px] lg:text-[8px] text-zinc-700 font-mono italic text-right">{(component.price / component.weight).toFixed(2)} €/g</p>
+            )}
+          </div>
+        </div>
+      </motion.button>
+    </>
+  );
+};
+
 
 // --- SOUND ENGINE ---
 // MP3-based — volume is baked into the files, so it works correctly on iOS/Android.
@@ -593,7 +679,7 @@ const useSounds = () => {
   const play = (file: string) => {
     try {
       const a = new Audio('/parts/sounds/' + file + '?v=' + _v);
-      a.volume = isMobile ? 1.0 : 1.3;
+      a.volume = isMobile ? 0.15 : 1.0;
       a.play().catch(() => {});
     } catch {}
   };
@@ -633,6 +719,16 @@ export default function BikeConfigurator() {
   const [selections, setSelections] = useState<Record<string, string>>({});
   const [isFinished, setIsFinished] = useState(false);
   const stepsNavRef = useRef<HTMLDivElement>(null);
+  const touchStartX = useRef<number | null>(null);
+  const handleTouchStartSwipe = (e: React.TouchEvent) => { touchStartX.current = e.touches[0].clientX; };
+  const handleTouchEndSwipe = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return;
+    const dx = e.changedTouches[0].clientX - touchStartX.current;
+    touchStartX.current = null;
+    if (Math.abs(dx) < 50) return;
+    if (dx < 0 && currentStepIndex < steps.length - 1) { playSelect(); if (navigator.vibrate) navigator.vibrate(18); setCurrentStepIndex(i => i + 1); }
+    if (dx > 0 && currentStepIndex > 0) { playSelect(); setCurrentStepIndex(i => i - 1); }
+  };
 
   const [user, setUser] = useState<any>(JSON.parse(localStorage.getItem('adicto_user') || 'null'));
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -717,6 +813,7 @@ export default function BikeConfigurator() {
                   cardImageUrl: (cardKey ? row[cardKey] : '') || (imageKey ? row[imageKey] : '') || '',
                   zIndex: Number(row[findKey('zindex') || '']) || 10,
                   logic: String(row[findKey('logic') || ''] || "").trim(),
+                  description: String(row[findKey('description') || findKey('descripcion') || ''] || "").trim(),
                 };
               })
             };
@@ -725,10 +822,21 @@ export default function BikeConfigurator() {
         });
         setSteps(newSteps);
 
-        // Restore build from URL param ?build=frame-0,wheelset-2,...
-        const buildParam = new URLSearchParams(window.location.search).get('build');
-        if (buildParam) {
-          const ids = buildParam.split(',');
+        // Restore build from URL param
+        const params = new URLSearchParams(window.location.search);
+        const compactParam = params.get('b');
+        const legacyParam = params.get('build');
+        if (compactParam) {
+          const STEPS = ['frame','wheelset','tyres','cockpit','tape','saddle','shifters','crankset','derailleurs','cassette','discs'];
+          const indices = compactParam.split('.');
+          const restored: Record<string, string> = {};
+          indices.forEach((idx, i) => {
+            if (idx !== '-' && STEPS[i]) restored[STEPS[i]] = `${STEPS[i]}-${idx}`;
+          });
+          setSelections(restored);
+          setIsFinished(true);
+        } else if (legacyParam) {
+          const ids = legacyParam.split(',');
           const restored: Record<string, string> = {};
           ids.forEach(compId => {
             const stepId = compId.split('-').slice(0, -1).join('-');
@@ -798,7 +906,7 @@ export default function BikeConfigurator() {
               selections={selectedComponents}
               rawSelections={selections}
               onBack={() => setIsFinished(false)}
-              onReset={() => window.location.reload()}
+              onReset={() => { window.history.replaceState({}, '', '/'); window.location.reload(); }}
               setSavedBuilds={setSavedBuilds}
               user={user}
               onOpenGarage={() => setIsGarageOpen(true)}
@@ -904,18 +1012,18 @@ export default function BikeConfigurator() {
                   <AnimatePresence mode="popLayout">
                     {filteredOptions.map((option) => (
                       <div key={option.id} className="w-[calc(33.333%-6px)] min-w-[calc(33.333%-6px)] shrink-0 h-full">
-                        <OptionCard component={option} isSelected={selections[currentStep.id] === option.id} onClick={() => { playSelect(); setSelections({ ...selections, [currentStep.id]: option.id }); }} />
+                        <OptionCard component={option} isSelected={selections[currentStep.id] === option.id} onClick={() => { playSelect(); if (navigator.vibrate) navigator.vibrate(12); setSelections({ ...selections, [currentStep.id]: option.id }); }} />
                       </div>
                     ))}
                   </AnimatePresence>
                 </div>
               </div>
-              <div className="hidden lg:block desk-scroll h-full pr-1">
+              <div className="hidden lg:block desk-scroll h-full pr-1"><p className="text-[7px] text-zinc-700 font-black uppercase italic tracking-widest mb-1.5 px-0.5">Double click for more info</p>
                 <div className="flex flex-col gap-2">
                   <AnimatePresence mode="popLayout">
                     {filteredOptions.map((option) => (
                       <div key={option.id} className="w-full">
-                        <OptionCard component={option} isSelected={selections[currentStep.id] === option.id} onClick={() => { playSelect(); setSelections({ ...selections, [currentStep.id]: option.id }); }} />
+                        <OptionCard component={option} isSelected={selections[currentStep.id] === option.id} onClick={() => { playSelect(); if (navigator.vibrate) navigator.vibrate(12); setSelections({ ...selections, [currentStep.id]: option.id }); }} />
                       </div>
                     ))}
                   </AnimatePresence>
@@ -942,11 +1050,12 @@ export default function BikeConfigurator() {
               <p className="font-mono text-[12px] lg:text-sm font-black text-red-600">€{selectedComponents.reduce((acc, c) => acc + c.price, 0).toLocaleString()}</p>
             </div>
           </div>
-          <div className="col-span-3 flex justify-end">
+          <div className="col-span-3 flex flex-col items-end gap-0.5">
+          <span className="text-[6px] font-black uppercase italic tracking-widest text-zinc-700">Push or Swipe</span>
             <button
               onClick={() => {
                 if (filteredOptions.length > 0 && !selections[currentStep.id]) return;
-                if (currentStepIndex < steps.length - 1) { playNext(); setCurrentStepIndex(currentStepIndex + 1); }
+                if (currentStepIndex < steps.length - 1) { playSelect(); if (navigator.vibrate) navigator.vibrate(18); setCurrentStepIndex(currentStepIndex + 1); }
                 else { setIsFinished(true); }
               }}
               className="bg-red-600 text-white h-[32px] px-4 lg:px-6 rounded-lg font-black uppercase text-[10px] italic flex items-center gap-2 shadow-lg shadow-red-600/20 active:scale-95 transition-all"
@@ -1080,6 +1189,24 @@ const CompareView = ({ builds, onBack }: { builds: any[], onBack: () => void }) 
                 </td>
               ))}
             </tr>
+            <tr className="bg-zinc-900/40 border-b border-white/10">
+              <td className="sticky left-0 z-10 bg-zinc-900/80 border-r border-white/10 p-1.5 lg:p-3">
+                <span className="text-[8px] font-black uppercase italic text-zinc-400">Ratio €/g</span>
+                <p className="text-[6px] text-zinc-600 italic">lower = better</p>
+              </td>
+              {totals.map(t => {
+                const ratio = t.weight > 0 ? t.price / t.weight : 0;
+                const allRatios = totals.map(x => x.weight > 0 ? x.price / x.weight : 0);
+                const best = Math.min(...allRatios);
+                const worst = Math.max(...allRatios);
+                return (
+                  <td key={t.id} className="border-l border-white/10 p-1.5 lg:p-3 text-center">
+                    <span className={cn("font-mono text-[10px] lg:text-[12px]", ratio === best ? 'text-green-400 font-black' : ratio === worst && allRatios.length > 1 ? 'text-red-400' : 'text-zinc-300')}>{ratio.toFixed(2)}</span>
+                  </td>
+                );
+              })}
+            </tr>
+
             {allCategories.map((cat, rowIdx) => {
               const comps = builds.map(b => getComp(b, cat));
               const prices = comps.map(c => c ? Number(c.price) || 0 : 0).filter(v => v > 0);
@@ -1411,8 +1538,15 @@ function SummaryView({ selections, rawSelections, onBack, onReset, setSavedBuild
 
   const buildUrl = useMemo(() => {
     if (!rawSelections) return 'https://adictobike.vercel.app';
-    const ids = Object.values(rawSelections as Record<string, string>).filter(Boolean).join(',');
-    return `https://adictobike.vercel.app?build=${ids}`;
+    // Encode as compact string: each component index only (e.g. "0,2,1,3,0,1,2,0,1,2,0")
+    const STEPS = ['frame','wheelset','tyres','cockpit','tape','saddle','shifters','crankset','derailleurs','cassette','discs'];
+    const indices = STEPS.map(stepId => {
+      const compId = (rawSelections as Record<string,string>)[stepId];
+      if (!compId) return '-';
+      const idx = compId.split('-').pop() || '-';
+      return idx;
+    }).join('.');
+    return `https://adictobike.vercel.app?b=${indices}`;
   }, [rawSelections]);
 
   const handleExport = async () => {
@@ -1538,6 +1672,11 @@ function SummaryView({ selections, rawSelections, onBack, onReset, setSavedBuild
             <div className="flex-1 bg-black/40 border border-white/5 rounded-xl p-2 lg:p-3 flex flex-col items-center justify-center text-center">
               <p className="text-zinc-600 text-[6px] lg:text-[7px] uppercase font-black italic tracking-widest leading-none mb-0.5 lg:mb-1">Weight</p>
               <p className="text-[13px] lg:text-[16px] font-mono text-white/80 font-black tracking-tighter italic leading-none">{totalWeight}g</p>
+            </div>
+            <div className="flex-1 bg-black/40 border border-white/5 rounded-xl p-2 lg:p-3 flex flex-col items-center justify-center text-center">
+              <p className="text-zinc-600 text-[6px] lg:text-[7px] uppercase font-black italic tracking-widest leading-none mb-0.5 lg:mb-1">€/g</p>
+              <p className="text-[13px] lg:text-[16px] font-mono text-zinc-400 font-black tracking-tighter italic leading-none">{totalWeight > 0 ? (totalPrice / totalWeight).toFixed(2) : '—'}</p>
+              <p className="text-[5px] lg:text-[6px] text-zinc-700 italic">lower = better</p>
             </div>
           </div>
 
