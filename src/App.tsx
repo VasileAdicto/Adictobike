@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight, ChevronsRight, Download, CheckCircle2, Upload, Lock, User, Save, RotateCcw, Grid3X3, Search, Move, FolderOpen, Key, Eye, EyeOff, LogOut, LogIn, Share2, Send } from 'lucide-react';
 import { cn } from './lib/utils';
@@ -685,9 +686,7 @@ const OptionCard = ({ component, allOptions = [], isSelected, onClick }: { compo
 
   return (
     <>
-      <AnimatePresence>
-        {showDetail && <ComponentDetailModal component={component} onClose={() => setShowDetail(false)} />}
-      </AnimatePresence>
+{showDetail && createPortal(<AnimatePresence><ComponentDetailModal component={component} onClose={() => setShowDetail(false)} /></AnimatePresence>, document.body)}
       <motion.button
         layout
         onClick={handleClick}
@@ -701,7 +700,10 @@ const OptionCard = ({ component, allOptions = [], isSelected, onClick }: { compo
         )}
       >
         <div className="relative">
-          <div className="absolute top-0 left-0 z-10 text-[5px] lg:text-[7px] font-black uppercase italic tracking-widest text-zinc-600 leading-none">Double click for more info</div>
+          <div className="absolute top-0 left-0 z-10 leading-none px-0.5"><span className="hidden lg:inline text-[7px] font-black uppercase italic tracking-widest text-zinc-500">Double click for more info</span><span className="lg:hidden text-[6px] font-black uppercase italic tracking-widest text-zinc-500">Hold for info</span></div>
+          {allOptions.length > 0 && allOptions[0].id === component.id && (
+            <div className="absolute top-0 right-0 z-10 bg-amber-500/20 text-amber-400 text-[5px] lg:text-[7px] font-black uppercase italic tracking-widest leading-none px-1 py-0.5 rounded-bl-md">Most Expensive</div>
+          )}
           <div className="aspect-square w-full rounded-md bg-black/40 mb-1 lg:mb-2 overflow-hidden relative">
             <img src={component.cardImageUrl} alt={component.name} className="w-full h-full object-contain p-1" />
             {isSelected && <div className="absolute top-0.5 right-0.5 bg-red-600 p-0.5 rounded-full shadow-lg z-10"><CheckCircle2 size={8} className="text-white" /></div>}
@@ -724,7 +726,7 @@ const OptionCard = ({ component, allOptions = [], isSelected, onClick }: { compo
               <div className="flex items-center justify-between mt-0.5 gap-0.5">
                 <p className="font-mono text-[8px] lg:text-[11px] text-red-600 tracking-tighter shrink-0">€{component.price}</p>
                 {mostExpensive && mostExpensive.id !== component.id && (
-                  <span className="font-mono text-[5px] lg:text-[8px] italic text-center leading-none shrink-0">
+                  <span className="font-mono text-[6px] lg:text-[9px] italic text-center leading-none flex-1 px-0.5">
                     <span className={priceColor}>{priceDiffStr}€</span>
                     <span className="text-zinc-700"> / </span>
                     <span className={weightColor}>{weightDiffStr}</span>
@@ -995,7 +997,7 @@ export default function BikeConfigurator() {
               transition={{ type: 'spring', damping: 26, stiffness: 260 }}
               className="bg-zinc-950 border border-white/10 rounded-2xl p-8 max-w-sm w-full"
             >
-              <p className="text-[11px] font-black uppercase italic tracking-widest text-red-500 mb-2">⚠ Ви забули обрати</p>
+              <p className="text-[11px] font-black uppercase italic tracking-widest text-red-500 mb-2">⚠ You forgot to choose</p>
               <ul className="flex flex-col gap-1 mb-6">
                 {steps.filter(s => s.options.length > 0 && !selections[s.id]).map(s => (
                   <li key={s.id} className="text-[13px] font-black uppercase text-zinc-300 italic tracking-wide">— {s.title}</li>
@@ -1180,8 +1182,8 @@ export default function BikeConfigurator() {
               <p className="font-mono text-[12px] lg:text-sm font-black text-red-600">€{selectedComponents.reduce((acc, c) => acc + c.price, 0).toLocaleString()}</p>
             </div>
           </div>
-          <div className="col-span-3 flex flex-col items-end gap-0.5">
-          <span className="hidden lg:inline-block text-[8px] font-black uppercase italic tracking-widest text-zinc-600 w-full text-center">Push or Swipe</span>
+          <div className="col-span-3 flex flex-col items-stretch gap-0.5">
+          <span className="hidden lg:block text-[8px] font-black uppercase italic tracking-widest text-zinc-600 text-center w-full">Push or Swipe</span>
             <button
               onClick={() => {
                 if (filteredOptions.length > 0 && !selections[currentStep.id]) return;
