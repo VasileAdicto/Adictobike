@@ -14,6 +14,9 @@ interface Component {
   price: number;
   weight: number;
   description: string;
+  foto2?: string;
+  foto3?: string;
+  foto4?: string;
   imageUrl: string;
   cardImageUrl: string;
   zIndex: number;
@@ -557,51 +560,101 @@ const Visualizer = ({ selectedComponents, offsets, showGrid, gridSize, isZoomed,
 };
 
 // --- OPTION CARD ---
-const ComponentDetailModal = ({ component, onClose }: { component: Component, onClose: () => void }) => (
-  <motion.div
-    initial={{ opacity: 0 }}
-    animate={{ opacity: 1 }}
-    exit={{ opacity: 0 }}
-    className="fixed inset-0 z-[500] bg-black/90 backdrop-blur-xl flex items-end lg:items-center justify-center p-0 lg:p-6"
-    onClick={onClose}
-  >
-    <motion.div
-      initial={{ y: 60, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      exit={{ y: 60, opacity: 0 }}
-      transition={{ type: 'spring', damping: 28, stiffness: 260 }}
-      onClick={e => e.stopPropagation()}
-      className="bg-zinc-950 border border-white/10 rounded-t-[2rem] lg:rounded-[2rem] w-full max-w-sm p-5 relative"
-    >
-      <button onClick={onClose} className="absolute top-4 right-4 w-7 h-7 bg-red-600 rounded-full flex items-center justify-center text-white font-black text-[10px] z-10 hover:bg-red-700 transition-colors active:scale-90">✕</button>
-      <div className="aspect-square w-full rounded-xl bg-black/60 mb-4 overflow-hidden">
-        <img src={component.cardImageUrl || component.imageUrl} alt={component.name} className="w-full h-full object-contain p-3" />
-      </div>
-      <div className="mb-1">
-        <p className="text-[8px] font-black uppercase italic text-zinc-500 tracking-widest">{component.brand}</p>
-        <h3 className="text-[14px] font-black uppercase text-white leading-tight">{component.name}</h3>
-      </div>
-      <div className="flex items-center gap-3 mb-3">
-        <span className="font-mono text-[13px] text-red-500 font-black">€{component.price}</span>
-        <span className="text-zinc-700">·</span>
-        <span className="font-mono text-[12px] text-zinc-400">{component.weight}g</span>
-        {component.price > 0 && component.weight > 0 && (
-          <>
-            <span className="text-zinc-700">·</span>
-            <span className="font-mono text-[10px] text-zinc-500">{(component.price / component.weight).toFixed(2)} €/g</span>
-          </>
-        )}
-      </div>
-      {component.description ? (
-        <p className="text-[11px] text-zinc-400 leading-relaxed">{component.description}</p>
-      ) : (
-        <p className="text-[10px] text-zinc-600 italic">No description available.</p>
-      )}
-    </motion.div>
-  </motion.div>
-);
+const ComponentDetailModal = ({ component, onClose }: { component: Component, onClose: () => void }) => {
+  const photos = [
+    component.cardImageUrl || component.imageUrl,
+    component.foto2,
+    component.foto3,
+    component.foto4,
+  ].filter(Boolean) as string[];
 
-const OptionCard = ({ component, isSelected, onClick }: { component: Component, isSelected: boolean, onClick: () => void }) => {
+  const [photoIdx, setPhotoIdx] = React.useState(0);
+  const touchStartX = React.useRef<number | null>(null);
+
+  const prev = () => setPhotoIdx(i => (i - 1 + photos.length) % photos.length);
+  const next = () => setPhotoIdx(i => (i + 1) % photos.length);
+
+  const onTouchStart = (e: React.TouchEvent) => { touchStartX.current = e.touches[0].clientX; };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return;
+    const dx = e.changedTouches[0].clientX - touchStartX.current;
+    touchStartX.current = null;
+    if (dx < -40) next();
+    if (dx > 40) prev();
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[500] bg-black/90 backdrop-blur-xl flex items-end lg:items-center justify-center p-0 lg:p-6"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ y: 60, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: 60, opacity: 0 }}
+        transition={{ type: 'spring', damping: 28, stiffness: 260 }}
+        onClick={e => e.stopPropagation()}
+        className="bg-zinc-950 border border-white/10 rounded-t-[2rem] lg:rounded-[2rem] w-full max-w-[416px] p-5 relative"
+      >
+        <button onClick={onClose} className="absolute top-4 right-4 w-7 h-7 bg-red-600 rounded-full flex items-center justify-center text-white font-black text-[10px] z-10 hover:bg-red-700 transition-colors active:scale-90">✕</button>
+
+        {/* Photo gallery */}
+        <div
+          className="relative aspect-square w-full rounded-xl bg-black/60 mb-4 overflow-hidden"
+          onTouchStart={onTouchStart}
+          onTouchEnd={onTouchEnd}
+        >
+          <AnimatePresence mode="wait">
+            <motion.img
+              key={photoIdx}
+              src={photos[photoIdx]}
+              alt={component.name}
+              initial={{ opacity: 0, x: 30 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -30 }}
+              transition={{ duration: 0.2 }}
+              className="absolute inset-0 w-full h-full object-contain p-3"
+            />
+          </AnimatePresence>
+          {photos.length > 1 && (
+            <>
+              <button onClick={prev} className="absolute left-2 top-1/2 -translate-y-1/2 w-7 h-7 bg-black/60 rounded-full flex items-center justify-center text-white hover:bg-black/80 transition-all active:scale-90 z-10">
+                <ChevronLeft size={14} />
+              </button>
+              <button onClick={next} className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 bg-black/60 rounded-full flex items-center justify-center text-white hover:bg-black/80 transition-all active:scale-90 z-10">
+                <ChevronRight size={14} />
+              </button>
+              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
+                {photos.map((_, i) => (
+                  <button key={i} onClick={() => setPhotoIdx(i)} className={cn("w-1.5 h-1.5 rounded-full transition-all", i === photoIdx ? "bg-white" : "bg-white/30")} />
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+
+        <p className="text-[8px] font-black uppercase italic text-zinc-500 tracking-widest">{component.brand}</p>
+        <h3 className="text-[14px] font-black uppercase text-white leading-tight mb-2">{component.name}</h3>
+        <div className="flex items-center gap-3 mb-3">
+          <span className="font-mono text-[13px] text-red-500 font-black">€{component.price}</span>
+          <span className="text-zinc-700">·</span>
+          <span className="font-mono text-[12px] text-zinc-400">{component.weight}g</span>
+        </div>
+        {component.description ? (
+          <p className="text-[11px] text-zinc-400 leading-relaxed">{component.description}</p>
+        ) : (
+          <p className="text-[10px] text-zinc-600 italic">No description available.</p>
+        )}
+      </motion.div>
+    </motion.div>
+  );
+};
+
+
+const OptionCard = ({ component, allOptions = [], isSelected, onClick }: { component: Component, allOptions?: Component[], isSelected: boolean, onClick: () => void }) => {
   const [showDetail, setShowDetail] = React.useState(false);
   const longPressTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const didLongPress = React.useRef(false);
@@ -644,24 +697,36 @@ const OptionCard = ({ component, isSelected, onClick }: { component: Component, 
           isSelected ? "border-red-600 bg-red-600/5 ring-1 ring-red-600/20" : "border-white/5 bg-zinc-900/50 hover:border-white/20"
         )}
       >
-        <div className="aspect-square w-full rounded-md bg-black/40 mb-1 lg:mb-2 overflow-hidden relative">
-          <img src={component.cardImageUrl} alt={component.name} className="w-full h-full object-contain p-1" />
-          {isSelected && <div className="absolute top-0.5 right-0.5 bg-red-600 p-0.5 rounded-full shadow-lg z-10"><CheckCircle2 size={8} className="text-white" /></div>}
+        <div className="relative">
+          <div className="hidden lg:block absolute top-0 right-0 z-10 text-[8px] font-black uppercase italic tracking-widest text-zinc-600 leading-none">Double click for more info</div>
+          <div className="aspect-square w-full rounded-md bg-black/40 mb-1 lg:mb-2 overflow-hidden relative">
+            <img src={component.cardImageUrl} alt={component.name} className="w-full h-full object-contain p-1" />
+            {isSelected && <div className="absolute top-0.5 right-0.5 bg-red-600 p-0.5 rounded-full shadow-lg z-10"><CheckCircle2 size={8} className="text-white" /></div>}
+          </div>
         </div>
         <div className="flex-1 flex flex-col justify-between overflow-hidden">
           <div>
             <h3 className="text-[7px] lg:text-[11px] font-bold leading-none line-clamp-1 text-zinc-300 uppercase">{component.name}</h3>
             <p className="text-[6px] lg:text-[8px] text-zinc-500 uppercase font-black truncate">{component.brand}</p>
           </div>
-          <div className="flex flex-col mt-0.5">
-            <div className="flex justify-between items-center">
-              <p className="font-mono text-[8px] lg:text-[12px] text-red-600 tracking-tighter">€{component.price}</p>
-              {component.price > 0 && component.weight > 0 && (
-                <p className="text-[7px] lg:text-[11px] text-zinc-600 font-mono italic">{(component.price / component.weight).toFixed(2)} €/g</p>
-              )}
-              <p className="text-[7px] lg:text-[11px] text-white font-mono italic">{component.weight}g</p>
-            </div>
-          </div>
+          {(() => {
+            const mostExpensive = allOptions.length > 0 ? allOptions.reduce((a, b) => b.price > a.price ? b : a, allOptions[0]) : null;
+            const priceDiff = mostExpensive ? component.price - mostExpensive.price : 0;
+            const weightDiff = mostExpensive ? component.weight - mostExpensive.weight : 0;
+            const priceDiffStr = priceDiff === 0 ? '0' : (priceDiff > 0 ? `+${priceDiff}` : `${priceDiff}`);
+            const weightDiffStr = weightDiff === 0 ? '0' : (weightDiff > 0 ? `+${weightDiff}g` : `${weightDiff}g`);
+            const priceColor = priceDiff === 0 ? 'text-zinc-600' : priceDiff < 0 ? 'text-green-400' : 'text-red-400';
+            const weightColor = weightDiff === 0 ? 'text-zinc-600' : weightDiff > 0 ? 'text-red-400' : 'text-green-400';
+            return (
+              <div className="flex flex-col mt-0.5">
+                <p className="font-mono text-[8px] lg:text-[12px] text-red-600 tracking-tighter">€{component.price}</p>
+                <div className="flex justify-between items-center">
+                  <span className={cn("font-mono text-[6px] lg:text-[9px] italic", priceColor)}>{priceDiffStr} €</span>
+                  <span className={cn("font-mono text-[6px] lg:text-[9px] italic", weightColor)}>{weightDiffStr}</span>
+                </div>
+              </div>
+            );
+          })()}
         </div>
       </motion.button>
     </>
@@ -720,6 +785,7 @@ export default function BikeConfigurator() {
   const [isFinished, setIsFinished] = useState(false);
   const stepsNavRef = useRef<HTMLDivElement>(null);
   const touchStartX = useRef<number | null>(null);
+  const mouseStartX = useRef<number | null>(null);
   const handleTouchStartSwipe = (e: React.TouchEvent) => { touchStartX.current = e.touches[0].clientX; };
   const handleTouchEndSwipe = (e: React.TouchEvent) => {
     if (touchStartX.current === null) return;
@@ -727,6 +793,15 @@ export default function BikeConfigurator() {
     touchStartX.current = null;
     if (Math.abs(dx) < 50) return;
     if (dx < 0 && currentStepIndex < steps.length - 1) { playSelect(); if (navigator.vibrate) navigator.vibrate(18); setCurrentStepIndex(i => i + 1); }
+    if (dx > 0 && currentStepIndex > 0) { playSelect(); setCurrentStepIndex(i => i - 1); }
+  };
+  const handleMouseDownSwipe = (e: React.MouseEvent) => { mouseStartX.current = e.clientX; };
+  const handleMouseUpSwipe = (e: React.MouseEvent) => {
+    if (mouseStartX.current === null) return;
+    const dx = e.clientX - mouseStartX.current;
+    mouseStartX.current = null;
+    if (Math.abs(dx) < 60) return;
+    if (dx < 0 && currentStepIndex < steps.length - 1) { playSelect(); setCurrentStepIndex(i => i + 1); }
     if (dx > 0 && currentStepIndex > 0) { playSelect(); setCurrentStepIndex(i => i - 1); }
   };
 
@@ -813,6 +888,9 @@ export default function BikeConfigurator() {
                   cardImageUrl: (cardKey ? row[cardKey] : '') || (imageKey ? row[imageKey] : '') || '',
                   zIndex: Number(row[findKey('zindex') || '']) || 10,
                   logic: String(row[findKey('logic') || ''] || "").trim(),
+                  foto2: String(row[findKey('foto2') || ''] || "").trim() || '',
+                  foto3: String(row[findKey('foto3') || ''] || "").trim() || '',
+                  foto4: String(row[findKey('foto4') || ''] || "").trim() || '',
                   description: String(row[findKey('description') || findKey('descripcion') || ''] || "").trim(),
                 };
               })
@@ -865,7 +943,7 @@ export default function BikeConfigurator() {
       if (!activeLogic) return true;
       if (!option.logic || option.logic.trim() === "") return true;
       return option.logic.trim() === activeLogic;
-    });
+    }).sort((a, b) => b.price - a.price);
   }, [currentStep, activeLogic]);
 
   const selectedComponents = useMemo(() => steps.map(s => {
@@ -1000,7 +1078,7 @@ export default function BikeConfigurator() {
                 </button>
               ))}
             </div>
-            <div className="flex-1 relative min-h-0" onTouchStart={handleTouchStartSwipe} onTouchEnd={handleTouchEndSwipe}>
+            <div className="flex-1 relative min-h-0" onTouchStart={handleTouchStartSwipe} onTouchEnd={handleTouchEndSwipe} onMouseDown={handleMouseDownSwipe} onMouseUp={handleMouseUpSwipe}>
               <Visualizer selectedComponents={selectedComponents} offsets={offsets} showGrid={showGrid} gridSize={gridSize} isZoomed={isZoomed} zoomScale={zoomScale} steps={steps} selectedFrameId={selections['frame'] || ''} />
             </div>
           </div>
@@ -1012,18 +1090,18 @@ export default function BikeConfigurator() {
                   <AnimatePresence mode="popLayout">
                     {filteredOptions.map((option) => (
                       <div key={option.id} className="w-[calc(33.333%-6px)] min-w-[calc(33.333%-6px)] shrink-0 h-full">
-                        <OptionCard component={option} isSelected={selections[currentStep.id] === option.id} onClick={() => { playSelect(); if (navigator.vibrate) navigator.vibrate(12); setSelections({ ...selections, [currentStep.id]: option.id }); }} />
+                        <OptionCard component={option} allOptions={filteredOptions} isSelected={selections[currentStep.id] === option.id} onClick={() => { playSelect(); if (navigator.vibrate) navigator.vibrate(12); setSelections({ ...selections, [currentStep.id]: option.id }); }} />
                       </div>
                     ))}
                   </AnimatePresence>
                 </div>
               </div>
-              <div className="hidden lg:block desk-scroll h-full pr-1"><p className="text-[7px] text-zinc-700 font-black uppercase italic tracking-widest mb-1.5 px-0.5">Double click for more info</p>
+              <div className="hidden lg:block desk-scroll h-full pr-1">
                 <div className="flex flex-col gap-2">
                   <AnimatePresence mode="popLayout">
                     {filteredOptions.map((option) => (
                       <div key={option.id} className="w-full">
-                        <OptionCard component={option} isSelected={selections[currentStep.id] === option.id} onClick={() => { playSelect(); if (navigator.vibrate) navigator.vibrate(12); setSelections({ ...selections, [currentStep.id]: option.id }); }} />
+                        <OptionCard component={option} allOptions={filteredOptions} isSelected={selections[currentStep.id] === option.id} onClick={() => { playSelect(); if (navigator.vibrate) navigator.vibrate(12); setSelections({ ...selections, [currentStep.id]: option.id }); }} />
                       </div>
                     ))}
                   </AnimatePresence>
@@ -1051,7 +1129,7 @@ export default function BikeConfigurator() {
             </div>
           </div>
           <div className="col-span-3 flex flex-col items-end gap-0.5">
-          <span className="text-[6px] font-black uppercase italic tracking-widest text-zinc-700">Push or Swipe</span>
+          <span className="text-[8px] font-black uppercase italic tracking-widest text-zinc-600 w-full text-center">Push or Swipe</span>
             <button
               onClick={() => {
                 if (filteredOptions.length > 0 && !selections[currentStep.id]) return;
@@ -1637,8 +1715,6 @@ function SummaryView({ selections, rawSelections, onBack, onReset, setSavedBuild
                   <div className="flex items-center gap-1 mt-0.5">
                     <span className="text-[7px] font-mono text-red-500">€{c.price}</span>
                     <span className="text-zinc-700 text-[6px]">·</span>
-                    <span className="text-[7px] font-mono text-zinc-500">{(c.price > 0 && c.weight > 0) ? (c.price/c.weight).toFixed(2)+' €/g' : ''}</span>
-                    <span className="text-zinc-700 text-[6px]">·</span>
                     <span className="text-[7px] font-mono text-white">{c.weight}g</span>
                   </div>
                 </div>
@@ -1656,9 +1732,7 @@ function SummaryView({ selections, rawSelections, onBack, onReset, setSavedBuild
                   <div className="flex items-center gap-1.5 mt-1">
                     <span className="text-[10px] font-mono text-red-500">€{c.price}</span>
                     <span className="text-zinc-700 text-[9px]">·</span>
-                    <span className="text-[10px] font-mono text-zinc-500">{(c.price > 0 && c.weight > 0) ? (c.price/c.weight).toFixed(2)+' €/g' : ''}</span>
-                    <span className="text-zinc-700 text-[9px]">·</span>
-                    <span className="text-[10px] font-mono text-white">{c.weight}g</span>
+                    <span className="text-[10px] font-mono text-zinc-500">{c.weight}g</span>
                   </div>
                 </div>
               ))}
@@ -1666,7 +1740,7 @@ function SummaryView({ selections, rawSelections, onBack, onReset, setSavedBuild
           </div>
         </div>
 
-        <div className="w-full lg:w-[280px] lg:min-w-[280px] shrink-0 flex flex-col border-t lg:border-t-0 lg:border-l border-white/5 bg-zinc-950/60 backdrop-blur-xl overflow-y-auto">
+        <div className="w-full lg:w-[280px] lg:min-w-[280px] shrink-0 flex flex-col border-t lg:border-t-0 lg:border-l border-white/5 bg-zinc-950/60 backdrop-blur-xl overflow-y-hidden">
 
           <div className="flex gap-2 px-3 lg:px-5 pt-1.5 pb-1 lg:pt-5 lg:pb-0 shrink-0">
             <div className="flex-1 bg-black/40 border border-white/5 rounded-xl p-2 lg:p-3 flex flex-col items-center justify-center text-center">
