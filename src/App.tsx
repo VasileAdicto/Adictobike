@@ -1413,6 +1413,8 @@ function SummaryView({ selections, rawSelections, onBack, onReset, setSavedBuild
     const ids = Object.values(rawSelections as Record<string, string>).filter(Boolean).join(',');
     return `https://adictobike.vercel.app?build=${ids}`;
   }, [rawSelections]);
+
+  const handleExport = async () => {
     setIsExporting(true);
     setProgress(0);
     const interval = setInterval(() => setProgress(prev => (prev >= 95 ? 95 : prev + 5)), 150);
