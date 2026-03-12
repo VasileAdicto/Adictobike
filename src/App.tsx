@@ -666,8 +666,8 @@ const OptionCard = ({ component, allOptions = [], isSelected, onClick }: { compo
               <>
                 {mostExpensive && mostExpensive.id !== component.id && (
                   <>
-                    <span className={cn("absolute bottom-[18px] lg:bottom-[22px] left-0.5 z-20 font-mono text-[9px] lg:text-[11px] italic leading-none", priceColor)}>{priceDiffStr}</span>
-                    <span className={cn("absolute bottom-[18px] lg:bottom-[22px] right-0.5 z-20 font-mono text-[9px] lg:text-[11px] italic leading-none", weightColor)}>{weightDiffStr}</span>
+                    <span className={cn("absolute top-[3px] left-0.5 z-20 font-mono text-[9px] lg:text-[11px] italic leading-none", priceColor)}>{priceDiffStr}</span>
+                    <span className={cn("absolute top-[3px] right-0.5 z-20 font-mono text-[9px] lg:text-[11px] italic leading-none", weightColor)}>{weightDiffStr}</span>
                   </>
                 )}
                 <div className="flex items-center justify-between mt-0.5 gap-0.5">
@@ -1123,7 +1123,7 @@ export default function BikeConfigurator() {
               <p className="font-mono text-[12px] lg:text-sm font-black text-red-600">€{selectedComponents.reduce((acc, c) => acc + c.price, 0).toLocaleString()}</p>
             </div>
           </div>
-          <div className="col-span-3 flex flex-col items-stretch gap-0.5">
+          <div className="col-span-3 flex flex-col items-end justify-end gap-0.5">
             <button
               onClick={() => {
                 if (filteredOptions.length > 0 && !selections[currentStep.id]) return;
@@ -1134,7 +1134,7 @@ export default function BikeConfigurator() {
                   else { setIsFinished(true); }
                 }
               }}
-              className="bg-red-600 text-white h-[32px] lg:h-[22px] px-4 lg:px-3 rounded-lg font-black uppercase text-[10px] italic flex items-center gap-2 shadow-lg shadow-red-600/20 active:scale-95 transition-all" style={{ padding: "0 10px", height: "20px", fontSize: "7px" }}
+              className="bg-red-600 text-white rounded-md font-black uppercase italic flex items-center gap-1.5 shadow-lg shadow-red-600/20 active:scale-95 transition-all shrink-0" style={{ padding: "2px 10px", height: "20px", fontSize: "7px", lineHeight: 1 }}
             >
               {currentStepIndex === steps.length - 1 ? 'Finish' : 'Next'} <ChevronRight size={14} />
             </button>
@@ -1189,7 +1189,7 @@ const CompareView = ({ builds, onBack }: { builds: any[], onBack: () => void }) 
   };
 
   const isMobile = typeof window !== "undefined" && window.innerWidth < 1024;
-  const colWidth = isMobile ? Math.max(60, Math.floor(180 / builds.length)) : Math.max(40, Math.floor(180 / builds.length));
+  const colWidth = isMobile ? 80 : 120;
 
   return (
     <div className="fixed inset-0 z-[1100] bg-black text-white font-sans flex flex-col">
@@ -1213,10 +1213,10 @@ const CompareView = ({ builds, onBack }: { builds: any[], onBack: () => void }) 
       </div>
 
       <div className="flex-1 overflow-auto custom-scroll-container">
-        <table className="border-collapse" style={{ width: '100%', minWidth: `${180 + builds.length * colWidth}px` }}>
+        <table className="border-collapse" style={{ width: '100%', minWidth: `${100 + builds.length * colWidth}px` }}>
           <thead className="sticky top-0 z-20">
             <tr>
-              <th className="sticky left-0 z-30 bg-zinc-950 border-b border-r border-white/10 p-1 lg:p-3 text-left w-16 lg:w-44">
+              <th className="sticky left-0 z-30 bg-zinc-950 border-b border-r border-white/10 p-1 lg:p-2 text-left w-16 lg:w-28">
                 <span className="text-[8px] font-black uppercase text-zinc-600 tracking-widest">Component</span>
               </th>
               {sortedBuilds.map((b: any, i: number) => {
