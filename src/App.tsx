@@ -666,8 +666,8 @@ const OptionCard = ({ component, allOptions = [], isSelected, onClick }: { compo
               <>
                 {mostExpensive && mostExpensive.id !== component.id && (
                   <>
-                    <span className={cn("absolute top-2 left-0 z-20 font-mono text-[7px] lg:text-[9px] italic leading-none px-0.5", priceColor)}>{priceDiffStr}</span>
-                    <span className={cn("absolute top-2 right-0 z-20 font-mono text-[7px] lg:text-[9px] italic leading-none px-0.5", weightColor)}>{weightDiffStr}</span>
+                    <span className={cn("absolute bottom-[18px] lg:bottom-[22px] left-0.5 z-20 font-mono text-[9px] lg:text-[11px] italic leading-none", priceColor)}>{priceDiffStr}</span>
+                    <span className={cn("absolute bottom-[18px] lg:bottom-[22px] right-0.5 z-20 font-mono text-[9px] lg:text-[11px] italic leading-none", weightColor)}>{weightDiffStr}</span>
                   </>
                 )}
                 <div className="flex items-center justify-between mt-0.5 gap-0.5">
@@ -1134,7 +1134,7 @@ export default function BikeConfigurator() {
                   else { setIsFinished(true); }
                 }
               }}
-              className="bg-red-600 text-white h-[32px] lg:h-[22px] px-4 lg:px-3 rounded-lg lg:rounded-md font-black uppercase text-[10px] lg:text-[8px] italic flex items-center gap-2 shadow-lg shadow-red-600/20 active:scale-95 transition-all"
+              className="bg-red-600 text-white h-[32px] lg:h-[22px] px-4 lg:px-3 rounded-lg font-black uppercase text-[10px] italic flex items-center gap-2 shadow-lg shadow-red-600/20 active:scale-95 transition-all" style={{ padding: "0 10px", height: "20px", fontSize: "7px" }}
             >
               {currentStepIndex === steps.length - 1 ? 'Finish' : 'Next'} <ChevronRight size={14} />
             </button>
@@ -1189,7 +1189,7 @@ const CompareView = ({ builds, onBack }: { builds: any[], onBack: () => void }) 
   };
 
   const isMobile = typeof window !== "undefined" && window.innerWidth < 1024;
-  const colWidth = isMobile ? Math.max(72, Math.floor(220 / builds.length)) : Math.max(100, Math.floor(400 / builds.length));
+  const colWidth = isMobile ? Math.max(60, Math.floor(180 / builds.length)) : Math.max(40, Math.floor(180 / builds.length));
 
   return (
     <div className="fixed inset-0 z-[1100] bg-black text-white font-sans flex flex-col">
