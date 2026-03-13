@@ -642,11 +642,11 @@ const OptionCard = ({ component, allOptions = [], isSelected, onClick }: { compo
         <div className="relative">
           
           {allOptions.length > 0 && allOptions[0].id === component.id && (
-            <div className="absolute top-0 right-0 z-10 text-[4px] lg:text-[6px] font-black uppercase italic tracking-widest text-zinc-600 leading-none px-0.5">Most Expensive</div>
+            <div className="absolute top-0 right-0 z-10 text-[6px] lg:text-[8px] font-black uppercase italic tracking-widest text-zinc-600 leading-none px-0.5">Most Expensive</div>
           )}
           <div className="aspect-square w-full rounded-md bg-black/40 mb-1 lg:mb-2 overflow-hidden relative">
             <img src={component.cardImageUrl} alt={component.name} className="w-full h-full object-contain p-1" />
-            {isSelected && <div className="absolute top-0.5 right-0.5 bg-red-600 p-0.5 rounded-full shadow-lg z-10"><CheckCircle2 size={8} className="text-white" /></div>}
+            
           </div>
         </div>
         <div className="flex-1 flex flex-col justify-between overflow-hidden">
@@ -666,8 +666,8 @@ const OptionCard = ({ component, allOptions = [], isSelected, onClick }: { compo
               <>
                 {mostExpensive && mostExpensive.id !== component.id && (priceDiffStr || weightDiffStr) && (
                   <>
-                    <span className={cn("absolute top-[6px] left-[2px] z-20 font-mono text-[9px] lg:text-[11px] italic leading-none", priceColor)}>{priceDiffStr}</span>
-                    <span className={cn("absolute top-[6px] right-[2px] z-20 font-mono text-[9px] lg:text-[11px] italic leading-none", weightColor)}>{weightDiffStr}</span>
+                    <span className={cn("absolute top-[6px] left-2 z-20 font-mono text-[7px] lg:text-[9px] italic leading-none", priceColor)}>{priceDiffStr}</span>
+                    <span className={cn("absolute top-[6px] right-2 z-20 font-mono text-[7px] lg:text-[9px] italic leading-none", weightColor)}>{weightDiffStr}</span>
                   </>
                 )}
                 <div className="flex items-center justify-between mt-0.5 gap-0.5">
@@ -1189,7 +1189,7 @@ const CompareView = ({ builds, onBack }: { builds: any[], onBack: () => void }) 
   };
 
   const isMobile = typeof window !== "undefined" && window.innerWidth < 1024;
-  const colWidth = isMobile ? 80 : 40;
+  const colWidth = isMobile ? 80 : 130;
 
   return (
     <div className="fixed inset-0 z-[1100] bg-black text-white font-sans flex flex-col">
@@ -1213,7 +1213,7 @@ const CompareView = ({ builds, onBack }: { builds: any[], onBack: () => void }) 
       </div>
 
       <div className="flex-1 overflow-auto custom-scroll-container">
-        <table className="border-collapse" style={{ tableLayout: 'fixed', width: `${100 + builds.length * colWidth}px` }}>
+        <table className="border-collapse" style={{ width: `${120 + builds.length * colWidth}px` }}>
           <thead className="sticky top-0 z-20">
             <tr>
               <th className="sticky left-0 z-30 bg-zinc-950 border-b border-r border-white/10 p-1 lg:p-2 text-left w-16 lg:w-28">
