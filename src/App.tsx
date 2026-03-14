@@ -517,7 +517,7 @@ const Visualizer = ({ selectedComponents, offsets, showGrid, gridSize, isZoomed,
       .filter((x): x is { imageUrl: string; zIndex: number } => !!x && !!x.imageUrl);
   }, [steps]);
   return (
-    <div id="bike-visualizer" className="relative w-full h-full bg-white rounded-none lg:rounded-[2.5rem] overflow-hidden border-0 lg:border border-zinc-200 shadow-[0_0_100px_rgba(0,0,0,0.15)] flex items-center justify-center cursor-crosshair">
+    <div id="bike-visualizer" className="relative w-full h-full bg-zinc-950 rounded-none lg:rounded-[2.5rem] overflow-hidden border-0 lg:border border-white/5 shadow-[0_0_100px_rgba(0,0,0,0.5)] flex items-center justify-center cursor-crosshair">
       {showGrid && (
         <div className="absolute inset-0 z-[60] pointer-events-none opacity-[0.2]"
           style={{ backgroundImage: `linear-gradient(to right, rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.5) 1px, transparent 1px)`, backgroundSize: `${gridSize}px ${gridSize}px` }} />
