@@ -188,7 +188,7 @@ const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
 };
 
 // --- ADMIN PANEL COMPONENT ---
-const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, selectedFrameId, showGrid, setShowGrid, gridSize, setGridSize, isZoomed, setIsZoomed, zoomScale, setZoomScale, onLogout }: any) => {
+const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, selectedFrameId, steps = [], showGrid, setShowGrid, gridSize, setGridSize, isZoomed, setIsZoomed, zoomScale, setZoomScale, onLogout }: any) => {
   const offsetKey = (compId: string) => selectedFrameId ? `${selectedFrameId}__${compId}` : `__${compId}`;
   const [selectedCat, setSelectedCat] = useState('excel');
   const [status, setStatus] = useState('');
@@ -215,10 +215,47 @@ const AdminPanel = ({ categories, offsets, setOffsets, activeComponent, selected
     } catch (err) { return false; }
   };
 
+  // Groups: steps whose offsets should be synced together per frame
+  const SHARED_OFFSET_GROUPS: string[][] = [
+    ['wheelset', 'tyres', 'cassette', 'discs'],
+    ['shifters'],
+    ['crankset'],
+    ['saddle'],
+    ['cockpit'],
+    ['tape'],
+  ];
+
+  const getStepIdFromCompId = (compId: string) => {
+    // compId format: "stepId-index" e.g. "wheelset-0"
+    const match = compId.match(/^(.+)-\d+$/);
+    return match ? match[1] : null;
+  };
+
   const updateTune = (key: keyof OffsetData, val: number) => {
     if (!activeComponent) return;
-    const k = offsetKey(activeComponent.id);
-    setOffsets((prev: any) => ({ ...prev, [k]: { ...(prev[k] || { s: 1, x: 0, y: 0 }), [key]: val } }));
+    const stepId = getStepIdFromCompId(activeComponent.id);
+    // Find which group this step belongs to
+    const group = stepId ? SHARED_OFFSET_GROUPS.find(g => g.includes(stepId)) : null;
+
+    setOffsets((prev: any) => {
+      const next = { ...prev };
+      if (group) {
+        // Apply same offset to all components in all steps of this group
+        group.forEach(groupStepId => {
+          const step = steps.find((s: any) => s.id === groupStepId);
+          if (!step) return;
+          step.options.forEach((opt: any) => {
+            const k = selectedFrameId ? `${selectedFrameId}__${opt.id}` : `__${opt.id}`;
+            next[k] = { ...(next[k] || { s: 1, x: 0, y: 0 }), [key]: val };
+          });
+        });
+      } else {
+        // No group - just update this one component
+        const k = offsetKey(activeComponent.id);
+        next[k] = { ...(next[k] || { s: 1, x: 0, y: 0 }), [key]: val };
+      }
+      return next;
+    });
   };
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>, isFolder: boolean) => {
@@ -365,7 +402,7 @@ interface BikeLayer { imageUrl: string; zIndex: number; }
 
 type IntroPhase = 'hidden' | 'assembling' | 'hold' | 'fadeout' | 'logo';
 
-const LAYER_GAPS = [350, 460, 420, 390, 370, 240, 340, 360, 360, 360, 340];
+const LAYER_GAPS = [350, 0, 460, 420, 390, 370, 240, 340, 360, 360, 360, 340];
 
 
 const EmptyVisualizerState = ({ layers = [] }: { layers?: BikeLayer[] }) => {
@@ -709,6 +746,7 @@ const useSounds = () => {
 // --- MAIN CONFIGURATOR ---
 const INITIAL_STEPS: Step[] = [
   { id: 'frame', title: 'Frame', options: [] },
+  { id: 'color', title: 'Color', options: [] },
   { id: 'wheelset', title: 'Wheelset', options: [] },
   { id: 'tyres', title: 'Tyres', options: [] },
   { id: 'cockpit', title: 'Cockpit', options: [] },
@@ -856,7 +894,7 @@ export default function BikeConfigurator() {
         const compactParam = params.get('b');
         const legacyParam = params.get('build');
         if (compactParam) {
-          const STEPS = ['frame','wheelset','tyres','cockpit','tape','saddle','shifters','crankset','derailleurs','cassette','discs'];
+          const STEPS = ['frame','color','wheelset','tyres','cockpit','tape','saddle','shifters','crankset','derailleurs','cassette','discs'];
           const indices = compactParam.split('.');
           const restored: Record<string, string> = {};
           indices.forEach((idx, i) => {
@@ -1619,7 +1657,7 @@ function SummaryView({ selections, rawSelections, onBack, onReset, setSavedBuild
   const buildUrl = useMemo(() => {
     if (!rawSelections) return 'https://adictobike.vercel.app';
     // Encode as compact string: each component index only (e.g. "0,2,1,3,0,1,2,0,1,2,0")
-    const STEPS = ['frame','wheelset','tyres','cockpit','tape','saddle','shifters','crankset','derailleurs','cassette','discs'];
+    const STEPS = ['frame','color','wheelset','tyres','cockpit','tape','saddle','shifters','crankset','derailleurs','cassette','discs'];
     const indices = STEPS.map(stepId => {
       const compId = (rawSelections as Record<string,string>)[stepId];
       if (!compId) return '-';
